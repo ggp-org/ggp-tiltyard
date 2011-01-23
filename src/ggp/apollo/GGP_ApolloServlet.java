@@ -9,7 +9,7 @@ import javax.servlet.http.*;
 public class GGP_ApolloServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
-        if (req.getRequestURI() == "/cron/scheduling_round") {
+        if (req.getRequestURI().equals("/cron/scheduling_round")) {
             runSchedulingRound();
             resp.setContentType("text/plain");
             resp.getWriter().println("Starting scheduling round.");            
