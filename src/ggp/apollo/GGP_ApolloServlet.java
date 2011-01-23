@@ -1,7 +1,10 @@
 package ggp.apollo;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.*;
 
@@ -17,10 +20,18 @@ public class GGP_ApolloServlet extends HttpServlet {
         }
         
         resp.getWriter().println("<html><body>");
-        resp.getWriter().println("Hello, world! This is Apollo.<ul>");        
+        resp.getWriter().println("Hello, world! This is Apollo.<ul>");
+        
+        // Output a sorted list of the mock scheduling round times
+        List<String> theDataStrings = new ArrayList<String>();
         for(DataPoint d : DataPoint.loadData()) {
-            resp.getWriter().println("<li>" + d.getData());
+            theDataStrings.add(d.getData());
         }
+        Collections.sort(theDataStrings);
+        for(String s : theDataStrings) {
+            resp.getWriter().println("<li>" + s);        
+        }
+        
         resp.getWriter().println("</ul></body></html>");
     }
     
