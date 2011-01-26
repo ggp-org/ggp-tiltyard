@@ -35,7 +35,8 @@ public class GGP_ApolloServlet extends HttpServlet {
         resp.getWriter().println("</ul></body></html>");
     }
     
-    public void runSchedulingRound() {
+    public void runSchedulingRound() throws IOException {
+        DataPoint.clearDataPoints();
         new DataPoint("Scheduling round: " + new Date().toString());
     }
 }

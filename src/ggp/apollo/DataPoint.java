@@ -56,7 +56,7 @@ public class DataPoint {
         return theData;
     }
     
-    public static void clearMatches() throws IOException {
+    public static void clearDataPoints() throws IOException {
         Set<DataPoint> theData = loadData();
 
         for (DataPoint m : theData) {
