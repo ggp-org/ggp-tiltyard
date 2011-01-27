@@ -12,28 +12,41 @@ import javax.jdo.annotations.*;
 import org.datanucleus.store.query.AbstractQueryResult;
 
 @PersistenceCapable
-public class DataPoint {
-    @PrimaryKey @Persistent private String theDataPoint;
+public class KnownMatch {
+    @PrimaryKey @Persistent private long theTimeStamp;
+    @Persistent private String theSpectatorURL;
+    @Persistent private int[] thePlayers;
 
-    public DataPoint(String theData) {
-        this.theDataPoint = theData;        
+    public KnownMatch(String theSpectatorURL, int[] thePlayers) {
+        this.theSpectatorURL = theSpectatorURL;
+        this.thePlayers = thePlayers;
+        this.theTimeStamp = System.currentTimeMillis();
+        
         PersistenceManager pm = PMF.get().getPersistenceManager();
         pm.makePersistent(this);
         pm.close();
     }
-    
-    public String getData() {
-        return theDataPoint;
+
+    public int[] getPlayers() {
+        return thePlayers;
+    }
+
+    public String getSpectatorURL() {
+        return theSpectatorURL;
+    }
+
+    public long getTimeStamp() {
+        return theTimeStamp;
     }
 
     /* Static accessor methods */
-    public static Set<DataPoint> loadData() throws IOException {
-        Set<DataPoint> theData = new HashSet<DataPoint>();
+    public static Set<KnownMatch> loadKnownMatches() throws IOException {
+        Set<KnownMatch> theData = new HashSet<KnownMatch>();
         PersistenceManager pm = PMF.get().getPersistenceManager();
         try {
-            Iterator<?> sqr = ((AbstractQueryResult) pm.newQuery(DataPoint.class).execute()).iterator();
+            Iterator<?> sqr = ((AbstractQueryResult) pm.newQuery(KnownMatch.class).execute()).iterator();
             while (sqr.hasNext()) {
-                theData.add((DataPoint)sqr.next());
+                theData.add((KnownMatch)sqr.next());
             }            
         } catch(JDOObjectNotFoundException e) {
             ;
@@ -43,11 +56,11 @@ public class DataPoint {
         return theData;
     }
     
-    public static DataPoint loadDataPoints(String theKey) throws IOException {
-        DataPoint theData = null;
+    public static KnownMatch loadKnownMatch(long theTimeStamp) throws IOException {
+        KnownMatch theData = null;
         PersistenceManager pm = PMF.get().getPersistenceManager();
         try {
-            theData = pm.detachCopy(pm.getObjectById(DataPoint.class, theKey));
+            theData = pm.detachCopy(pm.getObjectById(KnownMatch.class, theTimeStamp));
         } catch(JDOObjectNotFoundException e) {
             ;
         } finally {
@@ -57,12 +70,12 @@ public class DataPoint {
     }
     
     public static void clearDataPoints() throws IOException {
-        Set<DataPoint> theData = loadData();
+        Set<KnownMatch> theData = loadKnownMatches();
 
-        for (DataPoint m : theData) {
+        for (KnownMatch m : theData) {
             PersistenceManager pm = PMF.get().getPersistenceManager();
             try {
-                pm.deletePersistent(pm.getObjectById(DataPoint.class, m.getData()));
+                pm.deletePersistent(pm.getObjectById(KnownMatch.class, m.getTimeStamp()));
             } catch(JDOObjectNotFoundException e) {
                 ;
             } finally {

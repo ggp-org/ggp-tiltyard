@@ -1,12 +1,23 @@
 package ggp.apollo;
 
+import ggp.apollo.ServerState.RunningMatch;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.http.*;
+
+import com.google.appengine.repackaged.org.json.JSONException;
+import com.google.appengine.repackaged.org.json.JSONObject;
 
 @SuppressWarnings("serial")
 public class GGP_ApolloServlet extends HttpServlet {
@@ -24,8 +35,8 @@ public class GGP_ApolloServlet extends HttpServlet {
         
         // Output a sorted list of the mock scheduling round times
         List<String> theDataStrings = new ArrayList<String>();
-        for(DataPoint d : DataPoint.loadData()) {
-            theDataStrings.add(d.getData());
+        for(KnownMatch m : KnownMatch.loadKnownMatches()) {
+            theDataStrings.add("Match " + m.getTimeStamp() + " [" + m.getPlayers().length + "]: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>");
         }
         Collections.sort(theDataStrings);
         for(String s : theDataStrings) {
@@ -44,16 +55,29 @@ public class GGP_ApolloServlet extends HttpServlet {
     };
     
     public void runSchedulingRound() throws IOException {
-        //DataPoint.clearDataPoints();
-        //new DataPoint("Scheduling round: " + new Date().toString());
-        
         boolean[] playerBusy = new boolean[theActivePlayers.length];
         Arrays.fill(playerBusy, false);
+
+        ServerState theState = ServerState.loadState();
+
+        Set<RunningMatch> doneMatches = new HashSet<RunningMatch>();
+        for (RunningMatch m : theState.getRunningMatches()) {
+            try {
+                JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.theURL);
+                if(theMatchInfo.getBoolean("isCompleted")) {
+                    doneMatches.add(m);
+                } else {
+                    for (int i = 0; i < m.thePlayers.length; i++) {
+                        playerBusy[m.thePlayers[i]] = true;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new IOException(e);
+            }
+        }
         
-        // Load in the ongoing matches
-        // For each match, look it up from the spectator server
-        // If it's finished, remove it from the list.
-        // Otherwise, mark the players in it as busy
+        theState.getRunningMatches().removeAll(doneMatches);
         
         int readyPlayers = 0;
         for (int i = 0; i < playerBusy.length; i++)
@@ -76,15 +100,45 @@ public class GGP_ApolloServlet extends HttpServlet {
         if (theGameURL == null)
             return;
         
+        int[] thePlayerIndexes = new int[nPlayersForGame];
         String[] thePlayersForMatch = new String[nPlayersForGame];
         for (int i = 0; i < playerBusy.length && nPlayersForGame > 0; i++) {
             if (!playerBusy[i]) {
                 nPlayersForGame--;
-                thePlayersForMatch[nPlayersForGame] = theActivePlayers[i];                
+                thePlayersForMatch[nPlayersForGame] = theActivePlayers[i];
+                thePlayerIndexes[nPlayersForGame] = i;
             }
         }
+                
+        JSONObject theMatchRequest = new JSONObject();
+        try {
+            theMatchRequest.put("startClock", 15);
+            theMatchRequest.put("playClock", 5);
+            theMatchRequest.put("gameURL", theGameURL);
+            theMatchRequest.put("matchId", "apollo." + System.currentTimeMillis());
+            theMatchRequest.put("players", thePlayersForMatch);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        String theSpectatorURL = null;
+        try {
+            URL url = new URL("http://0.0.0.0/" + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            theSpectatorURL = reader.readLine();
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
         
-        // Call out to the backend to start the match
-        // Persist the matches in the list of running matches
+        RunningMatch theNewMatch = new RunningMatch();
+        theNewMatch.theURL = theSpectatorURL;
+        theNewMatch.thePlayers = thePlayerIndexes;
+        theState.getRunningMatches().add(theNewMatch);
+        
+        new KnownMatch(theSpectatorURL, thePlayerIndexes);        
+        theState.save();
     }
 }
