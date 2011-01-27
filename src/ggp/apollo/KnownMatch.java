@@ -13,14 +13,14 @@ import org.datanucleus.store.query.AbstractQueryResult;
 
 @PersistenceCapable
 public class KnownMatch {
-    @PrimaryKey @Persistent private long theTimeStamp;
+    @PrimaryKey @Persistent private String theTimeStamp;
     @Persistent private String theSpectatorURL;
     @Persistent private int[] thePlayers;
 
     public KnownMatch(String theSpectatorURL, int[] thePlayers) {
         this.theSpectatorURL = theSpectatorURL;
         this.thePlayers = thePlayers;
-        this.theTimeStamp = System.currentTimeMillis();
+        this.theTimeStamp = "" + System.currentTimeMillis();
         
         PersistenceManager pm = PMF.get().getPersistenceManager();
         pm.makePersistent(this);
@@ -35,7 +35,7 @@ public class KnownMatch {
         return theSpectatorURL;
     }
 
-    public long getTimeStamp() {
+    public String getTimeStamp() {
         return theTimeStamp;
     }
 
@@ -56,7 +56,7 @@ public class KnownMatch {
         return theData;
     }
     
-    public static KnownMatch loadKnownMatch(long theTimeStamp) throws IOException {
+    public static KnownMatch loadKnownMatch(String theTimeStamp) throws IOException {
         KnownMatch theData = null;
         PersistenceManager pm = PMF.get().getPersistenceManager();
         try {

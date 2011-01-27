@@ -1,7 +1,5 @@
 package ggp.apollo;
 
-import ggp.apollo.ServerState.RunningMatch;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -60,15 +58,16 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         ServerState theState = ServerState.loadState();
 
-        Set<RunningMatch> doneMatches = new HashSet<RunningMatch>();
-        for (RunningMatch m : theState.getRunningMatches()) {
+        Set<String> doneMatches = new HashSet<String>();
+        for (String matchKey : theState.getRunningMatches()) {
+            KnownMatch m = KnownMatch.loadKnownMatch(matchKey);
             try {
-                JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.theURL);
+                JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
                 if(theMatchInfo.getBoolean("isCompleted")) {
-                    doneMatches.add(m);
+                    doneMatches.add(matchKey);
                 } else {
-                    for (int i = 0; i < m.thePlayers.length; i++) {
-                        playerBusy[m.thePlayers[i]] = true;
+                    for (int i = 0; i < m.getPlayers().length; i++) {
+                        playerBusy[m.getPlayers()[i]] = true;
                     }
                 }
             } catch (Exception e) {
@@ -124,7 +123,7 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         String theSpectatorURL = null;
         try {
-            URL url = new URL("http://0.0.0.0/" + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
+            URL url = new URL("http://0.0.0.0:9124/" + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
             BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
             theSpectatorURL = reader.readLine();
             reader.close();
@@ -133,12 +132,8 @@ public class GGP_ApolloServlet extends HttpServlet {
             return;
         }
         
-        RunningMatch theNewMatch = new RunningMatch();
-        theNewMatch.theURL = theSpectatorURL;
-        theNewMatch.thePlayers = thePlayerIndexes;
-        theState.getRunningMatches().add(theNewMatch);
-        
-        new KnownMatch(theSpectatorURL, thePlayerIndexes);        
+        KnownMatch k = new KnownMatch(theSpectatorURL, thePlayerIndexes);
+        theState.getRunningMatches().add(k.getTimeStamp());
         theState.save();
     }
 }

@@ -13,18 +13,16 @@ import org.datanucleus.store.query.AbstractQueryResult;
 
 @PersistenceCapable
 public class ServerState {
-    @Persistent Set<RunningMatch> theRunningMatches;
-    
-    static class RunningMatch {
-        public String theURL;
-        public int[] thePlayers;
-    }
+    @SuppressWarnings("unused")
+    @PrimaryKey @Persistent private String thePrimaryKey;
+    @Persistent Set<String> theRunningMatches;
     
     private ServerState() {
-        theRunningMatches = new HashSet<RunningMatch>();
+        thePrimaryKey = "ServerState";
+        theRunningMatches = new HashSet<String>();
     }
     
-    public Set<RunningMatch> getRunningMatches() {
+    public Set<String> getRunningMatches() {
         return theRunningMatches;
     }
     
