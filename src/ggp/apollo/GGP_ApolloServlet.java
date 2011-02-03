@@ -29,7 +29,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.getWriter().println("Starting scheduling round.");            
             return;
         }
-        
+
         resp.getWriter().println("<html><body>");
         resp.getWriter().println("Hello, world! This is Apollo.<ul>");
 
@@ -47,7 +47,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         
         resp.getWriter().println("</ul></body></html>");
     }
-    
+
     private final String[] theActivePlayers = {
             "0.player.ggp.org:80",
             "1.player.ggp.org:80",
@@ -89,15 +89,11 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         int nPlayersForGame = 0;
         String theGameURL = null;
-        if (readyPlayers >= 3) {
-            theGameURL = "http://ggp-repository.appspot.com/games/3pConnectFour/";
-            nPlayersForGame = 3;
-        } else if (readyPlayers >= 2){
-            theGameURL = "http://ggp-repository.appspot.com/games/connectFour/";
+        String theGameKey = null;
+        if (readyPlayers >= 2){
+            theGameKey = "nineBoardTicTacToe";
+            theGameURL = "http://games.ggp.org/games/" + theGameKey + "/";
             nPlayersForGame = 2;
-        } else if (readyPlayers >= 1) {
-            theGameURL = "http://ggp-repository.appspot.com/games/peg/";
-            nPlayersForGame = 1;
         }
 
         if (theGameURL == null)
@@ -118,7 +114,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             theMatchRequest.put("startClock", 45);
             theMatchRequest.put("playClock", 15);
             theMatchRequest.put("gameURL", theGameURL);
-            theMatchRequest.put("matchId", "apollo." + System.currentTimeMillis());
+            theMatchRequest.put("matchId", "apollo." + theGameKey + "." + System.currentTimeMillis());
             theMatchRequest.put("players", thePlayersForMatch);
         } catch (JSONException e) {
             e.printStackTrace();
