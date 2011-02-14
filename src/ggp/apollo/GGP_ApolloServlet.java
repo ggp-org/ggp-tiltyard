@@ -28,7 +28,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             return;
         }
 
-        resp.getWriter().println("<html><body>");
+        resp.getWriter().println("<html><head><title>GGP Apollo Server</title></head><body>");
         resp.getWriter().println("Welcome to the Apollo gaming server. ");
 
         // Output a sorted list of the recorded matches.
