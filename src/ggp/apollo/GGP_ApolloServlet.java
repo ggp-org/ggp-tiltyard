@@ -19,8 +19,6 @@ import com.google.appengine.repackaged.org.json.JSONObject;
 
 @SuppressWarnings("serial")
 public class GGP_ApolloServlet extends HttpServlet {
-    private final String backendAddress = "http://0.0.0.0:9124/";
-    
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         if (req.getRequestURI().equals("/cron/scheduling_round")) {
@@ -31,20 +29,23 @@ public class GGP_ApolloServlet extends HttpServlet {
         }
 
         resp.getWriter().println("<html><body>");
-        resp.getWriter().println("Hello, world! This is Apollo.<ul>");
+        resp.getWriter().println("Welcome to the Apollo gaming server. ");
 
         // Output a sorted list of the recorded matches.
         ServerState theState = ServerState.loadState();
+        resp.getWriter().println("Currently on scheduling round " + theState.getSchedulingRound() + ".<ul>");
+        
         List<String> theDataStrings = new ArrayList<String>();
         for(KnownMatch m : KnownMatch.loadKnownMatches()) {
             String isOngoing = theState.getRunningMatches().contains(m.getTimeStamp()) ? " <b>(Ongoing!)</b>" : "";
             theDataStrings.add("Match " + m.getTimeStamp() + " [" + m.getPlayers().length + "]: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
         }
         Collections.sort(theDataStrings);
+        Collections.reverse(theDataStrings);
         for(String s : theDataStrings) {
             resp.getWriter().println("<li>" + s);        
         }
-        
+
         resp.getWriter().println("</ul></body></html>");
     }
 
@@ -57,10 +58,15 @@ public class GGP_ApolloServlet extends HttpServlet {
     };
 
     public void runSchedulingRound() throws IOException {
+        ServerState theState = ServerState.loadState();
+        theState.incrementSchedulingRound();
+        runSchedulingRound(theState);
+        theState.save();
+    }
+    
+    public void runSchedulingRound(ServerState theState) throws IOException {
         boolean[] playerBusy = new boolean[theActivePlayers.length];
         Arrays.fill(playerBusy, false);
-
-        ServerState theState = ServerState.loadState();
 
         Set<String> doneMatches = new HashSet<String>();
         for (String matchKey : theState.getRunningMatches()) {
@@ -68,6 +74,9 @@ public class GGP_ApolloServlet extends HttpServlet {
             try {
                 JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
                 if(theMatchInfo.getBoolean("isCompleted")) {
+                    doneMatches.add(matchKey);
+                } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
+                    // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
                     doneMatches.add(matchKey);
                 } else {
                     for (int i = 0; i < m.getPlayers().length; i++) {
@@ -88,16 +97,14 @@ public class GGP_ApolloServlet extends HttpServlet {
                 readyPlayers++;
 
         int nPlayersForGame = 0;
-        String theGameURL = null;
         String theGameKey = null;
         if (readyPlayers >= 2){
-            theGameKey = "nineBoardTicTacToe";
-            theGameURL = "http://games.ggp.org/games/" + theGameKey + "/";
+            theGameKey = "connectFour";
             nPlayersForGame = 2;
         }
 
-        if (theGameURL == null)
-            return;
+        if (theGameKey == null) return;
+        String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/";        
 
         int[] thePlayerIndexes = new int[nPlayersForGame];
         String[] thePlayersForMatch = new String[nPlayersForGame];
@@ -108,7 +115,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                 thePlayerIndexes[nPlayersForGame] = i;
             }
         }
-                
+
         JSONObject theMatchRequest = new JSONObject();
         try {
             theMatchRequest.put("startClock", 45);
@@ -123,7 +130,7 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         String theSpectatorURL = null;
         try {
-            URL url = new URL(backendAddress + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
+            URL url = new URL(theState.getBackendAddress() + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
             BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
             theSpectatorURL = reader.readLine();
             reader.close();
@@ -134,6 +141,5 @@ public class GGP_ApolloServlet extends HttpServlet {
         
         KnownMatch k = new KnownMatch(theSpectatorURL, thePlayerIndexes);
         theState.getRunningMatches().add(k.getTimeStamp());
-        theState.save();
     }
 }

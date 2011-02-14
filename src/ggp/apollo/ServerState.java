@@ -15,16 +15,36 @@ import org.datanucleus.store.query.AbstractQueryResult;
 public class ServerState {
     @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
-    @Persistent Set<String> theRunningMatches;
+    @Persistent private Set<String> theRunningMatches;
+    @Persistent private String theBackendAddress;
+    @Persistent private Integer theSchedulingRound;
     
     private ServerState() {
         thePrimaryKey = "ServerState";
         theRunningMatches = new HashSet<String>();
+        theBackendAddress = "";
+        theSchedulingRound = 0;
     }
     
     public Set<String> getRunningMatches() {
         return theRunningMatches;
     }
+    
+    public void setBackendAddress(String theBackendAddress) {
+        this.theBackendAddress = theBackendAddress;
+    }
+
+    public String getBackendAddress() {
+        return theBackendAddress;
+    }
+
+    public void incrementSchedulingRound() {
+        this.theSchedulingRound++;
+    }
+
+    public int getSchedulingRound() {
+        return theSchedulingRound;
+    }    
     
     public void save() {
         PersistenceManager pm = PMF.get().getPersistenceManager();
