@@ -65,20 +65,25 @@ public class GGP_ApolloServlet extends HttpServlet {
     };
     
     private final String[] someProperGames = {
-            "connectFour:2",
-            "connectFourSuicide:2",
-            "nineBoardTicTacToe:2",
-            "chess:2",
-            "checkers:2",
             "3pConnectFour:3",
-            "ticTacToe:2",
             "4pttc:4",
             "blocker:2",
+            "breakthrough:2",
+            "breakthroughSmall:2",            
+            "chess:2",
+            "checkers:2",
+            "connectFour:2",
+            "connectFourSuicide:2",            
+            "eightPuzzle:1",
             "knightThrough:2",
             "knightsTour:1",
             "pawnToQueen:2",
             "pawnWhopping:2",
+            "peg:1",
+            "pegEuro:1",            
             "qyshinsu:2",
+            "nineBoardTicTacToe:2",
+            "ticTacToe:2",
             "ttcc4_2player:2"
     };
 
