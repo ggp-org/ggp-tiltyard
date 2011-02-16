@@ -17,13 +17,15 @@ public class ServerState {
     @PrimaryKey @Persistent private String thePrimaryKey;
     @Persistent private Set<String> theRunningMatches;
     @Persistent private String theBackendAddress;
-    @Persistent private Integer theSchedulingRound;
+    @Persistent private Integer theBackendErrors;
+    @Persistent private Integer theSchedulingRound;    
     
     private ServerState() {
         thePrimaryKey = "ServerState";
         theRunningMatches = new HashSet<String>();
         theBackendAddress = "";
-        theSchedulingRound = 0;
+        theBackendErrors = 0;
+        theSchedulingRound = 0;        
     }
     
     public Set<String> getRunningMatches() {
@@ -44,6 +46,18 @@ public class ServerState {
 
     public int getSchedulingRound() {
         return theSchedulingRound;
+    }
+    
+    public void incrementBackendErrors() {
+        this.theBackendErrors++;
+    }
+    
+    public void clearBackendErrors() {
+        this.theBackendErrors = 0;
+    }    
+
+    public Integer getBackendErrors() {
+        return theBackendErrors;
     }    
     
     public void save() {
