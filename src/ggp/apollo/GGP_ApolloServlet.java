@@ -64,27 +64,28 @@ public class GGP_ApolloServlet extends HttpServlet {
             "4.player.ggp.org:80"
     };
     
+    // Comment out games that are expensive for AppEngine-based players.
     private final String[] someProperGames = {
-            "3pConnectFour:3",
-            "4pttc:4",
-            "blocker:2",
-            "breakthrough:2",
-            "breakthroughSmall:2",            
-            "chess:2",
-            "checkers:2",
+            //"3pConnectFour:3",
+            //"4pttc:4",
+            //"blocker:2",
+            //"breakthrough:2",
+            //"breakthroughSmall:2",
+            //"chess:2",
+            //"checkers:2",
             "connectFour:2",
             "connectFourSuicide:2",            
-            "eightPuzzle:1",
-            "knightThrough:2",
-            "knightsTour:1",
-            "pawnToQueen:2",
-            "pawnWhopping:2",
-            "peg:1",
-            "pegEuro:1",            
-            "qyshinsu:2",
-            "nineBoardTicTacToe:2",
-            "ticTacToe:2",
-            "ttcc4_2player:2"
+            //"eightPuzzle:1",
+            //"knightThrough:2",
+            //"knightsTour:1",
+            //"pawnToQueen:2",
+            //"pawnWhopping:2",
+            //"peg:1",
+            //"pegEuro:1",            
+            //"qyshinsu:2",
+            "nineBoardTicTacToe:2",            
+            //"ttcc4_2player:2",
+            "ticTacToe:2"
     };
 
     public void runSchedulingRound() throws IOException {
@@ -128,7 +129,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         for (int i = 0; i < playerBusy.length; i++)
             if (!playerBusy[i])
                 readyPlayers++;
-        if (readyPlayers < 1) return;
+        if (readyPlayers < 2) return;
         
         // Shuffle the list of known proper games, draw a game, and check whether
         // we have enough players available to play it. Repeat until we have a game.
