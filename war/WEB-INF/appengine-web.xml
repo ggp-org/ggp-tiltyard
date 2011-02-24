@@ -9,7 +9,7 @@
 	</system-properties>
 
 	<resource-files>
-        <include path="/root/**" />
+        <include path="**" />
     </resource-files>
     
     <static-files>

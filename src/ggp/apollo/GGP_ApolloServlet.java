@@ -1,7 +1,10 @@
 package ggp.apollo;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -10,19 +13,35 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
 import javax.servlet.http.*;
 
+import com.google.appengine.api.users.User;
+import com.google.appengine.api.users.UserService;
+import com.google.appengine.api.users.UserServiceFactory;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
 @SuppressWarnings("serial")
 public class GGP_ApolloServlet extends HttpServlet {
+    
+    private static final Map<String, String> openIdProviders;
+    static {
+        openIdProviders = new HashMap<String, String>();
+        openIdProviders.put("google", "google.com/accounts/o8/id");
+        openIdProviders.put("yahoo", "yahoo.com");
+        openIdProviders.put("myspace", "myspace.com");
+        openIdProviders.put("aol", "aol.com");
+        openIdProviders.put("myopenid", "myopenid.com");
+    }
+    
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         if (req.getRequestURI().equals("/cron/scheduling_round")) {
@@ -31,29 +50,87 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.getWriter().println("Starting scheduling round.");            
             return;
         }
-
-        resp.getWriter().println("<html><head><title>GGP Apollo Server</title></head><body>");
-        resp.getWriter().println("Welcome to the Apollo gaming server.<br>");
-
-        // Output a sorted list of the recorded matches.
-        ServerState theState = ServerState.loadState();
-        resp.getWriter().println("Currently on scheduling round " + theState.getSchedulingRound() + ".<br>");
-        resp.getWriter().println("Consecutive backend errors so far: " + theState.getBackendErrors() + ".<br> <ul>");
         
-        DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.LONG, Locale.US);
-        df.setTimeZone(TimeZone.getTimeZone("PST"));
-        List<String> theDataStrings = new ArrayList<String>();
-        for(KnownMatch m : KnownMatch.loadKnownMatches()) {
-            String isOngoing = theState.getRunningMatches().contains(m.getTimeStamp()) ? " <b>(Ongoing!)</b>" : "";
-            theDataStrings.add(m.getTimeStamp() + ": Match started on " + df.format(new Date(Long.parseLong(m.getTimeStamp()))) + " with " + m.getPlayers().length + " players: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
+        String reqURI = req.getRequestURI();
+        if (reqURI.endsWith("/")) {
+            reqURI += "index.html";
         }
-        Collections.sort(theDataStrings);
-        Collections.reverse(theDataStrings);
-        for(String s : theDataStrings) {
-            resp.getWriter().println("<li>" + s.substring(15));        
+        
+        StringBuilder specialContent = new StringBuilder();
+        if (reqURI.equals("/index.html")) {            
+            // Sample user login service
+            UserService userService = UserServiceFactory.getUserService();
+            User user = userService.getCurrentUser();        
+            if (user != null) {
+                specialContent.append("Hello <b>" + user.getNickname() + "</b>!");
+                specialContent.append(" You can <a href=\""
+                        + userService.createLogoutURL(req.getRequestURI())
+                        + "\">sign out</a>. <br>");
+                specialContent.append("Your auth domain is <i>" + user.getAuthDomain() + "</i>. <br>");
+                specialContent.append("Your federated identity is <i>" + user.getFederatedIdentity() + "</i>. <br>");
+                specialContent.append("Your email is <i>" + user.getEmail() + "</i>. <br>");
+                specialContent.append("Your user ID is <i>" + user.getUserId() + "</i>.");                
+            } else {
+                specialContent.append("<p>Sign in using OpenID via ");
+                for (String providerName : openIdProviders.keySet()) {
+                    String providerUrl = openIdProviders.get(providerName);
+                    String loginUrl = userService.createLoginURL(req
+                            .getRequestURI(), null, providerUrl, new HashSet<String>());
+                    specialContent.append("<a href=\"" + loginUrl + "\"><img src=\"static/images/" + providerName + ".png\"></img></a> ");
+                }
+                specialContent.append("</p>");
+            }
+            specialContent.append("<br><br>");
+
+            // Output a sorted list of the recorded matches.
+            ServerState theState = ServerState.loadState();
+            specialContent.append("Currently on scheduling round " + theState.getSchedulingRound() + ".<br>");
+            specialContent.append("Consecutive backend errors so far: " + theState.getBackendErrors() + ".<br> <ul>");
+
+            DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.LONG, Locale.US);
+            df.setTimeZone(TimeZone.getTimeZone("PST"));
+            List<String> theDataStrings = new ArrayList<String>();
+            for(KnownMatch m : KnownMatch.loadKnownMatches()) {
+                String isOngoing = theState.getRunningMatches().contains(m.getTimeStamp()) ? " <b>(Ongoing!)</b>" : "";
+                theDataStrings.add(m.getTimeStamp() + ": Match started on " + df.format(new Date(Long.parseLong(m.getTimeStamp()))) + " with " + m.getPlayers().length + " players: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
+            }
+            Collections.sort(theDataStrings);
+            Collections.reverse(theDataStrings);
+            for(String s : theDataStrings) {
+                specialContent.append("<li>" + s.substring(15));        
+            }
+            specialContent.append("</ul>");
         }
 
-        resp.getWriter().println("</ul></body></html>");
+        boolean writeAsBinary = false;        
+        if (reqURI.endsWith(".html")) {
+            resp.setContentType("text/html");
+        } else if (reqURI.endsWith(".xml")) {
+            resp.setContentType("application/xml");
+        } else if (reqURI.endsWith(".xsl")) {
+            resp.setContentType("application/xml");
+        } else if (reqURI.endsWith(".js")) {
+            resp.setContentType("text/javascript");   
+        } else if (reqURI.endsWith(".json")) {
+            resp.setContentType("text/javascript");
+        } else if (reqURI.endsWith(".png")) {
+            resp.setContentType("image/png");
+            writeAsBinary = true;
+        } else if (reqURI.endsWith(".ico")) {
+            resp.setContentType("image/png");
+            writeAsBinary = true;
+        } else {
+            resp.setContentType("text/plain");
+        }
+
+        if (writeAsBinary) {
+            writeStaticBinaryPage(resp, reqURI.substring(1));
+        } else {
+            // Temporary limits on caching, for during development.
+            resp.setHeader("Cache-Control", "no-cache");
+            resp.setHeader("Pragma", "no-cache");
+            writeStaticTextPage(resp, reqURI.substring(1), specialContent.toString());
+        }
     }
 
     private final String[] theActivePlayers = {
@@ -191,5 +268,32 @@ public class GGP_ApolloServlet extends HttpServlet {
         KnownMatch k = new KnownMatch(theSpectatorURL, thePlayerIndexes);
         theState.getRunningMatches().add(k.getTimeStamp());
         theState.clearBackendErrors();
+    }
+    
+    public void writeStaticTextPage(HttpServletResponse resp, String theURI, String specialContent) throws IOException {
+        FileReader fr = new FileReader(theURI);
+        BufferedReader br = new BufferedReader(fr);
+        StringBuffer response = new StringBuffer();
+        
+        String line;
+        while( (line = br.readLine()) != null ) {
+            response.append(line + "\n");
+        }
+        
+        String theResponse = response.toString();
+        if (specialContent.length() > 0) {
+            theResponse = theResponse.replace("[SPECIAL_PAGE_CONTENT]", specialContent);
+        }
+        
+        resp.getWriter().println(theResponse);
+    }
+    
+    public void writeStaticBinaryPage(HttpServletResponse resp, String theURI) throws IOException {
+        InputStream in = new FileInputStream(theURI);
+        byte[] buf = new byte[1024];
+        while (in.read(buf) > 0) {
+            resp.getOutputStream().write(buf);
+        }
+        in.close();        
     }
 }
