@@ -62,13 +62,21 @@ public class GGP_ApolloServlet extends HttpServlet {
             UserService userService = UserServiceFactory.getUserService();
             User user = userService.getCurrentUser();        
             if (user != null) {
-                specialContent.append("Hello <b>" + user.getNickname() + "</b>!");
-                specialContent.append(" You can <a href=\""
+                if (user.getNickname().isEmpty()) {
+                    specialContent.append("Hello!");
+                } else {
+                    specialContent.append("Hello, <b>" + user.getNickname() + "</b>!");
+                }
+                specialContent.append(" You are logged in, but you can <a href=\""
                         + userService.createLogoutURL(req.getRequestURI())
-                        + "\">sign out</a>. <br>");
+                        + "\">sign out</a> if you'd like. <br>");
                 specialContent.append("Your auth domain is <i>" + user.getAuthDomain() + "</i>. <br>");
                 specialContent.append("Your federated identity is <i>" + user.getFederatedIdentity() + "</i>. <br>");
-                specialContent.append("Your email is <i>" + user.getEmail() + "</i>. <br>");
+                if (user.getEmail().isEmpty()) {
+                    specialContent.append("You don't have an email address associated with this account.<br>");
+                } else {
+                    specialContent.append("Your email address is <i>" + user.getEmail() + "</i>. <br>");
+                }
                 specialContent.append("Your user ID is <i>" + user.getUserId() + "</i>.");                
             } else {
                 specialContent.append("<p>Sign in using OpenID via ");
