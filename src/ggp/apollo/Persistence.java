@@ -1,6 +1,5 @@
 package ggp.apollo;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -14,7 +13,7 @@ import org.datanucleus.store.query.AbstractQueryResult;
 
 public class Persistence {
     @SuppressWarnings("unchecked")
-    public static <T> Set<T> loadAll(Class<T> theClass) throws IOException {
+    public static <T> Set<T> loadAll(Class<T> theClass) {
         Set<T> theSet = new HashSet<T>();
         PersistenceManager pm = getPersistenceManager();
         try {
@@ -30,7 +29,7 @@ public class Persistence {
         return theSet;
     }
     
-    public static <T> T loadSpecific(String theKey, Class<T> theClass) throws IOException {
+    public static <T> T loadSpecific(String theKey, Class<T> theClass) {
         T theData = null;
         PersistenceManager pm = getPersistenceManager();
         try {
@@ -43,7 +42,7 @@ public class Persistence {
         return theData;
     }
     
-    public static <T> void clearAll(Class<T> theClass) throws IOException {
+    public static <T> void clearAll(Class<T> theClass) {
         Set<T> theData = loadAll(theClass);        
         
         for (T m : theData) {
@@ -55,6 +54,17 @@ public class Persistence {
             } finally {
                 pm.close();
             }
+        }
+    }
+    
+    public static <T> void clearSpecific(String theKey, Class<T> theClass) {
+        PersistenceManager pm = getPersistenceManager();
+        try {
+            pm.deletePersistent(pm.getObjectById(theClass, theKey));
+        } catch(JDOObjectNotFoundException e) {
+            ;
+        } finally {
+            pm.close();
         }
     }
     
