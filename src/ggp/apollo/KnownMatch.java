@@ -1,15 +1,10 @@
 package ggp.apollo;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
-import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
-
-import org.datanucleus.store.query.AbstractQueryResult;
 
 @PersistenceCapable
 public class KnownMatch {
@@ -22,7 +17,7 @@ public class KnownMatch {
         this.thePlayers = thePlayers;
         this.theTimeStamp = "" + System.currentTimeMillis();
         
-        PersistenceManager pm = PMF.get().getPersistenceManager();
+        PersistenceManager pm = Persistence.getPersistenceManager();
         pm.makePersistent(this);
         pm.close();
     }
@@ -41,46 +36,10 @@ public class KnownMatch {
 
     /* Static accessor methods */
     public static Set<KnownMatch> loadKnownMatches() throws IOException {
-        Set<KnownMatch> theData = new HashSet<KnownMatch>();
-        PersistenceManager pm = PMF.get().getPersistenceManager();
-        try {
-            Iterator<?> sqr = ((AbstractQueryResult) pm.newQuery(KnownMatch.class).execute()).iterator();
-            while (sqr.hasNext()) {
-                theData.add((KnownMatch)sqr.next());
-            }            
-        } catch(JDOObjectNotFoundException e) {
-            ;
-        } finally {
-            pm.close();
-        }
-        return theData;
+        return Persistence.loadAll(KnownMatch.class);
     }
     
     public static KnownMatch loadKnownMatch(String theTimeStamp) throws IOException {
-        KnownMatch theData = null;
-        PersistenceManager pm = PMF.get().getPersistenceManager();
-        try {
-            theData = pm.detachCopy(pm.getObjectById(KnownMatch.class, theTimeStamp));
-        } catch(JDOObjectNotFoundException e) {
-            ;
-        } finally {
-            pm.close();
-        }
-        return theData;
-    }
-    
-    public static void clearDataPoints() throws IOException {
-        Set<KnownMatch> theData = loadKnownMatches();
-
-        for (KnownMatch m : theData) {
-            PersistenceManager pm = PMF.get().getPersistenceManager();
-            try {
-                pm.deletePersistent(pm.getObjectById(KnownMatch.class, m.getTimeStamp()));
-            } catch(JDOObjectNotFoundException e) {
-                ;
-            } finally {
-                pm.close();
-            }
-        }
+        return Persistence.loadSpecific(theTimeStamp, KnownMatch.class);
     }
 }
