@@ -27,12 +27,22 @@ public class CondensedMatch {
         pm.close();
     }
     
+    public void save() {
+        PersistenceManager pm = Persistence.getPersistenceManager();
+        pm.makePersistent(this);
+        pm.close();        
+    }
+    
     public boolean isReady() {
         return (this.theCondensedMatchJSON.getValue().length() > 0);
     }
 
     public void condenseFullJSON(JSONObject theJSON) throws JSONException {
-        theJSON.put("moveCount", theJSON.getJSONArray("moves").length());
+        try {
+            theJSON.put("moveCount", theJSON.getJSONArray("moves").length());
+        } catch (Exception e) {
+            theJSON.put("moveCount", 0);
+        }
         theJSON.remove("states");      // Strip out all of the large fields
         theJSON.remove("moves");       // that we won't need most of the time.        
         theJSON.remove("stateTimes");  // This is why we can store it here.        

@@ -30,8 +30,7 @@ import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
 @SuppressWarnings("serial")
-public class GGP_ApolloServlet extends HttpServlet {
-    
+public class GGP_ApolloServlet extends HttpServlet {    
     private static final Map<String, String> openIdProviders;
     static {
         openIdProviders = new HashMap<String, String>();
@@ -59,6 +58,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         StringBuilder specialContent = new StringBuilder();
         if (reqURI.equals("/index.html")) {            
             // Sample user login service
+            specialContent.append("<p>");
             UserService userService = UserServiceFactory.getUserService();
             User user = userService.getCurrentUser();        
             if (user != null) {
@@ -79,16 +79,15 @@ public class GGP_ApolloServlet extends HttpServlet {
                 }
                 specialContent.append("Your user ID is <i>" + user.getUserId() + "</i>.");                
             } else {
-                specialContent.append("<p>Sign in using OpenID via ");
+                specialContent.append("Sign in using OpenID via ");
                 for (String providerName : openIdProviders.keySet()) {
                     String providerUrl = openIdProviders.get(providerName);
                     String loginUrl = userService.createLoginURL(req
                             .getRequestURI(), null, providerUrl, new HashSet<String>());
                     specialContent.append("<a href=\"" + loginUrl + "\"><img src=\"static/images/" + providerName + ".png\"></img></a> ");
                 }
-                specialContent.append("</p>");
             }
-            specialContent.append("<br><br>");
+            specialContent.append("</p>");
 
             // Output a sorted list of the recorded matches.
             ServerState theState = ServerState.loadState();
@@ -98,14 +97,21 @@ public class GGP_ApolloServlet extends HttpServlet {
             DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.LONG, Locale.US);
             df.setTimeZone(TimeZone.getTimeZone("PST"));
             List<String> theDataStrings = new ArrayList<String>();
-            for(KnownMatch m : KnownMatch.loadKnownMatches()) {
-                String isOngoing = theState.getRunningMatches().contains(m.getTimeStamp()) ? " <b>(Ongoing!)</b>" : "";
-                theDataStrings.add(m.getTimeStamp() + ": Match started on " + df.format(new Date(Long.parseLong(m.getTimeStamp()))) + " with " + m.getPlayers().length + " players: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
+            for(CondensedMatch m : CondensedMatch.loadCondensedMatches()) {
+                if (m.isReady()) {
+                    String isOngoing = theState.getRunningMatches().contains(m.getSpectatorURL()) ? " <b>(Ongoing!)</b>" : "";                
+                    JSONObject theMatchJSON = m.getCondensedJSON();
+                    try {
+                        theDataStrings.add(theMatchJSON.getLong("startTime") + ": Match started on " + df.format(new Date(theMatchJSON.getLong("startTime"))) + " with " + m.getPlayers().size() + " players: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
+                    } catch (Exception e) {
+                        theDataStrings.add("?: Match started on ? with " + m.getPlayers().size() + " players: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
+                    }
+                }
             }
             Collections.sort(theDataStrings);
             Collections.reverse(theDataStrings);
             for(String s : theDataStrings) {
-                specialContent.append("<li>" + s.substring(15));        
+                specialContent.append("<li>" + s.substring(s.indexOf(":")+1));        
             }
             specialContent.append("</ul>");
         }
@@ -141,14 +147,6 @@ public class GGP_ApolloServlet extends HttpServlet {
         }
     }
 
-    private final String[] theActivePlayers = {
-            "0.player.ggp.org:80",
-            "1.player.ggp.org:80",
-            "2.player.ggp.org:80",
-            "3.player.ggp.org:80",
-            "4.player.ggp.org:80"
-    };
-    
     // Comment out games that are expensive for AppEngine-based players.
     private final String[] someProperGames = {
             //"3pConnectFour:3",
@@ -179,16 +177,21 @@ public class GGP_ApolloServlet extends HttpServlet {
         runSchedulingRound(theState);
         theState.save();
     }
-    
+
     public void runSchedulingRound(ServerState theState) throws IOException {
-        boolean[] playerBusy = new boolean[theActivePlayers.length];
-        Arrays.fill(playerBusy, false);
+        List<Player> thePlayers = new ArrayList<Player>(Player.loadPlayers());
+        for (int i = thePlayers.size()-1; i >= 0; i--) {
+            if (!thePlayers.get(i).isEnabled()) {
+                thePlayers.remove(i);
+            }
+        }
 
         // Find and clear all of the completed or wedged matches. For matches
         // which are still ongoing, mark the players in those matches as busy.
         Set<String> doneMatches = new HashSet<String>();
+        Set<String> busyPlayerNames = new HashSet<String>();
         for (String matchKey : theState.getRunningMatches()) {
-            KnownMatch m = KnownMatch.loadKnownMatch(matchKey);
+            CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);
             try {
                 JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
                 if(theMatchInfo.getBoolean("isCompleted")) {
@@ -197,10 +200,10 @@ public class GGP_ApolloServlet extends HttpServlet {
                     // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
                     doneMatches.add(matchKey);
                 } else {
-                    for (int i = 0; i < m.getPlayers().length; i++) {
-                        playerBusy[m.getPlayers()[i]] = true;
-                    }
+                    busyPlayerNames.addAll(m.getPlayers());
                 }
+                m.condenseFullJSON(theMatchInfo);
+                m.save();
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new IOException(e);
@@ -210,10 +213,7 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         // Figure out how many players are available. If no players are available,
         // don't bother attempting to schedule a match.
-        int readyPlayers = 0;
-        for (int i = 0; i < playerBusy.length; i++)
-            if (!playerBusy[i])
-                readyPlayers++;
+        int readyPlayers = thePlayers.size() - busyPlayerNames.size();
         if (readyPlayers < 2) return;
         
         // Shuffle the list of known proper games, draw a game, and check whether
@@ -221,7 +221,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         int nPlayersForGame;
         String theGameKey = null;
         List<String> theProperGames = Arrays.asList(someProperGames);
-        do {            
+        do {
             Collections.shuffle(theProperGames);            
             nPlayersForGame = Integer.parseInt(theProperGames.get(0).split(":")[1]);
             if (readyPlayers >= nPlayersForGame){
@@ -235,14 +235,15 @@ public class GGP_ApolloServlet extends HttpServlet {
         String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/";        
 
         // Assign available players to roles in the game.
-        int[] thePlayerIndexes = new int[nPlayersForGame];
-        String[] thePlayersForMatch = new String[nPlayersForGame];
-        for (int i = 0; i < playerBusy.length && nPlayersForGame > 0; i++) {
-            if (!playerBusy[i]) {
-                nPlayersForGame--;
-                thePlayersForMatch[nPlayersForGame] = theActivePlayers[i];
-                thePlayerIndexes[nPlayersForGame] = i;
-            }
+        String[] playerURLsForMatch = new String[nPlayersForGame];
+        List<String> playerNamesForMatch = new ArrayList<String>(); 
+        for (Player p : thePlayers) {
+            if (busyPlayerNames.contains(p.getName())) continue;
+            nPlayersForGame--;            
+            playerURLsForMatch[nPlayersForGame] = p.getURL();
+            playerNamesForMatch.add(p.getName());
+            if (nPlayersForGame == 0)
+                break;
         }
 
         // Construct a JSON request to the Apollo backend with the information
@@ -253,7 +254,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             theMatchRequest.put("playClock", 15);
             theMatchRequest.put("gameURL", theGameURL);
             theMatchRequest.put("matchId", "apollo." + theGameKey + "." + System.currentTimeMillis());
-            theMatchRequest.put("players", thePlayersForMatch);
+            theMatchRequest.put("players", playerURLsForMatch);
         } catch (JSONException e) {
             e.printStackTrace();
             return;
@@ -273,8 +274,8 @@ public class GGP_ApolloServlet extends HttpServlet {
         }        
 
         // Store the known match in the datastore for lookup later.
-        KnownMatch k = new KnownMatch(theSpectatorURL, thePlayerIndexes);
-        theState.getRunningMatches().add(k.getTimeStamp());
+        CondensedMatch c = new CondensedMatch(theSpectatorURL, playerNamesForMatch);
+        theState.getRunningMatches().add(c.getSpectatorURL());
         theState.clearBackendErrors();
     }
     

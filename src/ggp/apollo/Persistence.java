@@ -43,18 +43,17 @@ public class Persistence {
     }
     
     public static <T> void clearAll(Class<T> theClass) {
-        Set<T> theData = loadAll(theClass);        
-        
-        for (T m : theData) {
-            PersistenceManager pm = getPersistenceManager();
-            try {
-                pm.deletePersistent(pm.getObjectById(theClass, pm.getObjectId(m)));                
-            } catch(JDOObjectNotFoundException e) {
-                ;
-            } finally {
-                pm.close();
+        PersistenceManager pm = getPersistenceManager();
+        try {
+            Iterator<?> sqr = ((AbstractQueryResult) pm.newQuery(theClass).execute()).iterator();
+            while (sqr.hasNext()) {
+                pm.deletePersistent(sqr.next());
             }
-        }
+        } catch(JDOObjectNotFoundException e) {
+            ;
+        } finally {
+            pm.close();
+        }        
     }
     
     public static <T> void clearSpecific(String theKey, Class<T> theClass) {
