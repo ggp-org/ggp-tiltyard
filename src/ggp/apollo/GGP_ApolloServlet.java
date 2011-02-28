@@ -275,6 +275,14 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         // Store the known match in the datastore for lookup later.
         CondensedMatch c = new CondensedMatch(theSpectatorURL, playerNamesForMatch);
+        try {
+            // Attempt to populate the condensed match information immediately,
+            // if we can pull that out from the spectator server.
+            c.condenseFullJSON(RemoteResourceLoader.loadJSON(c.getSpectatorURL()));
+            c.save();
+        } catch (Exception e) {
+            ;
+        }
         theState.getRunningMatches().add(c.getSpectatorURL());
         theState.clearBackendErrors();
     }
