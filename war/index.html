@@ -1,11 +1,68 @@
 <html>
   <head>
     <title>GGP Apollo Server</title>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+    <style>
+      a.biglink {
+        color: #222222;
+        font-family: 'Droid Sans', bold;
+        font-size: 30px;
+        text-shadow: #AAAAAA 0px 0px 10px;
+        margin: 5px;
+      }
+      td.login {
+        color: #222222;
+        font-family: 'Droid Sans', bold;
+        font-size: 18px;
+        text-shadow: #AAAAAA 0px 0px 5px;
+        margin: 5px;
+      }
+    </style>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
   </head>
   <body>
-    <h1>Apollo Gaming Server</h1>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+  
+    <center>
+      <table>
+        <tr>
+          <td width=30% align="right" valign="bottom"><a class=biglink>Games</a></td>
+          <td width=15% align="center" valign="bottom"><a class=biglink>Players</a></td>
+          <td width=10% align="center"><img src="static/images/ApolloGamingLogo.png" width=200 height=200></img></td>
+          <td width=15% align="center" valign="bottom"><a class=biglink>Matches</a></td>
+          <td width=30% align="left" valign="bottom"><a class=biglink>Stats</a></td>
+        </tr>
+        <tr>
+          <td colspan=5 align="center" class="login">
+            <!-- Special page content begins here -->
+            [SPECIAL_PAGE_CONTENT]
+            <!-- Special page content ends here -->
+          </td>
+        </tr>
+      </table>
+    </center>
+    <br>    
+    <div id='stateInfo'></div>
+    <br>
+    <div id='recentMatchesInfo'></div>
     
-    [SPECIAL_PAGE_CONTENT]
+    <script type='text/javascript'>
+      var serverState = ResourceLoader.load_json('//apollo.ggp.org/data/serverState');
+      var serverStateHTML = 'Currently on scheduling round ' + serverState.schedulingRound + '.<br>';
+      serverStateHTML += 'Consecutive backend errors so far: ' + serverState.backendErrors + '.<br>';
+      document.getElementById('stateInfo').innerHTML = serverStateHTML;
+
+      var ongoingMatches = ResourceLoader.load_json('//apollo.ggp.org/data/matches/ongoing/set');      
+      var recentMatches = ResourceLoader.load_json('//apollo.ggp.org/data/matches/recent/');
+      recentMatches.reverse();
+      var recentMatchesHTML = 'Listing of the ' + recentMatches.length + ' most recently played matches: <ul>';
+      for (var i = 0; i < recentMatches.length; i++) {
+        recentMatchesHTML += '<li>Match started on ' + new Date(recentMatches[i].startTime).toLocaleString() + ' with ' + recentMatches[i].apolloPlayers.length + ' players: <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+        if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
+          recentMatchesHTML += '<b>(Ongoing!)</b>';
+        }
+      }
+      document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
+    </script>
   </body>  
 </html>

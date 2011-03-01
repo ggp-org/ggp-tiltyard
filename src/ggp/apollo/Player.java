@@ -22,7 +22,7 @@ public class Player {
     @Persistent private String theURL;
     
     @Persistent private List<String> recentMatchURLs;
-    private static final int kRecentMatchURLsToRecord = 4;
+    private static final int kRecentMatchURLsToRecord = 40;
     
     // Optional fields.
     @Persistent private String visibleEmail;
@@ -107,6 +107,7 @@ public class Player {
                 JSONArray theMatches = new JSONArray();
                 for (String recentMatchURL : recentMatchURLs) {
                     CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
+                    if (!c.isReady()) continue;
                     theMatches.put(c.getCondensedJSON());
                 }
                 theJSON.put("recentMatches", theMatches);

@@ -8,18 +8,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 
 import javax.servlet.http.*;
 
@@ -50,6 +46,11 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.getWriter().println("Starting scheduling round.");            
             return;
         }
+
+        resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
+        resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+        resp.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        resp.setHeader("Access-Control-Allow-Age", "86400");       
         
         if (req.getRequestURI().startsWith("/data/")) {
             respondToRPC(resp, req.getRequestURI().replaceFirst("/data/", ""));
@@ -64,7 +65,6 @@ public class GGP_ApolloServlet extends HttpServlet {
         StringBuilder specialContent = new StringBuilder();
         if (reqURI.equals("/index.html")) {            
             // Sample user login service
-            specialContent.append("<p>");
             UserService userService = UserServiceFactory.getUserService();
             User user = userService.getCurrentUser();        
             if (user != null) {
@@ -75,51 +75,16 @@ public class GGP_ApolloServlet extends HttpServlet {
                 }
                 specialContent.append(" You are logged in, but you can <a href=\""
                         + userService.createLogoutURL(req.getRequestURI())
-                        + "\">sign out</a> if you'd like. <br>");
-                specialContent.append("Your auth domain is <i>" + user.getAuthDomain() + "</i>. <br>");
-                specialContent.append("Your federated identity is <i>" + user.getFederatedIdentity() + "</i>. <br>");
-                if (user.getEmail().isEmpty()) {
-                    specialContent.append("You don't have an email address associated with this account.<br>");
-                } else {
-                    specialContent.append("Your email address is <i>" + user.getEmail() + "</i>. <br>");
-                }
-                specialContent.append("Your user ID is <i>" + user.getUserId() + "</i>.");                
+                        + "\">sign out</a> if you'd like.");
             } else {
                 specialContent.append("Sign in using OpenID via ");
                 for (String providerName : openIdProviders.keySet()) {
                     String providerUrl = openIdProviders.get(providerName);
                     String loginUrl = userService.createLoginURL(req
                             .getRequestURI(), null, providerUrl, new HashSet<String>());
-                    specialContent.append("<a href=\"" + loginUrl + "\"><img src=\"static/images/" + providerName + ".png\"></img></a> ");
+                    specialContent.append(" <a href=\"" + loginUrl + "\"><img src=\"static/images/" + providerName + ".png\"></img></a> ");
                 }
             }
-            specialContent.append("</p>");
-
-            // Output a sorted list of the recorded matches.
-            ServerState theState = ServerState.loadState();
-            specialContent.append("Currently on scheduling round " + theState.getSchedulingRound() + ".<br>");
-            specialContent.append("Consecutive backend errors so far: " + theState.getBackendErrors() + ".<br> <ul>");
-
-            DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.LONG, Locale.US);
-            df.setTimeZone(TimeZone.getTimeZone("PST"));
-            List<String> theDataStrings = new ArrayList<String>();
-            for(CondensedMatch m : CondensedMatch.loadCondensedMatches()) {
-                if (m.isReady()) {
-                    String isOngoing = theState.getRunningMatches().contains(m.getSpectatorURL()) ? " <b>(Ongoing!)</b>" : "";                
-                    JSONObject theMatchJSON = m.getCondensedJSON();
-                    try {
-                        theDataStrings.add(theMatchJSON.getLong("startTime") + ": Match started on " + df.format(new Date(theMatchJSON.getLong("startTime"))) + " with " + m.getPlayers().size() + " players: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
-                    } catch (Exception e) {
-                        theDataStrings.add("?: Match started on ? with " + m.getPlayers().size() + " players: <a href='" + m.getSpectatorURL() + "viz.html'>Spectator View</a>" + isOngoing);
-                    }
-                }
-            }
-            Collections.sort(theDataStrings);
-            Collections.reverse(theDataStrings);
-            for(String s : theDataStrings) {
-                specialContent.append("<li>" + s.substring(s.indexOf(":")+1));        
-            }
-            specialContent.append("</ul>");
         }
 
         boolean writeAsBinary = false;        
@@ -360,6 +325,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                 JSONArray theMatches = new JSONArray();
                 for (String recentMatchURL : serverState.getRecentMatchURLs()) {
                     CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
+                    if (!c.isReady()) continue;
                     theMatches.put(c.getCondensedJSON());
                 }
                 resp.getWriter().println(theMatches.toString());
@@ -368,6 +334,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                 JSONArray theMatches = new JSONArray();
                 for (String recentMatchURL : serverState.getRunningMatches()) {
                     CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
+                    if (!c.isReady()) continue;
                     theMatches.put(c.getCondensedJSON());
                 }
                 resp.getWriter().println(theMatches.toString());
@@ -378,11 +345,38 @@ public class GGP_ApolloServlet extends HttpServlet {
             } else if (theRPC.startsWith("matches/")) {
                 String theMatchURL = theRPC.replaceFirst("matches/", "");
                 CondensedMatch c = CondensedMatch.loadCondensedMatch(theMatchURL);
-                if (c == null) {
+                if (c == null || !c.isReady()) {
                     resp.setStatus(404);
                     return;
                 }
-                resp.getWriter().println(c.getCondensedJSON());                
+                resp.getWriter().println(c.getCondensedJSON());
+            } else if (theRPC.equals("serverState")) {
+                ServerState serverState = ServerState.loadState();
+                JSONObject theResponse = new JSONObject();
+                theResponse.put("schedulingRound", serverState.getSchedulingRound());
+                theResponse.put("backendErrors", serverState.getBackendErrors());
+                resp.getWriter().println(theResponse.toString());
+            } else if (theRPC.equals("userDebug")) {
+                StringBuilder theResponse = new StringBuilder();
+                if (user != null) {
+                    if (user.getNickname().isEmpty()) {
+                        theResponse.append("Hello!");
+                    } else {
+                        theResponse.append("Hello, <b>" + user.getNickname() + "</b>!");
+                    }
+                    theResponse.append(" You are logged in.<br>");
+                    theResponse.append("Your auth domain is <i>" + user.getAuthDomain() + "</i>. <br>");
+                    theResponse.append("Your federated identity is <i>" + user.getFederatedIdentity() + "</i>. <br>");
+                    if (user.getEmail().isEmpty()) {
+                        theResponse.append("You don't have an email address associated with this account.<br>");
+                    } else {
+                        theResponse.append("Your email address is <i>" + user.getEmail() + "</i>. <br>");
+                    }
+                    theResponse.append("Your user ID is <i>" + user.getUserId() + "</i>.");                
+                } else {
+                    theResponse.append("You are not logged in.");
+                }
+                resp.getWriter().println(theResponse.toString());
             } else {
                 resp.setStatus(404);
             }

@@ -19,7 +19,7 @@ public class ServerState {
     @Persistent private Integer theSchedulingRound;    
     
     @Persistent private List<String> recentMatchURLs;
-    private static final int kRecentMatchURLsToRecord = 10;    
+    private static final int kRecentMatchURLsToRecord = 100;    
     
     private ServerState() {
         thePrimaryKey = "ServerState";
