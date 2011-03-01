@@ -1,7 +1,9 @@
 package ggp.apollo;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -16,12 +18,16 @@ public class ServerState {
     @Persistent private Integer theBackendErrors;
     @Persistent private Integer theSchedulingRound;    
     
+    @Persistent private List<String> recentMatchURLs;
+    private static final int kRecentMatchURLsToRecord = 100;    
+    
     private ServerState() {
         thePrimaryKey = "ServerState";
         theRunningMatches = new HashSet<String>();
         theBackendAddress = "";
         theBackendErrors = 0;
-        theSchedulingRound = 0;        
+        theSchedulingRound = 0;    
+        recentMatchURLs = new ArrayList<String>();
     }
     
     public Set<String> getRunningMatches() {
@@ -54,6 +60,17 @@ public class ServerState {
 
     public Integer getBackendErrors() {
         return theBackendErrors;
+    }
+    
+    public List<String> getRecentMatchURLs() {
+        return recentMatchURLs;
+    }
+    
+    public void addRecentMatchURL(String theURL) {
+        recentMatchURLs.add(theURL);
+        if (recentMatchURLs.size() > kRecentMatchURLsToRecord) {
+            recentMatchURLs.remove(0);
+        }
     }    
     
     public void save() {

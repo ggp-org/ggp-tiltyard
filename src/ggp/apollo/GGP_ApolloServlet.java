@@ -236,12 +236,14 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         // Assign available players to roles in the game.
         String[] playerURLsForMatch = new String[nPlayersForGame];
-        List<String> playerNamesForMatch = new ArrayList<String>(); 
+        List<String> playerNamesForMatch = new ArrayList<String>();
+        List<Player> playersForMatch = new ArrayList<Player>();
         for (Player p : thePlayers) {
             if (busyPlayerNames.contains(p.getName())) continue;
             nPlayersForGame--;            
             playerURLsForMatch[nPlayersForGame] = p.getURL();
             playerNamesForMatch.add(p.getName());
+            playersForMatch.add(p);
             if (nPlayersForGame == 0)
                 break;
         }
@@ -278,12 +280,17 @@ public class GGP_ApolloServlet extends HttpServlet {
         try {
             // Attempt to populate the condensed match information immediately,
             // if we can pull that out from the spectator server.
-            c.condenseFullJSON(RemoteResourceLoader.loadJSON(c.getSpectatorURL()));
+            c.condenseFullJSON(RemoteResourceLoader.loadJSON(theSpectatorURL));
             c.save();
         } catch (Exception e) {
             ;
         }
-        theState.getRunningMatches().add(c.getSpectatorURL());
+        for (Player p : playersForMatch) {
+            p.addRecentMatchURL(theSpectatorURL);
+            p.save();
+        }
+        theState.addRecentMatchURL(theSpectatorURL);
+        theState.getRunningMatches().add(theSpectatorURL);
         theState.clearBackendErrors();
     }
     

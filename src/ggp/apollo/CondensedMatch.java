@@ -22,15 +22,7 @@ public class CondensedMatch {
         this.thePlayers = thePlayers;
         this.theCondensedMatchJSON = new Text("");
         
-        PersistenceManager pm = Persistence.getPersistenceManager();
-        pm.makePersistent(this);
-        pm.close();
-    }
-    
-    public void save() {
-        PersistenceManager pm = Persistence.getPersistenceManager();
-        pm.makePersistent(this);
-        pm.close();        
+        save();
     }
     
     public boolean isReady() {
@@ -64,6 +56,12 @@ public class CondensedMatch {
     public String getSpectatorURL() {
         return theSpectatorURL;
     }
+    
+    public void save() {
+        PersistenceManager pm = Persistence.getPersistenceManager();
+        pm.makePersistent(this);
+        pm.close();        
+    }    
 
     /* Static accessor methods */
     public static Set<CondensedMatch> loadCondensedMatches() throws IOException {
