@@ -41,11 +41,28 @@
         </tr>
       </table>
     </center>
+    <br>    
+    <div id='stateInfo'></div>
     <br>
-    <center><b>
-      <p>Welcome to the Apollo general game playing server!</p>
-      <p>You can read the <a href="http://en.wikipedia.org/wiki/General_Game_Playing">Wikipedia article</a> to learn what general game playing is all about.</p>
-      <p>This page will be significantly improved in the near future.</p>
-    </b></center>
+    <div id='recentMatchesInfo'></div>
+
+    <script type='text/javascript'>
+      var serverState = ResourceLoader.load_json('//apollo.ggp.org/data/serverState');
+      var serverStateHTML = 'Currently on scheduling round ' + serverState.schedulingRound + '.<br>';
+      serverStateHTML += 'Consecutive backend errors so far: ' + serverState.backendErrors + '.<br>';
+      document.getElementById('stateInfo').innerHTML = serverStateHTML;
+
+      var ongoingMatches = ResourceLoader.load_json('//apollo.ggp.org/data/matches/ongoing/set');      
+      var recentMatches = ResourceLoader.load_json('//apollo.ggp.org/data/matches/recent/');
+      recentMatches.reverse();
+      var recentMatchesHTML = 'Listing of the ' + recentMatches.length + ' most recently played matches: <ul>';
+      for (var i = 0; i < recentMatches.length; i++) {
+        recentMatchesHTML += '<li>Match started on ' + new Date(recentMatches[i].startTime).toLocaleString() + ' with ' + recentMatches[i].apolloPlayers.length + ' players: <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+        if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
+          recentMatchesHTML += '<b>(Ongoing!)</b>';
+        }
+      }
+      document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
+    </script>
   </body>  
 </html>

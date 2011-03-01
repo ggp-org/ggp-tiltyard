@@ -63,7 +63,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         }
         
         StringBuilder specialContent = new StringBuilder();
-        if (reqURI.equals("/index.html")) {            
+        if (reqURI.contains("/index.html")) {            
             // Sample user login service
             UserService userService = UserServiceFactory.getUserService();
             User user = userService.getCurrentUser();        
@@ -82,7 +82,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                     String providerUrl = openIdProviders.get(providerName);
                     String loginUrl = userService.createLoginURL(req
                             .getRequestURI(), null, providerUrl, new HashSet<String>());
-                    specialContent.append(" <a href=\"" + loginUrl + "\"><img src=\"static/images/" + providerName + ".png\"></img></a> ");
+                    specialContent.append(" <a href=\"" + loginUrl + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ");
                 }
             }
         }

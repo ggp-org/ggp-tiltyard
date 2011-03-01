@@ -22,7 +22,7 @@
   </head>
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
-
+  
     <center>
       <table>
         <tr>
@@ -41,11 +41,19 @@
         </tr>
       </table>
     </center>
-    <br>
-    <center><b>
-      <p>Welcome to the Apollo general game playing server!</p>
-      <p>You can read the <a href="http://en.wikipedia.org/wiki/General_Game_Playing">Wikipedia article</a> to learn what general game playing is all about.</p>
-      <p>This page will be significantly improved in the near future.</p>
-    </b></center>
+    <br>    
+    <div id='playerList'></div>
+
+    <script type='text/javascript'>
+      var thePlayers = ResourceLoader.load_json('//apollo.ggp.org/data/players/');
+      var playerListHTML = 'Listing of the players on the Apollo gaming server: <ul>';
+      for (var i in thePlayers) {
+        playerListHTML += '<li>' + thePlayers[i].name + ' is a ' + thePlayers[i].gdlVersion + ' player. ';
+        playerListHTML += 'Enabled? ' + thePlayers[i].isEnabled + '. ';
+        playerListHTML += 'Owned by you? ' + ('theURL' in thePlayers[i]) + '. ';
+      }
+      playerListHTML += '</ul>';
+      document.getElementById('playerList').innerHTML = playerListHTML;
+    </script>
   </body>  
 </html>
