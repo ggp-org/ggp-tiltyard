@@ -24,23 +24,25 @@ public class CondensedMatch {
         
         save();
     }
-    
+
     public boolean isReady() {
         return (this.theCondensedMatchJSON.getValue().length() > 0);
     }
 
     public void condenseFullJSON(JSONObject theJSON) throws JSONException {
+        theJSON.put("apolloSpectatorURL", theSpectatorURL);
+        theJSON.put("apolloPlayers", thePlayers);
         try {
             theJSON.put("moveCount", theJSON.getJSONArray("moves").length());
         } catch (Exception e) {
             theJSON.put("moveCount", 0);
-        }
+        }        
         theJSON.remove("states");      // Strip out all of the large fields
         theJSON.remove("moves");       // that we won't need most of the time.        
         theJSON.remove("stateTimes");  // This is why we can store it here.        
         this.theCondensedMatchJSON = new Text(theJSON.toString());
     }
-    
+
     public JSONObject getCondensedJSON() {
         try {
             return new JSONObject(theCondensedMatchJSON.getValue());

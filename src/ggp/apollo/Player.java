@@ -9,6 +9,10 @@ import java.util.Set;
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
+import com.google.appengine.repackaged.org.json.JSONArray;
+import com.google.appengine.repackaged.org.json.JSONException;
+import com.google.appengine.repackaged.org.json.JSONObject;
+
 @PersistenceCapable
 public class Player {
     @PrimaryKey @Persistent private String theName;    
@@ -18,7 +22,7 @@ public class Player {
     @Persistent private String theURL;
     
     @Persistent private List<String> recentMatchURLs;
-    private static final int kRecentMatchURLsToRecord = 40;
+    private static final int kRecentMatchURLsToRecord = 4;
     
     // Optional fields.
     @Persistent private String visibleEmail;
@@ -82,6 +86,34 @@ public class Player {
         recentMatchURLs.add(theURL);
         if (recentMatchURLs.size() > kRecentMatchURLsToRecord) {
             recentMatchURLs.remove(0);
+        }
+    }
+    
+    public boolean isOwner(String userId) {
+        return theOwners.contains(userId);
+    }
+    
+    public JSONObject asJSON(boolean includePrivate, boolean includeMatches) throws IOException {
+        try {
+            JSONObject theJSON = new JSONObject();
+            theJSON.put("name", theName);
+            theJSON.put("isEnabled", isEnabled);
+            theJSON.put("gdlVersion", gdlVersion);
+            if (includePrivate) {
+                theJSON.put("theOwners", theOwners);
+                theJSON.put("theURL", theURL);                
+            }
+            if (includeMatches) {
+                JSONArray theMatches = new JSONArray();
+                for (String recentMatchURL : recentMatchURLs) {
+                    CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
+                    theMatches.put(c.getCondensedJSON());
+                }
+                theJSON.put("recentMatches", theMatches);
+            }
+            return theJSON;
+        } catch (JSONException e) {
+            return null;
         }
     }
     

@@ -26,6 +26,7 @@ import javax.servlet.http.*;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
+import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
@@ -47,6 +48,11 @@ public class GGP_ApolloServlet extends HttpServlet {
             runSchedulingRound();
             resp.setContentType("text/plain");
             resp.getWriter().println("Starting scheduling round.");            
+            return;
+        }
+        
+        if (req.getRequestURI().startsWith("/data/")) {
+            respondToRPC(resp, req.getRequestURI().replaceFirst("/data/", ""));
             return;
         }
         
@@ -137,13 +143,17 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.setContentType("text/plain");
         }
 
-        if (writeAsBinary) {
-            writeStaticBinaryPage(resp, reqURI.substring(1));
-        } else {
-            // Temporary limits on caching, for during development.
-            resp.setHeader("Cache-Control", "no-cache");
-            resp.setHeader("Pragma", "no-cache");
-            writeStaticTextPage(resp, reqURI.substring(1), specialContent.toString());
+        try {
+            if (writeAsBinary) {
+                writeStaticBinaryPage(resp, reqURI.substring(1));
+            } else {
+                // Temporary limits on caching, for during development.
+                resp.setHeader("Cache-Control", "no-cache");
+                resp.setHeader("Pragma", "no-cache");
+                writeStaticTextPage(resp, reqURI.substring(1), specialContent.toString());
+            }
+        } catch(IOException e) {
+            resp.setStatus(404);
         }
     }
 
@@ -303,12 +313,12 @@ public class GGP_ApolloServlet extends HttpServlet {
         while( (line = br.readLine()) != null ) {
             response.append(line + "\n");
         }
-        
+
         String theResponse = response.toString();
         if (specialContent.length() > 0) {
             theResponse = theResponse.replace("[SPECIAL_PAGE_CONTENT]", specialContent);
         }
-        
+
         resp.getWriter().println(theResponse);
     }
     
@@ -319,5 +329,65 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.getOutputStream().write(buf);
         }
         in.close();        
+    }
+    
+    public void respondToRPC(HttpServletResponse resp, String theRPC) throws IOException {
+        UserService userService = UserServiceFactory.getUserService();
+        User user = userService.getCurrentUser();
+        String userId = (user != null) ? user.getUserId() : "";
+
+        try {
+            if (theRPC.equals("players/")) {
+                JSONObject theResponse = new JSONObject();
+                for (Player p : Player.loadPlayers()) {
+                    theResponse.put(p.getName(), p.asJSON(p.isOwner(userId), false));
+                }
+                resp.getWriter().println(theResponse.toString());
+            } else if (theRPC.startsWith("players/")) {
+                String thePlayer = theRPC.replaceFirst("players/", "");
+                Player p = Player.loadPlayer(thePlayer);
+                if (p == null) {
+                    resp.setStatus(404);
+                    return;
+                }
+                resp.getWriter().println(p.asJSON(p.isOwner(userId), true));
+            } else if (theRPC.equals("matches/")) {
+                // TODO: Should we have an RPC interface that lets you get
+                // the list of all matches ever? This might not scale.
+                resp.setStatus(404);
+            } else if (theRPC.equals("matches/recent/")) {
+                ServerState serverState = ServerState.loadState();
+                JSONArray theMatches = new JSONArray();
+                for (String recentMatchURL : serverState.getRecentMatchURLs()) {
+                    CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
+                    theMatches.put(c.getCondensedJSON());
+                }
+                resp.getWriter().println(theMatches.toString());
+            } else if (theRPC.equals("matches/ongoing/")) {
+                ServerState serverState = ServerState.loadState();
+                JSONArray theMatches = new JSONArray();
+                for (String recentMatchURL : serverState.getRunningMatches()) {
+                    CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
+                    theMatches.put(c.getCondensedJSON());
+                }
+                resp.getWriter().println(theMatches.toString());
+            } else if (theRPC.equals("matches/ongoing/set")) {
+                ServerState serverState = ServerState.loadState();                
+                JSONArray theMatches = new JSONArray(serverState.getRunningMatches());
+                resp.getWriter().println(theMatches.toString());                
+            } else if (theRPC.startsWith("matches/")) {
+                String theMatchURL = theRPC.replaceFirst("matches/", "");
+                CondensedMatch c = CondensedMatch.loadCondensedMatch(theMatchURL);
+                if (c == null) {
+                    resp.setStatus(404);
+                    return;
+                }
+                resp.getWriter().println(c.getCondensedJSON());                
+            } else {
+                resp.setStatus(404);
+            }
+        } catch(JSONException e) {
+            throw new IOException(e);
+        }
     }
 }
