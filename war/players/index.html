@@ -27,9 +27,9 @@
       <table>
         <tr>
           <td width=30% align="right" valign="bottom"><a class=biglink>Games</a></td>
-          <td width=15% align="center" valign="bottom"><a class=biglink href="/players/index.html">Players</a></td>
-          <td width=10% align="center"><a href="/index.html"><img src="/static/images/ApolloGamingLogo.png" width=200 height=200></img></a></td>
-          <td width=15% align="center" valign="bottom"><a class=biglink href="/matches/index.html">Matches</a></td>
+          <td width=15% align="center" valign="bottom"><a class=biglink href="/players/">Players</a></td>
+          <td width=10% align="center"><a href="/"><img src="/static/images/ApolloGamingLogo.png" width=200 height=200></img></a></td>
+          <td width=15% align="center" valign="bottom"><a class=biglink href="/matches/">Matches</a></td>
           <td width=30% align="left" valign="bottom"><a class=biglink>Stats</a></td>
         </tr>
         <tr>
@@ -45,12 +45,17 @@
     <div id='playerList'></div>
 
     <script type='text/javascript'>
-      var thePlayers = ResourceLoader.load_json('//apollo.ggp.org/data/players/');
+      var thePlayers = ResourceLoader.load_json('/data/players/');
       var playerListHTML = 'Listing of the players on the Apollo gaming server: <ul>';
       for (var i in thePlayers) {
         playerListHTML += '<li>' + thePlayers[i].name + ' is a ' + thePlayers[i].gdlVersion + ' player. ';
         playerListHTML += 'Enabled? ' + thePlayers[i].isEnabled + '. ';
         playerListHTML += 'Owned by you? ' + ('theURL' in thePlayers[i]) + '. ';
+        if (thePlayers[i].visibleEmail.length > 0) {
+          playerListHTML += 'Email address: ' + thePlayers[i].visibleEmail + '. ';
+        } else {
+          playerListHTML += 'Player has no listed email address. ';
+        } 
       }
       playerListHTML += '</ul>';
       document.getElementById('playerList').innerHTML = playerListHTML;

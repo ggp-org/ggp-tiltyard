@@ -99,8 +99,11 @@ public class Player {
             theJSON.put("name", theName);
             theJSON.put("isEnabled", isEnabled);
             theJSON.put("gdlVersion", gdlVersion);
+            theJSON.put("visibleEmail", visibleEmail);
             if (includePrivate) {
-                theJSON.put("theOwners", theOwners);
+                // Not sure if we want to expose the userID information,
+                // even to the owners themselves.
+                //theJSON.put("theOwners", theOwners);
                 theJSON.put("theURL", theURL);                
             }
             if (includeMatches) {
