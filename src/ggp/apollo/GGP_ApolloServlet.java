@@ -28,16 +28,6 @@ import com.google.appengine.repackaged.org.json.JSONObject;
 
 @SuppressWarnings("serial")
 public class GGP_ApolloServlet extends HttpServlet {    
-    private static final Map<String, String> openIdProviders;
-    static {
-        openIdProviders = new HashMap<String, String>();
-        openIdProviders.put("google", "google.com/accounts/o8/id");
-        openIdProviders.put("yahoo", "yahoo.com");
-        openIdProviders.put("myspace", "myspace.com");
-        openIdProviders.put("aol", "aol.com");
-        openIdProviders.put("myopenid", "myopenid.com");
-    }
-    
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         if (req.getRequestURI().equals("/cron/scheduling_round")) {
@@ -60,31 +50,6 @@ public class GGP_ApolloServlet extends HttpServlet {
         String reqURI = req.getRequestURI();
         if (reqURI.endsWith("/")) {
             reqURI += "index.html";
-        }
-        
-        StringBuilder specialContent = new StringBuilder();
-        if (reqURI.contains("/index.html")) {            
-            // Sample user login service
-            UserService userService = UserServiceFactory.getUserService();
-            User user = userService.getCurrentUser();        
-            if (user != null) {
-                if (user.getNickname().isEmpty()) {
-                    specialContent.append("Hello!");
-                } else {
-                    specialContent.append("Hello, <b>" + user.getNickname() + "</b>!");
-                }
-                specialContent.append(" You are logged in, but you can <a href=\""
-                        + userService.createLogoutURL(req.getRequestURI())
-                        + "\">sign out</a> if you'd like.");
-            } else {
-                specialContent.append("Sign in using OpenID via ");
-                for (String providerName : openIdProviders.keySet()) {
-                    String providerUrl = openIdProviders.get(providerName);
-                    String loginUrl = userService.createLoginURL(req
-                            .getRequestURI(), null, providerUrl, new HashSet<String>());
-                    specialContent.append(" <a href=\"" + loginUrl + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ");
-                }
-            }
         }
 
         boolean writeAsBinary = false;        
@@ -115,7 +80,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                 // Temporary limits on caching, for during development.
                 resp.setHeader("Cache-Control", "no-cache");
                 resp.setHeader("Pragma", "no-cache");
-                writeStaticTextPage(resp, reqURI.substring(1), specialContent.toString());
+                writeStaticTextPage(resp, reqURI.substring(1));
             }
         } catch(IOException e) {
             resp.setStatus(404);
@@ -269,7 +234,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         theState.clearBackendErrors();
     }
     
-    public void writeStaticTextPage(HttpServletResponse resp, String theURI, String specialContent) throws IOException {
+    public void writeStaticTextPage(HttpServletResponse resp, String theURI) throws IOException {
         FileReader fr = new FileReader(theURI);
         BufferedReader br = new BufferedReader(fr);
         StringBuffer response = new StringBuffer();
@@ -279,12 +244,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             response.append(line + "\n");
         }
 
-        String theResponse = response.toString();
-        if (specialContent.length() > 0) {
-            theResponse = theResponse.replace("[SPECIAL_PAGE_CONTENT]", specialContent);
-        }
-
-        resp.getWriter().println(theResponse);
+        resp.getWriter().println(response.toString());
     }
     
     public void writeStaticBinaryPage(HttpServletResponse resp, String theURI) throws IOException {
@@ -356,25 +316,33 @@ public class GGP_ApolloServlet extends HttpServlet {
                 theResponse.put("schedulingRound", serverState.getSchedulingRound());
                 theResponse.put("backendErrors", serverState.getBackendErrors());
                 resp.getWriter().println(theResponse.toString());
-            } else if (theRPC.equals("userDebug")) {
-                StringBuilder theResponse = new StringBuilder();
-                if (user != null) {
-                    if (user.getNickname().isEmpty()) {
-                        theResponse.append("Hello!");
-                    } else {
-                        theResponse.append("Hello, <b>" + user.getNickname() + "</b>!");
-                    }
-                    theResponse.append(" You are logged in.<br>");
-                    theResponse.append("Your auth domain is <i>" + user.getAuthDomain() + "</i>. <br>");
-                    theResponse.append("Your federated identity is <i>" + user.getFederatedIdentity() + "</i>. <br>");
-                    if (user.getEmail().isEmpty()) {
-                        theResponse.append("You don't have an email address associated with this account.<br>");
-                    } else {
-                        theResponse.append("Your email address is <i>" + user.getEmail() + "</i>. <br>");
-                    }
-                    theResponse.append("Your user ID is <i>" + user.getUserId() + "</i>.");                
+            } else if (theRPC.equals("login")) {
+                JSONObject theResponse = new JSONObject();
+                if (user != null) {                    
+                    theResponse.put("nickname", user.getNickname());
+                    theResponse.put("authDomain", user.getAuthDomain());
+                    theResponse.put("federatedIdentity", user.getFederatedIdentity());
+                    theResponse.put("emailAddress", user.getEmail());
+                    theResponse.put("userId", user.getUserId());
+                    theResponse.put("logoutURL", userService.createLogoutURL("http://apollo.ggp.org/REPLACEME"));
+                    theResponse.put("loggedIn", true);
                 } else {
-                    theResponse.append("You are not logged in.");
+                    Map<String, String> openIdProviders = new HashMap<String, String>();
+                    openIdProviders = new HashMap<String, String>();
+                    openIdProviders.put("google", "google.com/accounts/o8/id");
+                    openIdProviders.put("yahoo", "yahoo.com");
+                    openIdProviders.put("myspace", "myspace.com");
+                    openIdProviders.put("aol", "aol.com");
+                    openIdProviders.put("myopenid", "myopenid.com");
+
+                    JSONObject theProviders = new JSONObject();
+                    for (String providerName : openIdProviders.keySet()) {
+                        String providerUrl = openIdProviders.get(providerName);
+                        theProviders.put(providerName, userService.createLoginURL("http://apollo.ggp.org/REPLACEME", null, providerUrl, new HashSet<String>()));
+                    }
+                    theResponse.put("providers", theProviders);
+                    theResponse.put("preferredOrder", new String[] {"google", "yahoo", "aol", "myspace", "myopenid"} );
+                    theResponse.put("loggedIn", false);
                 }
                 resp.getWriter().println(theResponse.toString());
             } else {

@@ -34,9 +34,7 @@
         </tr>
         <tr>
           <td colspan=5 align="center" class="login">
-            <!-- Special page content begins here -->
-            [SPECIAL_PAGE_CONTENT]
-            <!-- Special page content ends here -->
+            <div id="login_div"> </div>
           </td>
         </tr>
       </table>
@@ -47,5 +45,25 @@
       <p>You can read the <a href="http://en.wikipedia.org/wiki/General_Game_Playing">Wikipedia article</a> to learn what general game playing is all about.</p>
       <p>This page will be significantly improved in the near future.</p>
     </b></center>
+    
+    <script type='text/javascript'>
+      var loginState = ResourceLoader.load_json('/data/login');
+      var loginHTML = "";
+      if (loginState.loggedIn) {
+        if (loginState.nickname.length > 0) {
+          loginHTML += "Hello, " + loginState.nickname + "! ";
+        } else {
+          loginHTML += "Hello! ";
+        }
+        loginHTML += " You are signed in, but you can <a href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">sign out</a> if you'd like.";
+      } else {
+        loginHTML += "Sign in using OpenID via ";
+        for (var i in loginState.preferredOrder) {
+          var providerName = loginState.preferredOrder[i];
+          loginHTML += "<a href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
+        }
+      }      
+      document.getElementById('login_div').innerHTML = loginHTML;
+    </script>
   </body>  
 </html>
