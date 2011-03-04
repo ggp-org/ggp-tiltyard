@@ -1,14 +1,17 @@
+a.darklink {
+	color: #222222;
+}
 a.biglink {
-  color: #222222;
-  font-family: 'Droid Sans', bold;
-  font-size: 30px;
-  text-shadow: #AAAAAA 0px 0px 10px;
-  margin: 5px;
+	color: #222222;
+	font-family: 'Droid Sans', bold;
+	font-size: 30px;
+	text-shadow: #AAAAAA 0px 0px 10px;
+	margin: 5px;
 }
 td.login {
-  color: #222222;
-  font-family: 'Droid Sans', bold;
-  font-size: 18px;
-  text-shadow: #AAAAAA 0px 0px 5px;
-  margin: 5px;
+	color: #222222;
+	font-family: 'Droid Sans', bold;
+	font-size: 18px;
+	text-shadow: #AAAAAA 0px 0px 5px;
+	margin: 5px;
 }

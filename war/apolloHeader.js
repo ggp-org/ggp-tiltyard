@@ -1,3 +1,4 @@
+var loginNascarHTML;
 function generateHeader(theDiv) {
     var theHTML = "";
     theHTML += '<center>';
@@ -28,10 +29,11 @@ function generateHeader(theDiv) {
       }
       loginHTML += " You are signed in, but you can <a href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">sign out</a> if you'd like.";
     } else {
-      loginHTML += "Sign in using OpenID via ";
+      loginHTML += " <a class=\"darklink\" href=\"javascript: document.getElementById('login_div').innerHTML = loginNascarHTML;\">Sign in</a> using OpenID to add your player to the match schedule.";
+      loginNascarHTML = "Sign in using OpenID via ";
       for (var i in loginState.preferredOrder) {
         var providerName = loginState.preferredOrder[i];
-        loginHTML += "<a href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
+        loginNascarHTML += "<a href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
       }
     }      
     document.getElementById('login_div').innerHTML = loginHTML;    
