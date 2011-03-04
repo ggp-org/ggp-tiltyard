@@ -16,26 +16,8 @@
     <div id='recentMatchesInfo'></div>
 
     <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));
-      var loginState = ResourceLoader.load_json('/data/login');
-      var loginHTML = "";
-      if (loginState.loggedIn) {
-        if (loginState.nickname.length > 0) {
-          loginHTML += "Hello, " + loginState.nickname + "! ";
-        } else {
-          loginHTML += "Hello! ";
-        }
-        loginHTML += " You are signed in, but you can <a href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">sign out</a> if you'd like.";
-      } else {
-        loginHTML += "Sign in using OpenID via ";
-        for (var i in loginState.preferredOrder) {
-          var providerName = loginState.preferredOrder[i];
-          loginHTML += "<a href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
-        }
-      }      
-      document.getElementById('login_div').innerHTML = loginHTML;
-    </script>
-    <script type='text/javascript'>
+      generateHeader(document.getElementById('header'));    
+    
       var serverState = ResourceLoader.load_json('/data/serverState');
       var serverStateHTML = 'Currently on scheduling round ' + serverState.schedulingRound + '.<br>';
       serverStateHTML += 'Consecutive backend errors so far: ' + serverState.backendErrors + '.<br>';
@@ -51,7 +33,7 @@
         recentMatchesHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
         recentMatchesHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
         for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {
-          recentMatchesHTML += recentMatches[i].apolloPlayers[j];
+          recentMatchesHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
           if (j < recentMatches[i].apolloPlayers.length - 1) {
             recentMatchesHTML += ', ';
           }

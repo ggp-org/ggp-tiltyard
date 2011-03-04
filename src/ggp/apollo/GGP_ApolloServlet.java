@@ -51,6 +51,15 @@ public class GGP_ApolloServlet extends HttpServlet {
         if (reqURI.endsWith("/")) {
             reqURI += "index.html";
         }
+        
+        if (reqURI.startsWith("/players/") && !reqURI.equals("/players/index.html")) {
+            String playerName = reqURI.replaceFirst("/players/", "");
+            if(Player.loadPlayer(playerName) == null) {
+                resp.setStatus(404);
+                return;
+            }
+            reqURI = "/players/playerPage.html";
+        }
 
         boolean writeAsBinary = false;        
         if (reqURI.endsWith(".html")) {

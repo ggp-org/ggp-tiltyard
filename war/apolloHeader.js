@@ -17,4 +17,22 @@ function generateHeader(theDiv) {
     theHTML += '</table>';
     theHTML += '</center>';
     theDiv.innerHTML = theHTML;
+    
+    var loginState = ResourceLoader.load_json('/data/login');
+    var loginHTML = "";
+    if (loginState.loggedIn) {
+      if (loginState.nickname.length > 0) {
+        loginHTML += "Hello, " + loginState.nickname + "! ";
+      } else {
+        loginHTML += "Hello! ";
+      }
+      loginHTML += " You are signed in, but you can <a href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">sign out</a> if you'd like.";
+    } else {
+      loginHTML += "Sign in using OpenID via ";
+      for (var i in loginState.preferredOrder) {
+        var providerName = loginState.preferredOrder[i];
+        loginHTML += "<a href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
+      }
+    }      
+    document.getElementById('login_div').innerHTML = loginHTML;    
 }

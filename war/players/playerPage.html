@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title>GGP Apollo Server</title>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+    <link rel="stylesheet" type="text/css" href="/apollo.css" />
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>    
+  </head>
+  <body>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+    <script type="text/javascript" src="/apolloHeader.js"></script>
+  
+    <div id='header'></div>
+    <br>    
+    <div id='playerDiv'></div>
+
+    <script type='text/javascript'>
+      generateHeader(document.getElementById('header'));
+
+      var thePlayer = ResourceLoader.load_json('/data/players/' + window.location.pathname.replace("/players/", ""));
+      var playerHTML = 'Information about ' + thePlayer.name + ': <ul>';
+      if (thePlayer.visibleEmail.length > 0) {
+      	playerHTML += '<li>Visible email: ' + thePlayer.visibleEmail;
+      } else {
+        playerHTML += '<li>No email address listed.';
+      }
+      playerHTML += '<li>Is enabled? ' + thePlayer.isEnabled;
+      playerHTML += '<li>Belongs to you? ' + ("theURL" in thePlayer);
+      playerHTML += '</ul>';
+      
+      var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
+      var recentMatches = thePlayer.recentMatches;
+      recentMatches.reverse();
+      playerHTML += 'What are the ' + recentMatches.length + ' matches this player has played in recently? <ul>';
+      for (var i = 0; i < recentMatches.length; i++) {
+        var theDate = new Date(recentMatches[i].startTime);
+        playerHTML += '<li>Match started at ';
+        playerHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
+        playerHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
+        for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {
+          playerHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
+          if (j < recentMatches[i].apolloPlayers.length - 1) {
+            playerHTML += ', ';
+          }
+        }
+        playerHTML += '): <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+        if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
+          playerHTML += '<b>(Ongoing!)</b>';
+        }        
+      }
+      playerHTML += '</ul>';
+      document.getElementById('playerDiv').innerHTML = playerHTML;
+    </script>
+  </body>  
+</html>
