@@ -8,6 +8,16 @@ a.biglink {
 	text-shadow: #AAAAAA 0px 0px 10px;
 	margin: 5px;
 }
+a.hugelink {
+	color: #222222;
+	font-family: 'Droid Sans', bold;
+	font-size: 60px;
+	text-align: left;
+	font-variant: small-caps;
+	text-shadow: #AAAAAA 0px 0px 20px;
+	margin: 5px;
+	text-decoration:none;
+}
 td.login {
 	color: #222222;
 	font-family: 'Droid Sans', bold;

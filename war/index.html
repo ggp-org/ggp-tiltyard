@@ -3,22 +3,54 @@
     <title>GGP Apollo Server</title>
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
     <link rel="stylesheet" type="text/css" href="/apollo.css" />
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>    
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <style>      
+      /* Huge hack to center things. This is surprisingly hard to do.
+       * Credit to: http://brunildo.org/test/shrink_center_4.html
+       */
+      html, body {
+	    margin: 0;
+        padding: 0;
+      }
+      html, body, .swc0, .swc1 {
+	    height: 100%;
+      }
+      .swc0 {
+        margin: 0 auto;
+        display: table;
+      }
+      .swc1 {
+        display: table-cell;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      .swc2:after {
+        position: absolute;
+        height: 0%;
+        content: "";
+      }
+      html {
+        position: relative;
+      }
+    </style>
   </head>
   <body>
-    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
-    <script type="text/javascript" src="/apolloHeader.js"></script>
-
-    <div id='header'></div>
-    <br>
-    <center><b>
-      <p>Welcome to the Apollo general game playing server!</p>
-      <p>You can read the <a href="http://en.wikipedia.org/wiki/General_Game_Playing">Wikipedia article</a> to learn what general game playing is all about.</p>
-      <p>This page will be significantly improved in the near future.</p>
-    </b></center>
-    
-    <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));
-    </script>
-  </body>  
+    <div class="swc0"><div class="swc1"><div class="swc2">
+    <table>
+      <tr>
+        <td>
+	      <img src="/static/images/SolidSun.png"></img>
+	    </td>
+	    <td width=20px></td>
+	    <td valign="middle">
+	      <a class="hugelink">Games</a><br>
+	      <a class="hugelink" href="/players/">Players</a><br>
+	      <a class="hugelink" href="/matches/">Matches</a><br>
+	      <a class="hugelink">Stats</a><br>
+	      <a class="hugelink">About</a>
+	    </td>
+      </tr>    
+    </table>
+    </div><span class="swc3"></span></div></div> 
+  </body>
 </html>
