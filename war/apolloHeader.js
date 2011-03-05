@@ -27,7 +27,7 @@ function generateHeader(theDiv) {
       } else {
         loginHTML += "Hello! ";
       }
-      loginHTML += " You are signed in, but you can <a href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">sign out</a> if you'd like.";
+      loginHTML += " You are signed in, but you can <a class=\"darklink\" href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">sign out</a> if you'd like.";
     } else {
       loginHTML += " <a class=\"darklink\" href=\"javascript: document.getElementById('login_div').innerHTML = loginNascarHTML;\">Sign in</a> using OpenID to add your player to the match schedule.";
       loginNascarHTML = "Sign in using OpenID via ";
