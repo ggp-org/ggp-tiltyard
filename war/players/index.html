@@ -17,18 +17,11 @@
       generateHeader(document.getElementById('header'));        
     
       var thePlayers = ResourceLoader.load_json('/data/players/');
-      var playerListHTML = 'Listing of the players on the Apollo gaming server: <ul>';
+      var playerListHTML = '<center>';
       for (var i in thePlayers) {
-        playerListHTML += '<li><a href="/players/' + thePlayers[i].name + '">' + thePlayers[i].name + '</a> is a ' + thePlayers[i].gdlVersion + ' player. ';
-        playerListHTML += 'Enabled? ' + thePlayers[i].isEnabled + '. ';
-        playerListHTML += 'Owned by you? ' + ('theURL' in thePlayers[i]) + '. ';
-        if (thePlayers[i].visibleEmail.length > 0) {
-          playerListHTML += 'Email address: ' + thePlayers[i].visibleEmail + '. ';
-        } else {
-          playerListHTML += 'Player has no listed email address. ';
-        } 
+        playerListHTML += generatePlayerHTML(thePlayers[i]);
       }
-      playerListHTML += '</ul>';
+      playerListHTML += '</center>';
       document.getElementById('playerList').innerHTML = playerListHTML;
     </script>
   </body>  

@@ -17,20 +17,14 @@
       generateHeader(document.getElementById('header'));
 
       var thePlayer = ResourceLoader.load_json('/data/players/' + window.location.pathname.replace("/players/", ""));
-      var playerHTML = 'Information about ' + thePlayer.name + ': <ul>';
-      if (thePlayer.visibleEmail.length > 0) {
-      	playerHTML += '<li>Visible email: ' + thePlayer.visibleEmail;
-      } else {
-        playerHTML += '<li>No email address listed.';
-      }
-      playerHTML += '<li>Is enabled? ' + thePlayer.isEnabled;
-      playerHTML += '<li>Belongs to you? ' + ("theURL" in thePlayer);
-      playerHTML += '</ul>';
+      var playerHTML = '<center>';
+      playerHTML += generatePlayerHTML(thePlayer);
+      playerHTML += '</center><br>';
       
       var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
       var recentMatches = thePlayer.recentMatches;
       recentMatches.reverse();
-      playerHTML += 'What are the ' + recentMatches.length + ' matches this player has played in recently? <ul>';
+      playerHTML += '<b>What are the ' + recentMatches.length + ' matches this player has played in recently?</b> <ul>';
       for (var i = 0; i < recentMatches.length; i++) {
         var theDate = new Date(recentMatches[i].startTime);
         playerHTML += '<li>Match started at ';

@@ -1,3 +1,7 @@
+body {
+  margin:0;
+  padding:0;
+}
 a.darklink {
 	color: #222222;
 }
@@ -7,6 +11,7 @@ a.biglink {
 	font-size: 30px;
 	text-shadow: #AAAAAA 0px 0px 10px;
 	margin: 5px;
+	text-decoration:none;
 }
 a.hugelink {
 	color: #222222;
@@ -24,4 +29,34 @@ td.login {
 	font-size: 18px;
 	text-shadow: #AAAAAA 0px 0px 5px;
 	margin: 5px;
+}
+
+table.enabled {
+    display: inline;
+    border-width: 5px;
+    border-style: ridge;
+    background-color: #52D017;
+    font-family: monospace;
+    font-weight: bold;
+}
+table.disabled {
+    display: inline;
+	border-width: 5px;
+	border-style: ridge;
+	background-color: #E42217;
+    font-family: monospace;
+    font-weight: bold;	
+}
+table.gdlVersion {
+    display: inline;
+	border-width: 5px;
+	border-style: ridge;
+	background-color: #56A5EC;
+    font-family: monospace;
+    font-weight: bold;		
+}
+table.player {
+    display: table;
+    border-width: 5px;
+    border-style: ridge;
 }
