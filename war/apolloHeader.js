@@ -4,16 +4,13 @@ function generateHeader(theDiv) {
     theHTML += '<center>';
     theHTML += '<table style="width: 100%; border: 0; margin: 0; border-spacing: 0px 0px;">';
     theHTML += '  <tr>';
-    theHTML += '    <td width=30% align="right" valign="bottom"><a class=biglink>Games</a></td>';
-    theHTML += '    <td width=15% align="center" valign="bottom"><a class=biglink href="/players/">Players</a></td>';
-    theHTML += '    <td width=10% align="center" style="padding: 0;"><a href="/"><img width=200 src="/static/images/SolidSunSection2.png"></img></a></td>';
-    theHTML += '    <td width=15% align="center" valign="bottom"><a class=biglink href="/matches/">Matches</a></td>';
-    theHTML += '    <td width=30% align="left" valign="bottom"><a class=biglink>Leaderboard</a></td>';
-    theHTML += '  </tr>';
-    theHTML += '  <tr>';
-    theHTML += '    <td colspan=5 align="center" class="login">';
-    theHTML += '      <div id="login_div"> </div>';
-    theHTML += '    </td>';
+    theHTML += '    <td class="navbar" width=20% align="left" style="padding: 0;"><a href="/"><img width=200px src="/static/images/SolidSunSlice.png"></img></a></td>';
+    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/about/">About</a></td>';
+    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink>Games</a></td>';
+    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/players/">Players</a></td>';    
+    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/matches/">Matches</a></td>';
+    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink>Stats</a></td>';
+    theHTML += '    <td class="navbar" width=30% align="right" valign="middle"><div class="login" id="login_div"> </div></td>';
     theHTML += '  </tr>';
     theHTML += '</table>';
     theHTML += '</center>';
@@ -23,24 +20,24 @@ function generateHeader(theDiv) {
     var loginHTML = "";
     if (loginState.loggedIn) {
       if (loginState.nickname.length > 0) {
-        loginHTML += "Hello, " + loginState.nickname + "! ";
+        loginHTML += "<b>" + loginState.nickname + "</b>";
       } else {
-        loginHTML += "Hello! ";
+        loginHTML += "<b>Signed in.</b> ";
       }
-      loginHTML += " You are signed in, but you can <a class=\"darklink\" href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">sign out</a> if you'd like.";
+      loginHTML += " <a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">(sign out)</a>.";
     } else {
-      loginHTML += " <a class=\"darklink\" href=\"javascript: document.getElementById('login_div').innerHTML = loginNascarHTML;\">Sign in</a> using OpenID to add your player to the match schedule.";
-      loginNascarHTML = "Sign in using OpenID via ";
+      loginHTML += " <a class=\"darklink\" href=\"javascript: document.getElementById('login_div').innerHTML = loginNascarHTML;\">Sign in</a> using OpenID.";
+      loginNascarHTML = "Sign in using OpenID via <br>";
       for (var i in loginState.preferredOrder) {
         var providerName = loginState.preferredOrder[i];
         loginNascarHTML += "<a href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
       }
     }      
-    document.getElementById('login_div').innerHTML = loginHTML;    
+    document.getElementById('login_div').innerHTML = loginHTML;
 }
 
 function generatePlayerHTML(aPlayer) {
-    var thePlayerHTML = '<table class="player" style="background-color:';
+    var thePlayerHTML = '<table draggable="true" class="player" style="background-color:';
     if ("theURL" in aPlayer) {
         thePlayerHTML += '#CCEECC';
     } else {

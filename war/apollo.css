@@ -8,7 +8,7 @@ a.darklink {
 a.biglink {
 	color: #222222;
 	font-family: 'Droid Sans', bold;
-	font-size: 30px;
+	font-size: 20px;
 	text-shadow: #AAAAAA 0px 0px 10px;
 	margin: 5px;
 	text-decoration:none;
@@ -23,10 +23,10 @@ a.hugelink {
 	margin: 5px;
 	text-decoration:none;
 }
-td.login {
+div.login {
 	color: #222222;
 	font-family: 'Droid Sans', bold;
-	font-size: 18px;
+	font-size: 14px;
 	text-shadow: #AAAAAA 0px 0px 5px;
 	margin: 5px;
 }
@@ -59,4 +59,19 @@ table.player {
     display: table;
     border-width: 5px;
     border-style: ridge;
+}
+
+td.navbar {
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0.24, rgb(230,230,230)),
+    color-stop(0.81, rgb(184,184,184))
+  );
+  background-image: -moz-linear-gradient(
+    center bottom,
+    rgb(230,230,230) 24%,
+    rgb(184,184,184) 81%
+  );
 }

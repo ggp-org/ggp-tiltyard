@@ -8,21 +8,15 @@
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type="text/javascript" src="/apolloHeader.js"></script>
-  
+    
     <div id='header'></div>
-    <br>    
-    <div id='playerList'></div>
+    <br>
+    
+    Hello! (etc)
+    TODO: Create an actual "About" page.
 
     <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));        
-    
-      var thePlayers = ResourceLoader.load_json('/data/players/');
-      var playerListHTML = '<center>';
-      for (var i in thePlayers) {
-        playerListHTML += generatePlayerHTML(thePlayers[i]);
-      }
-      playerListHTML += '</center>';
-      document.getElementById('playerList').innerHTML = playerListHTML;
+      generateHeader(document.getElementById('header'));    
     </script>
   </body>  
 </html>
