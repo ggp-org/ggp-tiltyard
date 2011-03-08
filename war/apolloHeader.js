@@ -37,23 +37,34 @@ function generateHeader(theDiv) {
 }
 
 function generatePlayerHTML(aPlayer) {
-    var thePlayerHTML = '<table draggable="true" class="player" style="background-color:';
+    var thePlayerHTML = '<table class="player" id="player_' + aPlayer.name + '_table" style="background-color:';
     if ("theURL" in aPlayer) {
         thePlayerHTML += '#CCEECC';
     } else {
         thePlayerHTML += '#DDDDDD';
     }
-    thePlayerHTML += '"><tr>';
+    thePlayerHTML += '">';
+    thePlayerHTML += generatePlayerInnerHTML(aPlayer);
+    thePlayerHTML += '</table>';    
+    return thePlayerHTML;
+}
+
+var theRecordedPlayers = {};
+function generatePlayerInnerHTML(aPlayer) {
+    theRecordedPlayers[aPlayer.name] = aPlayer;
+    
+    var thePlayerHTML = "";
+    thePlayerHTML += '<tr><td width=5></td>';
+    thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><table style="border-width: 2px; border-style: inset;" cellspacing=0 cellpadding=0><tr><td><img src="http://placekitten.com/g/50/50"/></tr></td></table></a></td>';
     thePlayerHTML += '<td width=5></td>';
-    thePlayerHTML += '<td><table style="border-width: 2px; border-style: inset;" cellspacing=0 cellpadding=0><tr><td><img src="http://placekitten.com/g/50/50"/></tr></td></table></td>';
-    thePlayerHTML += '<td width=5></td>';
-    thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><font size=6><b>' + aPlayer.name + '</b></font><br>';
+    thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><font size=6><b>' + aPlayer.name + '</b></font></a>';
+    thePlayerHTML += '<div id=player_' + aPlayer.name + '_email>'; 
     if (aPlayer.visibleEmail.length > 0) {
         thePlayerHTML += '<tt>' + aPlayer.visibleEmail + '</tt>';
     } else {
         thePlayerHTML += '<i>Email address not listed.</i>';
     }
-    thePlayerHTML += '</a></td>';
+    thePlayerHTML += '</div></td>';
     thePlayerHTML += '<td width=5></td>';
     thePlayerHTML += '<td>';
     if (aPlayer.isEnabled) {
@@ -63,6 +74,39 @@ function generatePlayerHTML(aPlayer) {
     }
     thePlayerHTML += '<br>';
     thePlayerHTML += '<table class="gdlversion"><tr><td>' + aPlayer.gdlVersion + '</td></tr></table>';
-    thePlayerHTML += '</td></tr></table>';
+    thePlayerHTML += '</td></tr>';
+    if ("theURL" in aPlayer) {
+        thePlayerHTML += '<tr><td width=5></td>';
+        thePlayerHTML += '<td><b>URL:</b></td><td width=5></td>';
+        thePlayerHTML += '<td><div id=player_' + aPlayer.name + '_url>';
+        thePlayerHTML += '<tt>' + aPlayer.theURL + '</tt></div></td><td width=5></td>';
+        thePlayerHTML += '<td><div id=player_' + aPlayer.name + '_button><button onclick=\'clickedEditForPlayer("' + aPlayer.name + '")\' type="Button">Edit</button></div></td></tr>'; 
+    }
     return thePlayerHTML;
+}
+
+function clickedEditForPlayer (playerName) {
+    var aPlayer = theRecordedPlayers[playerName];
+    var urlDiv = document.getElementById("player_" + playerName + "_url");
+    var emailDiv = document.getElementById("player_" + playerName + "_email");
+    var buttonDiv = document.getElementById("player_" + playerName + "_button");
+    
+    urlDiv.innerHTML = '<input type="text" size="22" id="player_' + playerName + '_url_field" value="' + aPlayer.theURL + '">';
+    emailDiv.innerHTML = '<input type="text" size="22" id="player_' + playerName + '_email_field" value="' + aPlayer.visibleEmail + '">';
+    buttonDiv.innerHTML = '<button onclick=\'clickedEditDoneForPlayer("' + aPlayer.name + '")\' type="Button">Done!</button>';
+}
+
+function clickedEditDoneForPlayer (playerName) {
+    var aPlayer = theRecordedPlayers[playerName];
+    
+    var newURL = document.getElementById("player_" + playerName + "_url_field").value;
+    var newEmail = document.getElementById("player_" + playerName + "_email_field").value;
+    aPlayer.theURL = newURL;
+    aPlayer.visibleEmail = newEmail;
+
+    // TODO: Make this asynchronous?
+    var bPlayer = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(aPlayer)));    
+
+    var theTable = document.getElementById("player_" + playerName + "_table");
+    theTable.innerHTML = generatePlayerInnerHTML(bPlayer);
 }

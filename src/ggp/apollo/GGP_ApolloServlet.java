@@ -361,4 +361,67 @@ public class GGP_ApolloServlet extends HttpServlet {
             throw new IOException(e);
         }
     }
+    
+    public static String sanitize(String x) {
+        // TODO: Force the string to be ASCII?
+        return x.replaceAll("<", "&lt;").replaceAll(">", "&rt;").trim();
+    }
+    
+    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
+        resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+        resp.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        resp.setHeader("Access-Control-Allow-Age", "86400");
+
+        String theURI = req.getRequestURI();
+        
+        BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
+        int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
+        StringBuilder theInput = new StringBuilder();
+        for (int i = 0; i < contentLength; i++) {
+            theInput.append((char)br.read());
+        }
+        String in = theInput.toString().trim();
+        
+        UserService userService = UserServiceFactory.getUserService();
+        User user = userService.getCurrentUser();
+        String userId = (user != null) ? user.getUserId() : "";
+
+        try {
+            if (theURI.equals("/data/updatePlayer") && userId.length() > 0) {
+                JSONObject playerInfo = new JSONObject(in);
+                Player p = Player.loadPlayer(playerInfo.getString("name"));
+                if (p == null) {
+                    p = new Player(sanitize(playerInfo.getString("name")), playerInfo.getString("theURL"), userId);
+                } else if (!p.isOwner(userId)) {
+                    resp.setStatus(404);
+                    return;
+                }
+
+                String gdlVersion = playerInfo.getString("gdlVersion");                
+                if (!gdlVersion.equals("GDLv1") && !gdlVersion.equals("GDLv2")) {
+                    gdlVersion = "GDLv1";
+                }
+                
+                p.setEnabled(playerInfo.getBoolean("isEnabled"));
+                p.setGdlVersion(gdlVersion);
+                p.setURL(sanitize(playerInfo.getString("theURL")));
+                p.setVisibleEmail(sanitize(playerInfo.getString("visibleEmail")));
+                p.save();
+
+                resp.getWriter().println(p.asJSON(true, false));
+            } else {
+                resp.setStatus(404);
+            }
+        } catch(JSONException e) {
+            throw new IOException(e);
+        }        
+    }
+    
+    public void doOptions(HttpServletRequest req, HttpServletResponse resp) throws IOException {  
+        resp.setHeader("Access-Control-Allow-Origin", "*");
+        resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+        resp.setHeader("Access-Control-Allow-Headers", "*");
+        resp.setHeader("Access-Control-Allow-Age", "86400");    
+    }    
 }
