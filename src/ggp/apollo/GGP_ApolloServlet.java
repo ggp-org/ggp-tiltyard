@@ -364,8 +364,25 @@ public class GGP_ApolloServlet extends HttpServlet {
     
     public static String sanitize(String x) {
         // TODO: Force the string to be ASCII?
-        return x.replaceAll("<", "&lt;").replaceAll(">", "&rt;").trim();
+        return x.replaceAll("<", "&lt;")
+                .replaceAll(">", "&rt;")
+                .replaceAll("\"", "&quot;")
+                .trim();
     }
+    
+    public static String sanitizeHarder(String x) {
+        StringBuilder theString = new StringBuilder();
+        
+        for (int i = 0; i < x.length(); i++) {
+            char c = x.charAt(i);
+            if (Character.isLetterOrDigit(c) ||
+                c == '-' || c == '_') {
+                theString.append(c);
+            }
+        }
+        
+        return sanitize(theString.toString());
+    }    
     
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
@@ -390,9 +407,15 @@ public class GGP_ApolloServlet extends HttpServlet {
         try {
             if (theURI.equals("/data/updatePlayer") && userId.length() > 0) {
                 JSONObject playerInfo = new JSONObject(in);
-                Player p = Player.loadPlayer(playerInfo.getString("name"));
+                String theName = sanitizeHarder(playerInfo.getString("name"));
+                if (!theName.equals(playerInfo.getString("name"))) {
+                    resp.setStatus(404);
+                    return;                    
+                }
+                
+                Player p = Player.loadPlayer(theName);
                 if (p == null) {
-                    p = new Player(sanitize(playerInfo.getString("name")), playerInfo.getString("theURL"), userId);
+                    p = new Player(theName, sanitize(playerInfo.getString("theURL")), userId);
                 } else if (!p.isOwner(userId)) {
                     resp.setStatus(404);
                     return;
