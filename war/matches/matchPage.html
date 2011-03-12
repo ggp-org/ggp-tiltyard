@@ -18,9 +18,8 @@
     <script type='text/javascript' src='//www.ggp.org/scripts/common/SpectatorView.js'></script>
 
     <div id='header'></div>
-    <div style="float: left; background-color: #AAAAAA; height: 100%; width: 20%">
-      <div id="desc_div"></div>
-      ... blah blah blah ...
+    <div style="float: left; background-color: #EEEEEE; height: 100%; width: 20%">
+      <div id="sidePanel"></div>
     </div>
     <div style="float: left; margin-left: 1%; height: 100%; width:79%;">
       <center><b><div id="name_div"></div></b><br></center>
@@ -31,17 +30,30 @@
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
-      var theMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
-      eval(ResourceLoader.load_raw(theMatch.apolloSpectatorURL + 'channel.js'));      
+      var apolloMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
+      eval(ResourceLoader.load_raw(apolloMatch.apolloSpectatorURL + 'channel.js'));      
       
-      spectatorView = SpectatorView.construct(theMatch.apolloSpectatorURL, document.getElementById('spectator_div'));
+      spectatorView = SpectatorView.construct(apolloMatch.apolloSpectatorURL, document.getElementById('spectator_div'));
+      // TODO: Fix the width/height calculation properly.
       //spectatorView.getHeight = function () { return document.getElementById("spectator_div").clientHeight; };
       //spectatorView.getWidth = function () { return document.getElementById("spectator_div").clientWidth; };
       spectatorView.getHeight = function () { return window.innerHeight - 70; };
       spectatorView.getWidth = function () { return window.innerWidth * 0.79; };      
       spectatorView.render();
       
-      //document.getElementById('matchDiv').innerHTML = JSON.stringify(theMatch);
+      var sidePanelHTML = '<br>';
+      var spectatorMatch = spectatorView.matchData;
+      var theDate = new Date(spectatorMatch.startTime);
+      sidePanelHTML += '<b>Game:</b> ' + spectatorMatch.gameName + '<br><br>';
+      sidePanelHTML += '<b>Started at:</b> ' + theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString() + '<br><br>';
+      sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator View</a>)<br><br>';
+      sidePanelHTML += 'There are ' + apolloMatch.apolloPlayers.length + ' players: <ol>';
+      for (var i = 0; i < apolloMatch.apolloPlayers.length; i++) {
+        sidePanelHTML += '<li><b>' + spectatorMatch.gameRoleNames[i] + ':</b> ';        
+        sidePanelHTML += '<a href="/players/' + apolloMatch.apolloPlayers[i] + '">' + apolloMatch.apolloPlayers[i] + '</a></li>';
+      }
+      sidePanelHTML += '</ol>';
+      document.getElementById('sidePanel').innerHTML = sidePanelHTML;
     </script>
   </body>  
 </html>
