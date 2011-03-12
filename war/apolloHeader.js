@@ -30,7 +30,7 @@ function generateHeader(theDiv) {
       loginNascarHTML = "Sign in using OpenID via <br>";
       for (var i in loginState.preferredOrder) {
         var providerName = loginState.preferredOrder[i];
-        loginNascarHTML += "<a href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
+        loginNascarHTML += "<a rel=\"nofollow\" href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
       }
     }      
     document.getElementById('login_div').innerHTML = loginHTML;

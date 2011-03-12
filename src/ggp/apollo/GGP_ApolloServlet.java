@@ -60,6 +60,14 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             reqURI = "/players/playerPage.html";
         }
+        if (reqURI.startsWith("/matches/") && !reqURI.equals("/matches/index.html")) {            
+            String matchName = reqURI.replaceFirst("/matches/", "").replace("index.html", "");
+            if(CondensedMatch.loadCondensedMatch("http://matches.ggp.org/matches/" + matchName) == null) {
+                resp.setStatus(404);
+                return;
+            }
+            reqURI = "/matches/matchPage.html";
+        }
 
         boolean writeAsBinary = false;        
         if (reqURI.endsWith(".html")) {

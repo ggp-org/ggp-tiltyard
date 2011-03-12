@@ -72,5 +72,5 @@ public class CondensedMatch {
     
     public static CondensedMatch loadCondensedMatch(String theSpectatorURL) throws IOException {
         return Persistence.loadSpecific(theSpectatorURL, CondensedMatch.class);
-    }
+    }    
 }

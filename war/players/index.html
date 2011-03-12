@@ -10,19 +10,43 @@
     <script type="text/javascript" src="/apolloHeader.js"></script>
   
     <div id='header'></div>
-    <br>    
+    <br>
+    <center>You can <a href="javascript:add_new_player()">add your player</a> to this list!</center>
+    <br>
     <div id='playerList'></div>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));        
-    
-      var thePlayers = ResourceLoader.load_json('/data/players/');
-      var playerListHTML = '<center>';
-      for (var i in thePlayers) {
-        playerListHTML += generatePlayerHTML(thePlayers[i]);
+
+      function add_new_player() {
+        var theName = window.prompt("What should the player's name be? This name can only contain letters, digits, dashes, and underscores. Once chosen, it cannot be changed.", "");
+        var thePlayer = {};
+        thePlayer.name = theName;
+        thePlayer.theURL = "";
+        thePlayer.isEnabled = false;
+        thePlayer.gdlVersion = "GDLv1";
+        thePlayer.visibleEmail = "";
+        if (theName.length > 0) {
+          var theResponse = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(thePlayer)));
+          if (theResponse) {
+            drawPlayerList();
+          } else {
+            alert("Failed to create player named: " + theName);
+          }
+        }
       }
-      playerListHTML += '</center>';
-      document.getElementById('playerList').innerHTML = playerListHTML;
+
+      function drawPlayerList() {
+        var thePlayers = ResourceLoader.load_json('/data/players/');
+        var playerListHTML = '';
+        for (var i in thePlayers) {
+          playerListHTML += generatePlayerHTML(thePlayers[i]);
+        }
+        playerListHTML += '';
+        document.getElementById('playerList').innerHTML = playerListHTML;
+      }
+      
+      drawPlayerList();
     </script>
   </body>  
 </html>

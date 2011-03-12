@@ -29,7 +29,8 @@
       var recentMatchesHTML = 'Listing of the ' + recentMatches.length + ' most recently played matches: <ul>';
       for (var i = 0; i < recentMatches.length; i++) {
         var theDate = new Date(recentMatches[i].startTime);
-        recentMatchesHTML += '<li>Match started at ';
+        var matchURL = recentMatches[i].apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
+        recentMatchesHTML += '<li><a href="/matches/' + matchURL + '">Match</a> started at ';
         recentMatchesHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
         recentMatchesHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
         for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {

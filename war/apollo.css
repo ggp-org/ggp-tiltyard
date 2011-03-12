@@ -59,6 +59,8 @@ table.player {
     display: table;
     border-width: 5px;
     border-style: ridge;
+    width: 450px;
+    float: left;
 }
 
 td.navbar {
