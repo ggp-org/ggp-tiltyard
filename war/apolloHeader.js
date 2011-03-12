@@ -6,10 +6,10 @@ function generateHeader(theDiv) {
     theHTML += '  <tr>';
     theHTML += '    <td class="navbar" width=20% align="left" style="padding: 0;"><a href="/"><img width=200px src="/static/images/SolidSunSlice.png"></img></a></td>';
     theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/about/">About</a></td>';
-    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink>Games</a></td>';
+    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/games/">Games</a></td>';
     theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/players/">Players</a></td>';    
     theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/matches/">Matches</a></td>';
-    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink>Stats</a></td>';
+    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/stats/">Stats</a></td>';
     theHTML += '    <td class="navbar" width=30% align="right" valign="middle"><div class="login" id="login_div"> </div></td>';
     theHTML += '  </tr>';
     theHTML += '</table>';
