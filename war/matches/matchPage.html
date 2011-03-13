@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="/apollo.css" />
     <script type='text/javascript' src='/_ah/channel/jsapi'></script>    
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
   </head>
   <body onload="spectatorView.render()" onresize="spectatorView.render()">
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
@@ -46,6 +47,8 @@
       var theDate = new Date(spectatorMatch.startTime);
       sidePanelHTML += '<b>Game:</b> ' + spectatorMatch.gameName + '<br><br>';
       sidePanelHTML += '<b>Started at:</b> ' + theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString() + '<br><br>';
+      sidePanelHTML += '<b>Start clock:</b> ' + spectatorMatch.startClock + '<br>';
+      sidePanelHTML += '<b>Play clock:</b> ' + spectatorMatch.playClock + '<br><br>';
       sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator View</a>)<br><br>';
       sidePanelHTML += 'There are ' + apolloMatch.apolloPlayers.length + ' players: <ol>';
       for (var i = 0; i < apolloMatch.apolloPlayers.length; i++) {
