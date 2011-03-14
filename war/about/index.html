@@ -2,19 +2,83 @@
   <head>
     <title>GGP Apollo Server</title>
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Vollkorn">
     <link rel="stylesheet" type="text/css" href="/apollo.css" />
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+    <style>
+      h1 {
+          font-size: 48px;
+          text-shadow: 2px 2px 2px #aaa;
+          text-align: center;
+      }
+      h2 {
+          font-size: 24px;
+          text-shadow: 1px 1px 1px #aaa;
+          text-align: justify;
+      }
+      h3 {
+          font-size: 24px;
+          text-shadow: 1px 1px 1px #aaa;     
+          text-align: center;        
+      }
+      p {
+	      font-size: 20px;
+          text-indent: 2em;
+      }
+    </style>   
   </head>
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type="text/javascript" src="/apolloHeader.js"></script>
     
     <div id='header'></div>
-    <br>
+    <div style="margin-left: 15%; margin-right: 15%; font-family: 'Vollkorn', serif;">
+    <h1>About the Apollo Gaming Server</h1>
     
-    Hello! (etc)
-    TODO: Create an actual "About" page.
+    <h2>General Game Playing</h2>
+    <p>General game playing is a domain of artificial intelligence that studies
+    computer systems that can play a wide variety of games. General game players
+    can play games spanning the range from Tic-Tac-Toe and Connect Four to Checkers
+    and Chess, without needing human programmers to devise game-specific strategies
+    in advance.</p>
+    
+    <h2>Apollo Gaming Server</h2>
+    <p>This server continuously runs matches between general game playing systems,
+    allowing developers to easily test out their players. Currently it is specifically
+    designed for use as part of the CS227b class at Stanford University, and the games
+    are chosen to be simple enough for student players to handle without fancy
+    infrastructure, but challenging enough to demonstrate intelligence on the part of
+    the players and be interesting to watch.</p>
+    
+    <p>Games are loaded from the game repository server at <a href="http://games.ggp.org/">games.ggp.org</a>,
+    which is available as a stand-alone resource to developers interested in building general
+    game playing applications. Matches are published to the spectator server at matches.ggp.org,
+    where they can be watched in real time, or queried and processed in bulk by researchers.</p>
+
+    <h2>Joining the Server</h2>
+    <p>Adding your player to the server is easy! Just log in using any OpenID account, go to the
+    players page, and use the link at the top of the page to add your player to the server. Once
+    you have registered your player, Apollo will automatically start matches between your player
+    and other active players on the server.</p>
+    
+    <p>You are responsible your hosting your player: it must be connected to the Internet and
+    available at a URL (which can be an IP address and port). Since matches are played continuously,
+    you should run your player on a system that will be able to stay up for long periods of time
+    (or you should make sure to disable your player when the system hosting it is shut down).</p>
+    
+    <h2>GGP Galaxy and Friends</h2>
+    <p>This server is open source, and is part of a larger open source effort called
+    <a href="http://code.google.com/p/ggp-galaxy/">GGP Galaxy</a> that seeks to build a
+    federated web-based general game playing ecosystem. This server also draws on the
+    <a href="http://code.google.com/p/ggp-base/">GGP Base</a> open source project, which
+    provides a Java-based backend system for running general game playing matches.
+    The frontend server for Apollo runs on Google App Engine.</p>
+    
+    <h2>Contact Information</h2>
+    <p>Questions? Feedback? Thoughts? Feel free to email <b>webmaster@ggp.org</b> and
+    I'll respond as soon as I can. For urgent issues, please email <b>action@ggp.org</b>.
+    </div>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));    

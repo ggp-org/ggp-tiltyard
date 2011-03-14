@@ -20,29 +20,33 @@
       var thePlayer = ResourceLoader.load_json('/data/players/' + window.location.pathname.replace("/players/", ""));
       var playerHTML = '<center>';
       playerHTML += generatePlayerHTML(thePlayer);
-      playerHTML += '</center><br>';
+      playerHTML += '</center><br><br>';
       
       var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
       var recentMatches = thePlayer.recentMatches;
       recentMatches.reverse();
-      playerHTML += '<b>What are the ' + recentMatches.length + ' matches this player has played in recently?</b> <ul>';
-      for (var i = 0; i < recentMatches.length; i++) {
-        var theDate = new Date(recentMatches[i].startTime);
-        playerHTML += '<li>Match started at ';
-        playerHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
-        playerHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
-        for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {
-          playerHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
-          if (j < recentMatches[i].apolloPlayers.length - 1) {
-            playerHTML += ', ';
+      if (recentMatches.length == 0) {
+        playerHTML += '<b>This player has not played in any matches recently.</b>';
+      } else {
+        playerHTML += '<b>What are the ' + recentMatches.length + ' matches this player has played in recently?</b> <ul>';      
+        for (var i = 0; i < recentMatches.length; i++) {
+          var theDate = new Date(recentMatches[i].startTime);
+          playerHTML += '<li>Match started at ';
+          playerHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
+          playerHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
+          for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {
+            playerHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
+            if (j < recentMatches[i].apolloPlayers.length - 1) {
+              playerHTML += ', ';
+            }
           }
+          playerHTML += '): <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+          if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
+            playerHTML += '<b>(Ongoing!)</b>';
+          }        
         }
-        playerHTML += '): <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
-        if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
-          playerHTML += '<b>(Ongoing!)</b>';
-        }        
+        playerHTML += '</ul>';        
       }
-      playerHTML += '</ul>';
       document.getElementById('playerDiv').innerHTML = playerHTML;
     </script>
   </body>  

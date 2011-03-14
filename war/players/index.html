@@ -12,7 +12,7 @@
   
     <div id='header'></div>
     <br>
-    <center>You can <a href="javascript:add_new_player()">add your player</a> to this list!</center>
+    <center>You can <a rel="nofollow" href="javascript:add_new_player()">add your player</a> to this list!</center>
     <br>
     <div id='playerList'></div>
 
@@ -20,7 +20,7 @@
       generateHeader(document.getElementById('header'));        
 
       function add_new_player() {
-        var theName = window.prompt("What should the player's name be? This name can only contain letters, digits, dashes, and underscores. Once chosen, it cannot be changed.", "");
+        var theName = window.prompt("What should the player's name be? It can only contain letters, digits, dashes, and underscores. Once chosen, it cannot be changed.", "");
         var thePlayer = {};
         thePlayer.name = theName;
         thePlayer.theURL = "";
