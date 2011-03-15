@@ -14,7 +14,8 @@
     <br>
     <center>You can <a rel="nofollow" href="javascript:add_new_player()">add your player</a> to this list!</center>
     <br>
-    <div id='playerList'></div>
+    <div id='ownedPlayerList' style='display: table;'></div><br>
+    <div id='playerList' style='display: table;'></div>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));        
@@ -40,10 +41,18 @@
       function drawPlayerList() {
         var thePlayers = ResourceLoader.load_json('/data/players/');
         var playerListHTML = '';
+        var ownedPlayerListHTML = '';
         for (var i in thePlayers) {
-          playerListHTML += generatePlayerHTML(thePlayers[i]);
+          if ("theURL" in thePlayers[i]) {
+            ownedPlayerListHTML += generatePlayerHTML(thePlayers[i]);
+          }
         }
-        playerListHTML += '';
+        for (var i in thePlayers) {
+          if (!("theURL" in thePlayers[i])) {
+            playerListHTML += generatePlayerHTML(thePlayers[i]);
+          }
+        }
+        document.getElementById('ownedPlayerList').innerHTML = ownedPlayerListHTML;
         document.getElementById('playerList').innerHTML = playerListHTML;
       }
       
