@@ -55,7 +55,7 @@ function generatePlayerInnerHTML(aPlayer) {
     
     var thePlayerHTML = "";
     thePlayerHTML += '<tr><td width=5></td>';
-    thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><table style="border-width: 2px; border-style: inset;" cellspacing=0 cellpadding=0><tr><td><img src="http://placekitten.com/g/50/50"/></tr></td></table></a></td>';
+    thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><table style="border-width: 2px; border-style: inset;" cellspacing=0 cellpadding=0><tr><td><img width=50 height=50 src="http://placekitten.com/g/50/50"/></tr></td></table></a></td>';
     thePlayerHTML += '<td width=5></td>';
     thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><font size=6><b>' + aPlayer.name + '</b></font></a>';
     thePlayerHTML += '<div id=player_' + aPlayer.name + '_email>'; 
