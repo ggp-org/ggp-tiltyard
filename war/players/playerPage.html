@@ -12,42 +12,45 @@
 
     <div id='header'></div>
     <br>    
-    <div id='playerDiv'></div>
+    <div id='playerDiv'></div><br>
+    <div id='playerMatchesDiv'></div>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
       var thePlayer = ResourceLoader.load_json('/data/players/' + window.location.pathname.replace("/players/", ""));
-      var playerHTML = '<center>';
+      var playerHTML = '<center style="display: table; width: 100%">';
       playerHTML += generatePlayerHTML(thePlayer);
-      playerHTML += '</center><br><br>';
+      playerHTML += '</center>';
+      document.getElementById('playerDiv').innerHTML = playerHTML;
       
+      var playerMatchesHTML = '';
       var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
       var recentMatches = thePlayer.recentMatches;
       recentMatches.reverse();
       if (recentMatches.length == 0) {
-        playerHTML += '<b>This player has not played in any matches recently.</b>';
+        playerMatchesHTML += '<b>This player has not played in any matches recently.</b>';
       } else {
-        playerHTML += '<b>What are the ' + recentMatches.length + ' matches this player has played in recently?</b> <ul>';      
+        playerMatchesHTML += '<b>What are the ' + recentMatches.length + ' matches this player has played in recently?</b> <ul>';      
         for (var i = 0; i < recentMatches.length; i++) {
           var theDate = new Date(recentMatches[i].startTime);
-          playerHTML += '<li>Match started at ';
-          playerHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
-          playerHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
+          playerMatchesHTML += '<li>Match started at ';
+          playerMatchesHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
+          playerMatchesHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
           for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {
-            playerHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
+            playerMatchesHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
             if (j < recentMatches[i].apolloPlayers.length - 1) {
-              playerHTML += ', ';
+              playerMatchesHTML += ', ';
             }
           }
-          playerHTML += '): <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+          playerMatchesHTML += '): <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
           if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
-            playerHTML += '<b>(Ongoing!)</b>';
+            playerMatchesHTML += '<b>(Ongoing!)</b>';
           }        
         }
-        playerHTML += '</ul>';        
+        playerMatchesHTML += '</ul>';        
       }
-      document.getElementById('playerDiv').innerHTML = playerHTML;
+      document.getElementById('playerMatchesDiv').innerHTML = playerMatchesHTML;
     </script>
   </body>  
 </html>
