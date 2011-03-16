@@ -31,21 +31,25 @@ div.login {
 	margin: 5px;
 }
 
-table.enabled {
+table.active {
     display: inline;
     border-width: 5px;
     border-style: ridge;
     background-color: #52D017;
     font-family: monospace;
     font-weight: bold;
+    width: 100%;
+    text-align: center;
 }
-table.disabled {
+table.inactive {
     display: inline;
 	border-width: 5px;
 	border-style: ridge;
 	background-color: #E42217;
     font-family: monospace;
-    font-weight: bold;	
+    font-weight: bold;
+    width: 100%;
+    text-align: center;
 }
 table.gdlVersion {
     display: inline;
@@ -53,7 +57,9 @@ table.gdlVersion {
 	border-style: ridge;
 	background-color: #56A5EC;
     font-family: monospace;
-    font-weight: bold;		
+    font-weight: bold;
+    width: 100%;
+    text-align: center;
 }
 table.player {
     display: table;
@@ -61,6 +67,7 @@ table.player {
     border-style: ridge;
     width: 450px;
     float: left;
+    margin: 5px;
 }
 
 td.navbar {

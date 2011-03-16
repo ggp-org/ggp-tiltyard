@@ -39,9 +39,9 @@ function generateHeader(theDiv) {
 function generatePlayerHTML(aPlayer) {
     var thePlayerHTML = '<table class="player" id="player_' + aPlayer.name + '_table" style="background-color:';
     if ("theURL" in aPlayer) {
-        thePlayerHTML += '#CCEECC';
+        thePlayerHTML += '#CCEECC; height: 110px';
     } else {
-        thePlayerHTML += '#DDDDDD';
+        thePlayerHTML += '#DDDDDD; height: 80px';
     }
     thePlayerHTML += '">';
     thePlayerHTML += generatePlayerInnerHTML(aPlayer);
@@ -53,33 +53,43 @@ var theRecordedPlayers = {};
 function generatePlayerInnerHTML(aPlayer) {
     theRecordedPlayers[aPlayer.name] = aPlayer;
     
+    function clip(s, n) {
+        if (s.length <= n) return s;
+        return s.substring(0,n-3) + "...";
+    }
+    
     var thePlayerHTML = "";
     thePlayerHTML += '<tr><td width=5></td>';
-    thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><table style="border-width: 2px; border-style: inset;" cellspacing=0 cellpadding=0><tr><td><img width=50 height=50 src="http://placekitten.com/g/50/50"/></tr></td></table></a></td>';
+    thePlayerHTML += '<td width=60><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><table style="border-width: 2px; border-style: inset;" cellspacing=0 cellpadding=0><tr><td><img width=50 height=50 src="http://placekitten.com/g/50/50"/></tr></td></table></a></td>';
     thePlayerHTML += '<td width=5></td>';
-    thePlayerHTML += '<td><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><font size=6><b>' + aPlayer.name + '</b></font></a>';
-    thePlayerHTML += '<div id=player_' + aPlayer.name + '_email>'; 
+    thePlayerHTML += '<td width=255><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><font size=6><b>' + aPlayer.name + '</b></font></a>';
+    thePlayerHTML += '<div id=player_' + clip(aPlayer.name, 15) + '_email>'; 
     if (aPlayer.visibleEmail.length > 0) {
-        thePlayerHTML += '<tt>' + aPlayer.visibleEmail + '</tt>';
+        thePlayerHTML += '<tt>' + clip(aPlayer.visibleEmail, 30) + '</tt>';
     } else {
         thePlayerHTML += '<i>Email address not listed.</i>';
     }
     thePlayerHTML += '</div></td>';
     thePlayerHTML += '<td width=5></td>';
-    thePlayerHTML += '<td>';
+    thePlayerHTML += '<td width=90>';
     if (aPlayer.isEnabled) {
-        thePlayerHTML += '<table class="enabled"><tr><td>Enabled!</td></tr></table>';
+        thePlayerHTML += '<table class="active"><tr id="player_' + aPlayer.name + '_active"><td>Active!</td></tr></table>';
     } else {
-        thePlayerHTML += '<table class="disabled"><tr><td>Disabled</td></tr></table>'; 
+        thePlayerHTML += '<table class="inactive"><tr id="player_' + aPlayer.name + '_active"><td>Inactive</td></tr></table>'; 
     }
     thePlayerHTML += '<br>';
-    thePlayerHTML += '<table class="gdlversion"><tr><td>' + aPlayer.gdlVersion + '</td></tr></table>';
+    thePlayerHTML += '<table class="gdlVersion"><tr><td>' + aPlayer.gdlVersion + '</td></tr></table>';
     thePlayerHTML += '</td></tr>';
     if ("theURL" in aPlayer) {
         thePlayerHTML += '<tr><td width=5></td>';
         thePlayerHTML += '<td><b>URL:</b></td><td width=5></td>';
         thePlayerHTML += '<td><div id=player_' + aPlayer.name + '_url>';
-        thePlayerHTML += '<tt>' + aPlayer.theURL + '</tt></div></td><td width=5></td>';
+        if (aPlayer.theURL.length > 0) {
+          thePlayerHTML += '<tt>' + aPlayer.theURL + '</tt>';
+        } else {
+          thePlayerHTML += '<i>Player URL not listed.</i>';
+        }
+        thePlayerHTML += '</div></td><td width=5></td>';
         thePlayerHTML += '<td><div id=player_' + aPlayer.name + '_button><button onclick=\'clickedEditForPlayer("' + aPlayer.name + '")\' type="Button">Edit</button></div></td></tr>'; 
     }
     return thePlayerHTML;
@@ -89,20 +99,28 @@ function clickedEditForPlayer (playerName) {
     var aPlayer = theRecordedPlayers[playerName];
     var urlDiv = document.getElementById("player_" + playerName + "_url");
     var emailDiv = document.getElementById("player_" + playerName + "_email");
-    var buttonDiv = document.getElementById("player_" + playerName + "_button");
+    var activeTd = document.getElementById("player_" + playerName + "_active");
+    var buttonDiv = document.getElementById("player_" + playerName + "_button");    
     
     urlDiv.innerHTML = '<input type="text" size="22" id="player_' + playerName + '_url_field" value="' + aPlayer.theURL + '">';
     emailDiv.innerHTML = '<input type="text" size="22" id="player_' + playerName + '_email_field" value="' + aPlayer.visibleEmail + '">';
+    if (aPlayer.isEnabled) {
+      activeTd.innerHTML = '<select id="player_' + playerName + '_active_field"><option>Inactive</option><option selected>Active</option></select>';
+    } else {
+      activeTd.innerHTML = '<select id="player_' + playerName + '_active_field"><option selected>Inactive</option><option>Active</option></select>';
+    }
     buttonDiv.innerHTML = '<button onclick=\'clickedEditDoneForPlayer("' + aPlayer.name + '")\' type="Button">Done!</button>';
 }
 
 function clickedEditDoneForPlayer (playerName) {
     var aPlayer = theRecordedPlayers[playerName];
     
+    var newActive = (document.getElementById("player_" + playerName + "_active_field").selectedIndex == 1);
     var newURL = document.getElementById("player_" + playerName + "_url_field").value;
     var newEmail = document.getElementById("player_" + playerName + "_email_field").value;
     aPlayer.theURL = newURL;
     aPlayer.visibleEmail = newEmail;
+    aPlayer.isEnabled = newActive;
 
     // TODO: Make this asynchronous?
     var bPlayer = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(aPlayer)));    
