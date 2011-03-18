@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <title>GGP Apollo Server</title>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+    <link rel="stylesheet" type="text/css" href="/apollo.css" />
+    <script type='text/javascript' src='/_ah/channel/jsapi'></script>    
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+  </head>
+  <body onload="renderViews()" onresize="renderViews()">
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+    <script type="text/javascript" src="/apolloHeader.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/compulog.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/AJAXSLT.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/StateRenderer.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/StateMachine.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/SymbolList.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/SpectatorView.js'></script>
+    <script type='text/javascript' src='//matches.ggp.org/matches/channel.js'></script>
+    
+    <div id='header'></div>
+    <br>
+    <div id='sv_0' style="width:50%; height:90%; float: left;"></div>
+    <div id='sv_1' style="width:50%; height:90%; float: left;"></div>
+
+    <script type='text/javascript'>
+      generateHeader(document.getElementById('header'));    
+
+      var views = [];
+    
+      var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
+      var recentMatches = ResourceLoader.load_json('/data/matches/recent/');
+      recentMatches.reverse();
+      for (var i = 0; i < recentMatches.length; i++) {
+        if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
+          var theDiv = document.getElementById('sv_' + views.length)
+          var sV = SpectatorView.construct(recentMatches[i].apolloSpectatorURL, theDiv);
+          sV.getHeight = function () { return theDiv.clientHeight * 0.95; };
+          sV.getWidth = function () { return theDiv.clientWidth * 0.95; };
+          sV.render();
+          views.push(sV);          
+        }
+      }
+      
+      function renderViews() {
+        for (var i = 0; i < views.length; i++) {
+          views[i].render();
+        }
+      }
+    </script>
+  </body>  
+</html>
