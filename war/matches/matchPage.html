@@ -17,6 +17,7 @@
     <script type='text/javascript' src='//www.ggp.org/scripts/common/StateMachine.js'></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/SymbolList.js'></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/SpectatorView.js'></script>
+    <script type='text/javascript' src='//matches.ggp.org/matches/channel.js'></script>
 
     <div id='header'></div>
     <div style="float: left; background-color: #EEEEEE; height: 90%; width: 20%">
@@ -34,8 +35,7 @@
       generateHeader(document.getElementById('header'));
 
       var apolloMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
-      eval(ResourceLoader.load_raw(apolloMatch.apolloSpectatorURL + 'channel.js'));      
-      
+
       spectatorView = SpectatorView.construct(apolloMatch.apolloSpectatorURL, document.getElementById('spectator_div'));
       // TODO: Fix the width/height calculation properly.
       spectatorView.getHeight = function () { return document.getElementById("spectator_div").clientHeight * 0.95; };
