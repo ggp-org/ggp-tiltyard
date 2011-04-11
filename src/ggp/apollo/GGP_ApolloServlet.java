@@ -13,11 +13,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.PersistenceManager;
 import javax.servlet.http.*;
+
+import org.datanucleus.store.query.AbstractQueryResult;
 
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
@@ -251,6 +256,108 @@ public class GGP_ApolloServlet extends HttpServlet {
         theState.clearBackendErrors();
     }
     
+    public void computeStatistics() {
+        int nMatches = 0;
+        int nMatchesFinished = 0;
+        int nMatchesAbandoned = 0;
+        int nMatchesStatErrors = 0;
+        
+        Map<String,WeightedAverage> playerAverageScore = new HashMap<String,WeightedAverage>();
+        Map<String,Map<String,WeightedAverage>> averageScoreVersus = new HashMap<String,Map<String,WeightedAverage>>();
+        
+        WeightedAverage playersPerMatch = new WeightedAverage();
+
+        long nComputeBeganAt = System.currentTimeMillis();
+        PersistenceManager pm = Persistence.getPersistenceManager();
+        try {
+            Iterator<?> sqr = ((AbstractQueryResult) pm.newQuery(CondensedMatch.class).execute()).iterator();
+            while (sqr.hasNext()) {
+                CondensedMatch c = (CondensedMatch)sqr.next();
+                if (!c.isReady()) continue;                            
+                JSONObject theJSON = c.getCondensedJSON();
+                
+                nMatches++;
+                try {
+                    if (theJSON.getBoolean("isCompleted")) {
+                        nMatchesFinished++;
+                        
+                        // Score-related statistics.
+                        for (int i = 0; i < c.getPlayers().size(); i++) {
+                            String aPlayer = c.getPlayers().get(i);
+                            int aPlayerScore = theJSON.getJSONArray("goalValues").getInt(i);
+                            
+                            if (!playerAverageScore.containsKey(aPlayer)) {
+                                playerAverageScore.put(aPlayer, new WeightedAverage());
+                            }
+                            playerAverageScore.get(aPlayer).addValue(aPlayerScore);
+                            
+                            for (String bPlayer : c.getPlayers()) {
+                                if (bPlayer.equals(aPlayer))
+                                    continue;
+                                if (!averageScoreVersus.containsKey(aPlayer)) {
+                                    averageScoreVersus.put(aPlayer, new HashMap<String,WeightedAverage>());
+                                }
+                                if (!averageScoreVersus.get(aPlayer).containsKey(bPlayer)) {
+                                    averageScoreVersus.get(aPlayer).put(bPlayer, new WeightedAverage());
+                                }
+                                averageScoreVersus.get(aPlayer).get(bPlayer).addValue(aPlayerScore);
+                            }
+                        }
+                    } else {
+                        nMatchesAbandoned++;
+                    }
+                    
+                    playersPerMatch.addValue(theJSON.getJSONArray("gameRoleNames").length());
+                } catch(JSONException ex) {
+                    nMatchesStatErrors++;
+                }
+            }
+        } catch(JDOObjectNotFoundException e) {
+            ;
+        } finally {
+            pm.close();
+        }
+        long nComputeTime = System.currentTimeMillis() - nComputeBeganAt;
+        
+        // Store the statistics as a JSON object in the datastore.
+        try {
+            JSONObject overall = new JSONObject();
+            Map<String, JSONObject> perPlayer = new HashMap<String, JSONObject>();
+            
+            // Store the overall statistics
+            overall.put("matches", nMatches);
+            overall.put("matchesFinished", nMatchesFinished);
+            overall.put("matchesAbandoned", nMatchesAbandoned);
+            overall.put("matchesAveragePlayers", playersPerMatch.getWeightedAverage());
+            overall.put("matchesStatErrors", nMatchesStatErrors);
+            overall.put("computeTime", nComputeTime);            
+            overall.put("leaderboard", playerAverageScore);
+            
+            // Store the per-player statistics
+            for (String playerName : playerAverageScore.keySet()) {
+                if (!perPlayer.containsKey(playerName)) {
+                    perPlayer.put(playerName, new JSONObject());
+                }
+                perPlayer.get(playerName).put("averageScore", playerAverageScore.get(playerName));
+            }
+            for (String playerName : averageScoreVersus.keySet()) {
+                if (!perPlayer.containsKey(playerName)) {
+                    perPlayer.put(playerName, new JSONObject());
+                }
+                perPlayer.get(playerName).put("averageScoreVersus", averageScoreVersus.get(playerName));
+            }
+            
+            StoredStatistics s = new StoredStatistics();
+            s.setOverallStats(overall);
+            for (String playerName : perPlayer.keySet()) {
+                s.setPlayerStats(playerName, perPlayer.get(playerName));
+            }
+            s.save();
+        } catch (JSONException e) {
+            ;
+        }
+    }    
+    
     public void writeStaticTextPage(HttpServletResponse resp, String theURI) throws IOException {
         FileReader fr = new FileReader(theURI);
         BufferedReader br = new BufferedReader(fr);
@@ -362,6 +469,30 @@ public class GGP_ApolloServlet extends HttpServlet {
                     theResponse.put("loggedIn", false);
                 }
                 resp.getWriter().println(theResponse.toString());
+            } else if (theRPC.startsWith("statistics/")) {                
+                String theStatistic = theRPC.replaceFirst("statistics/", "");                
+                JSONObject theResponse = null;
+                if (theStatistic.equals("overall")) {
+                    StoredStatistics s = StoredStatistics.loadStatistics();
+                    theResponse = s.getOverallStats();
+                } else if (theStatistic.startsWith("players/")) {
+                    StoredStatistics s = StoredStatistics.loadStatistics();
+                    theStatistic = theStatistic.replaceFirst("players/", "");
+                    theResponse = s.getPlayerStats(theStatistic);
+                } else if (theStatistic.startsWith("game/")) {
+                    StoredStatistics s = StoredStatistics.loadStatistics();
+                    theStatistic = theStatistic.replaceFirst("game/", "");
+                    theResponse = s.getGameStats(theStatistic);
+                } else if (theStatistic.equals("refresh")) {
+                    computeStatistics();
+                    StoredStatistics s = StoredStatistics.loadStatistics();
+                    theResponse = s.getOverallStats();
+                }
+                if (theResponse != null) {
+                    resp.getWriter().println(theResponse.toString());
+                } else {
+                    resp.setStatus(404);
+                }
             } else {
                 resp.setStatus(404);
             }
@@ -454,5 +585,5 @@ public class GGP_ApolloServlet extends HttpServlet {
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "*");
         resp.setHeader("Access-Control-Allow-Age", "86400");    
-    }    
+    }
 }

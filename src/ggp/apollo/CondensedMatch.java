@@ -36,7 +36,7 @@ public class CondensedMatch {
             theJSON.put("moveCount", theJSON.getJSONArray("moves").length());
         } catch (Exception e) {
             theJSON.put("moveCount", 0);
-        }        
+        }
         theJSON.remove("states");      // Strip out all of the large fields
         theJSON.remove("moves");       // that we won't need most of the time.        
         theJSON.remove("stateTimes");  // This is why we can store it here.        

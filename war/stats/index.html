@@ -12,12 +12,17 @@
     
     <div id='header'></div>
     <br>
-    
-    Hello! (etc)
-    TODO: Create an actual "Statistics" page.
+    <center>
+      <div id='stats'></div>
+      <br>
+      Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.
+    </center>
 
     <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));    
+      generateHeader(document.getElementById('header'));
+      
+      var statsJSON = ResourceLoader.load_json('/data/statistics/overall');
+      document.getElementById('stats').innerHTML = renderJSON(statsJSON);
     </script>
   </body>  
 </html>

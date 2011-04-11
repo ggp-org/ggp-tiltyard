@@ -128,3 +128,17 @@ function clickedEditDoneForPlayer (playerName) {
     var theTable = document.getElementById("player_" + playerName + "_table");
     theTable.innerHTML = generatePlayerInnerHTML(bPlayer);
 }
+
+function renderJSON(x) {
+  var s = "";
+  if (typeof(x) == "object" && !x[0]) {    
+    s += "<table border=\"1px\">";
+    for (y in x) {
+      s += "<tr><td><b>" + y + "</b></td><td>" + renderJSON(x[y]) + "</td></tr>";
+    }
+    s += "</table>";    
+  } else {
+    s += x;
+  }
+  return s;
+}

@@ -13,12 +13,18 @@
     <div id='header'></div>
     <br>    
     <div id='playerDiv'></div><br>
+    <center><div id='playerStatsDiv'></div></center><br>
     <div id='playerMatchesDiv'></div>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
-      var thePlayer = ResourceLoader.load_json('/data/players/' + window.location.pathname.replace("/players/", ""));
+      var playerName = window.location.pathname.replace("/players/", "");
+      
+      var statsJSON = ResourceLoader.load_json('/data/statistics/players/' + playerName);
+      document.getElementById('playerStatsDiv').innerHTML = renderJSON(statsJSON);
+
+      var thePlayer = ResourceLoader.load_json('/data/players/' + playerName);
       var playerHTML = '<center style="display: table; width: 100%">';
       playerHTML += generatePlayerHTML(thePlayer);
       playerHTML += '</center>';
