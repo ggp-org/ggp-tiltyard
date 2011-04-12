@@ -263,9 +263,11 @@ public class GGP_ApolloServlet extends HttpServlet {
         int nMatchesStatErrors = 0;
         
         Map<String,WeightedAverage> playerAverageScore = new HashMap<String,WeightedAverage>();
+        Map<String,WeightedAverage> playerDecayedAverageScore = new HashMap<String,WeightedAverage>();
         Map<String,Map<String,WeightedAverage>> averageScoreVersus = new HashMap<String,Map<String,WeightedAverage>>();
         
         WeightedAverage playersPerMatch = new WeightedAverage();
+        WeightedAverage movesPerMatch = new WeightedAverage();
 
         long nComputeBeganAt = System.currentTimeMillis();
         PersistenceManager pm = Persistence.getPersistenceManager();
@@ -279,7 +281,8 @@ public class GGP_ApolloServlet extends HttpServlet {
                 nMatches++;
                 try {
                     if (theJSON.getBoolean("isCompleted")) {
-                        nMatchesFinished++;
+                        nMatchesFinished++;                        
+                        movesPerMatch.addValue(theJSON.getInt("moveCount"));
                         
                         // Score-related statistics.
                         for (int i = 0; i < c.getPlayers().size(); i++) {
@@ -290,6 +293,12 @@ public class GGP_ApolloServlet extends HttpServlet {
                                 playerAverageScore.put(aPlayer, new WeightedAverage());
                             }
                             playerAverageScore.get(aPlayer).addValue(aPlayerScore);
+                            
+                            double ageInDays = (double)(System.currentTimeMillis() - theJSON.getLong("startTime")) / (double)(86400000L);
+                            if (!playerDecayedAverageScore.containsKey(aPlayer)) {
+                                playerDecayedAverageScore.put(aPlayer, new WeightedAverage());
+                            }
+                            playerDecayedAverageScore.get(aPlayer).addValue(aPlayerScore, Math.pow(0.98, ageInDays));
                             
                             for (String bPlayer : c.getPlayers()) {
                                 if (bPlayer.equals(aPlayer))
@@ -310,10 +319,11 @@ public class GGP_ApolloServlet extends HttpServlet {
                     playersPerMatch.addValue(theJSON.getJSONArray("gameRoleNames").length());
                 } catch(JSONException ex) {
                     nMatchesStatErrors++;
+                    throw new RuntimeException(ex);
                 }
             }
         } catch(JDOObjectNotFoundException e) {
-            ;
+            throw new RuntimeException(e);
         } finally {
             pm.close();
         }
@@ -328,11 +338,14 @@ public class GGP_ApolloServlet extends HttpServlet {
             overall.put("matches", nMatches);
             overall.put("matchesFinished", nMatchesFinished);
             overall.put("matchesAbandoned", nMatchesAbandoned);
+            overall.put("matchesAverageMoves", movesPerMatch.getWeightedAverage());
             overall.put("matchesAveragePlayers", playersPerMatch.getWeightedAverage());
             overall.put("matchesStatErrors", nMatchesStatErrors);
-            overall.put("computeTime", nComputeTime);            
+            overall.put("computeTime", nComputeTime);
             overall.put("leaderboard", playerAverageScore);
-            
+            overall.put("decayedLeaderboard", playerDecayedAverageScore);
+            overall.put("computedAt", System.currentTimeMillis());
+
             // Store the per-player statistics
             for (String playerName : playerAverageScore.keySet()) {
                 if (!perPlayer.containsKey(playerName)) {
@@ -340,6 +353,12 @@ public class GGP_ApolloServlet extends HttpServlet {
                 }
                 perPlayer.get(playerName).put("averageScore", playerAverageScore.get(playerName));
             }
+            for (String playerName : playerDecayedAverageScore.keySet()) {
+                if (!perPlayer.containsKey(playerName)) {
+                    perPlayer.put(playerName, new JSONObject());
+                }
+                perPlayer.get(playerName).put("decayedAverageScore", playerDecayedAverageScore.get(playerName));
+            }            
             for (String playerName : averageScoreVersus.keySet()) {
                 if (!perPlayer.containsKey(playerName)) {
                     perPlayer.put(playerName, new JSONObject());
@@ -354,7 +373,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             s.save();
         } catch (JSONException e) {
-            ;
+            throw new RuntimeException(e);
         }
     }    
     

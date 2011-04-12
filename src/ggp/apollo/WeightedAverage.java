@@ -24,6 +24,9 @@ class WeightedAverage {
     }
     
     public double getWeightedAverage() {
+        if (totalWeight == 0) {
+            return -1;
+        }
         return totalSum / totalWeight;
     }
     
