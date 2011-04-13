@@ -9,11 +9,48 @@
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type="text/javascript" src="/apolloHeader.js"></script>
-    
+
+<style>
+th {
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0.24, #CCC),
+    color-stop(0.81, #AAA)
+  );
+  background-image: -moz-linear-gradient(
+    center bottom,
+    rgb(230,230,230) 24%,
+    rgb(184,184,184) 81%
+  );
+  font-variant: small-caps;
+  font-size: 20px;
+}
+td.name {
+  font-weight:bold;
+  width: 200px;
+}
+</style>
+
     <div id='header'></div>
     <br>
     <center>
-      <div id='stats'></div>
+
+      <table width=100%><tr><td width=20%></td><td valign=top width=150px>
+        <center>
+        <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
+          <th colspan=3>Leaderboard</th>
+        </table>
+        </center>
+      </td><td valign=top width=150px>
+        <center>
+        <table id="server_stats" border=1px bgcolor=#CCC cellpadding=5px>
+          <th colspan=2>Server Statistics</th>
+        </table>
+        </center>
+      </td><td width=20%></td></tr></table>
+
       <br>
       Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.
     </center>
@@ -22,7 +59,43 @@
       generateHeader(document.getElementById('header'));
       
       var statsJSON = ResourceLoader.load_json('/data/statistics/overall');
-      document.getElementById('stats').innerHTML = renderJSON(statsJSON);
+
+      cleanFloat = function (x) { return Math.round(x*100)/100; };
+      var sortablePairs = [];
+      for (var pName in statsJSON.leaderboard) {
+        sortablePairs.push( [1*statsJSON.leaderboard[pName], pName] );
+      }
+      sortablePairs.sort(function(a,b){return(b[0]-a[0]);});
+      leadersHTML = "";
+      for (var i = 0; i < sortablePairs.length; i++) {
+        leadersHTML += '<tr><td class="name"><a class="darklink" href=/players/'+sortablePairs[i][1]+'>'+sortablePairs[i][1]+'</a></td><td>'+cleanFloat(sortablePairs[i][0])+'</td><td>'+cleanFloat(statsJSON.decayedLeaderboard[sortablePairs[i][1]])+'</td></tr>'; 
+      }
+      document.getElementById('leaderboard').children[0].innerHTML += leadersHTML;
+      
+      var varNameMapping = {
+        "matches": "Total Matches",
+        "matchesFinished": "Matches Finished",
+        "matchesAbandoned": "Matches Abandoned",
+        "matchesStatErrors": "Matches Unreadable",
+        "computeTime": "Time Updating Stats",
+        "matchesPerDayMedian": "Median Matches/Day",
+        "matchesInPastHour": "Matches in Past Hour",
+        "matchesInPastDay": "Matches in Past Day",
+        "computedAt": "Stats Updated At",
+        "matchesAverageMoves": "Average Moves/Match",
+        "matchesAveragePlayers": "Average Players/Match"
+      };
+      
+      varsHTML = "";
+      for (var varName in statsJSON) {
+        if (varName == "leaderboard" || varName == "decayedLeaderboard") continue;
+        var varProperName = varName;
+        if (varNameMapping[varName]) varProperName = varNameMapping[varName];
+        varsHTML += '<tr><td class="name">'+varProperName+'</td><td>'+cleanFloat(statsJSON[varName])+'</td></tr>';
+      }
+      document.getElementById('server_stats').children[0].innerHTML += varsHTML;
+      
+      //document.getElementById('stats').innerHTML = renderJSON(statsJSON);
     </script>
   </body>  
 </html>

@@ -10,6 +10,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -256,12 +257,21 @@ public class GGP_ApolloServlet extends HttpServlet {
         theState.clearBackendErrors();
     }
     
+    public static <T extends Comparable<? super T>> T getRoughMedian(Collection<T> theObjects) {
+        List<T> theList = new ArrayList<T>(theObjects); 
+        Collections.sort(theList);
+        return theList.get(theList.size()/2);
+    }    
+    
     public void computeStatistics() {
         int nMatches = 0;
         int nMatchesFinished = 0;
         int nMatchesAbandoned = 0;
         int nMatchesStatErrors = 0;
+        int nMatchesInPastHour = 0;
+        int nMatchesInPastDay = 0;        
         
+        Map<Long,Integer> matchesPerDay = new HashMap<Long,Integer>();
         Map<String,WeightedAverage> playerAverageScore = new HashMap<String,WeightedAverage>();
         Map<String,WeightedAverage> playerDecayedAverageScore = new HashMap<String,WeightedAverage>();
         Map<String,Map<String,WeightedAverage>> averageScoreVersus = new HashMap<String,Map<String,WeightedAverage>>();
@@ -317,6 +327,15 @@ public class GGP_ApolloServlet extends HttpServlet {
                     }
                     
                     playersPerMatch.addValue(theJSON.getJSONArray("gameRoleNames").length());
+                    
+                    if (System.currentTimeMillis() - theJSON.getLong("startTime") < 3600000L) nMatchesInPastHour++;
+                    if (System.currentTimeMillis() - theJSON.getLong("startTime") < 86400000L) nMatchesInPastDay++;
+                    
+                    Long theDayStart = theJSON.getLong("startTime") / 86400000L;
+                    if (!matchesPerDay.containsKey(theDayStart)) {
+                        matchesPerDay.put(theDayStart, 0);
+                    }
+                    matchesPerDay.put(theDayStart, matchesPerDay.get(theDayStart)+1);
                 } catch(JSONException ex) {
                     nMatchesStatErrors++;
                     throw new RuntimeException(ex);
@@ -345,6 +364,9 @@ public class GGP_ApolloServlet extends HttpServlet {
             overall.put("leaderboard", playerAverageScore);
             overall.put("decayedLeaderboard", playerDecayedAverageScore);
             overall.put("computedAt", System.currentTimeMillis());
+            overall.put("matchesInPastHour", nMatchesInPastHour);
+            overall.put("matchesInPastDay", nMatchesInPastDay);            
+            overall.put("matchesPerDayMedian", getRoughMedian(matchesPerDay.values()));
 
             // Store the per-player statistics
             for (String playerName : playerAverageScore.keySet()) {
