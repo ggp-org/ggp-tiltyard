@@ -12,13 +12,16 @@
   
     <div id='header'></div>
     <br>
-    <center>You can <a rel="nofollow" href="javascript:add_new_player()">add your player</a> to this list!</center>
+    <center><div id="add_player_promo">You can <a rel="nofollow" href="javascript:add_new_player()">add your player</a> to this list!</div></center>
     <br>
     <div id='ownedPlayerList' style='display: table;'></div><br>
     <div id='playerList' style='display: table;'></div>
 
     <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));        
+      generateHeader(document.getElementById('header'));
+      
+      var loginState = ResourceLoader.load_json('/data/login');
+      if (!loginState.loggedIn) { document.getElementById("add_player_promo").innerHTML = ""; }
 
       function add_new_player() {
         var theName = window.prompt("What should the player's name be? It can only contain letters, digits, dashes, and underscores. Once chosen, it cannot be changed.", "");

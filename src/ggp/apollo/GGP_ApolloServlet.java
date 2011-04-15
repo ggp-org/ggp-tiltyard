@@ -210,7 +210,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             if (busyPlayerNames.contains(p.getName())) continue;
             nPlayersForGame--;            
             playerURLsForMatch[nPlayersForGame] = p.getURL();
-            playerNamesForMatch.add(p.getName());
+            playerNamesForMatch.add(0,p.getName());
             playersForMatch.add(p);
             if (nPlayersForGame == 0)
                 break;
