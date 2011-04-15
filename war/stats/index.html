@@ -81,7 +81,7 @@ td.name {
         "matchesPerDayMedian": "Median Matches/Day",
         "matchesInPastHour": "Matches in Past Hour",
         "matchesInPastDay": "Matches in Past Day",
-        "computedAt": "Stats Updated At",
+        "computedAt": "Stats Last Updated",
         "matchesAverageMoves": "Average Moves/Match",
         "matchesAveragePlayers": "Average Players/Match"
       };
@@ -91,7 +91,9 @@ td.name {
         if (varName == "leaderboard" || varName == "decayedLeaderboard") continue;
         var varProperName = varName;
         if (varNameMapping[varName]) varProperName = varNameMapping[varName];
-        varsHTML += '<tr><td class="name">'+varProperName+'</td><td>'+cleanFloat(statsJSON[varName])+'</td></tr>';
+        var varValue = cleanFloat(statsJSON[varName]);        
+        if (varName == "computedAt") varValue = Math.round((new Date() - 1*statsJSON[varName])/1000) + 's ago';  
+        varsHTML += '<tr><td class="name">'+varProperName+'</td><td>'+varValue+'</td></tr>';
       }
       document.getElementById('server_stats').children[0].innerHTML += varsHTML;
       

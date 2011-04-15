@@ -41,6 +41,11 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.setContentType("text/plain");
             resp.getWriter().println("Starting scheduling round.");            
             return;
+        } else if (req.getRequestURI().equals("/cron/update_stats")) {
+            computeStatistics();
+            resp.setContentType("text/plain");
+            resp.getWriter().println("Updated statistics.");            
+            return;            
         }
 
         resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
@@ -261,7 +266,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         List<T> theList = new ArrayList<T>(theObjects); 
         Collections.sort(theList);
         return theList.get(theList.size()/2);
-    }    
+    }
     
     public void computeStatistics() {
         int nMatches = 0;

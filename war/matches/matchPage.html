@@ -20,7 +20,7 @@
     <script type='text/javascript' src='//matches.ggp.org/matches/channel.js'></script>
 
     <div id='header'></div>
-    <div style="float: left; background-color: #E6E6E6; height: 90%; width: 20%">
+    <div style="float: left; margin: 0; background-color: #E6E6E6; height: 90%; width: 20%">
       <div id="sidePanel"></div>
     </div>
     <div style="float: left; margin-left: 1%; margin-top: 1%; height: 89%; width:79%;">
@@ -32,6 +32,7 @@
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
+      document.getElementById('navBuffer').innerHTML = '<td style="padding: 0; width: 20%"><table style="border: 0; margin: 0; border-spacing: 0px 0px; width: 100%"><tr><td class="navbarBottomAbrupt" height=10px></td></tr></table></td>' + document.getElementById('navBuffer').innerHTML;
 
       var apolloMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
 

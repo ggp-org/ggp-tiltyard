@@ -3,14 +3,17 @@ function generateHeader(theDiv) {
     var theHTML = "";
     theHTML += '<center>';
     theHTML += '<table style="width: 100%; border: 0; margin: 0; border-spacing: 0px 0px;">';
-    theHTML += '  <tr>';
-    theHTML += '    <td class="navbar" width=20% align="left" style="padding: 0;"><a href="/"><img width=200px src="/static/images/SolidSunSlice.png"></img></a></td>';
-    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/about/">About</a></td>';
-    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/games/">Games</a></td>';
-    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/players/">Players</a></td>';    
-    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/matches/">Matches</a></td>';
-    theHTML += '    <td class="navbar" width=10% align="center" valign="middle"><a class=biglink href="/stats/">Stats</a></td>';
-    theHTML += '    <td class="navbar" width=30% align="right" valign="middle"><div class="login" id="login_div"> </div></td>';
+    theHTML += '  <tr class="navbarTop">';
+    theHTML += '    <td width=20% align="left"></td>';
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/about/">About</a></td>';
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/games/">Games</a></td>';
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/players/">Players</a></td>';    
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/matches/">Matches</a></td>';
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/stats/">Stats</a></td>';
+    theHTML += '    <td width=30% align="right" valign="bottom"><div class="login" id="login_div"> </div></td>';
+    theHTML += '  </tr>';
+    theHTML += '  <tr id="navBuffer" class="navbarBottom">'; 
+    theHTML += '    <td colspan=7 height=10px></td>';
     theHTML += '  </tr>';
     theHTML += '</table>';
     theHTML += '</center>';
@@ -141,4 +144,24 @@ function renderJSON(x) {
     s += x;
   }
   return s;
+}
+
+function renderMatchEntry(theMatchJSON, theOngoingMatches) {
+  var theMatchHTML = "";
+  var theDate = new Date(theMatchJSON.startTime);
+  var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
+  theMatchHTML += '<a href="/matches/' + matchURL + '">Match</a> started at ';
+  theMatchHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
+  theMatchHTML += ' with ' + theMatchJSON.apolloPlayers.length + ' players (';
+  for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
+    theMatchHTML += '<a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
+    if (j < theMatchJSON.apolloPlayers.length - 1) {
+      theMatchHTML += ', ';
+    }
+  }
+  theMatchHTML += '): <a href="' + theMatchJSON.apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+  if (theOngoingMatches.indexOf(theMatchJSON.apolloSpectatorURL) >= 0) {
+    theMatchHTML += '<b>(Ongoing!)</b>';
+  }
+  return theMatchHTML;
 }

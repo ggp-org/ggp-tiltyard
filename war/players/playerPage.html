@@ -39,20 +39,7 @@
       } else {
         playerMatchesHTML += '<b>What are the ' + recentMatches.length + ' matches this player has played in recently?</b> <ul>';      
         for (var i = 0; i < recentMatches.length; i++) {
-          var theDate = new Date(recentMatches[i].startTime);
-          playerMatchesHTML += '<li>Match started at ';
-          playerMatchesHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
-          playerMatchesHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
-          for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {
-            playerMatchesHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
-            if (j < recentMatches[i].apolloPlayers.length - 1) {
-              playerMatchesHTML += ', ';
-            }
-          }
-          playerMatchesHTML += '): <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
-          if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
-            playerMatchesHTML += '<b>(Ongoing!)</b>';
-          }        
+          playerMatchesHTML += '<li>' + renderMatchEntry(recentMatches[i], ongoingMatches);
         }
         playerMatchesHTML += '</ul>';        
       }

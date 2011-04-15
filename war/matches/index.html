@@ -29,21 +29,7 @@
       recentMatches.reverse();
       var recentMatchesHTML = 'Listing of the ' + recentMatches.length + ' most recently played matches: <ul>';
       for (var i = 0; i < recentMatches.length; i++) {
-        var theDate = new Date(recentMatches[i].startTime);
-        var matchURL = recentMatches[i].apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
-        recentMatchesHTML += '<li><a href="/matches/' + matchURL + '">Match</a> started at ';
-        recentMatchesHTML += theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString();
-        recentMatchesHTML += ' with ' + recentMatches[i].apolloPlayers.length + ' players (';
-        for (var j = 0; j < recentMatches[i].apolloPlayers.length; j++) {
-          recentMatchesHTML += '<a href="/players/' + recentMatches[i].apolloPlayers[j] + '">' + recentMatches[i].apolloPlayers[j] + '</a>';
-          if (j < recentMatches[i].apolloPlayers.length - 1) {
-            recentMatchesHTML += ', ';
-          }
-        }
-        recentMatchesHTML += '): <a href="' + recentMatches[i].apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
-        if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
-          recentMatchesHTML += '<b>(Ongoing!)</b>';
-        }        
+        recentMatchesHTML += '<li>' + renderMatchEntry(recentMatches[i], ongoingMatches);
       }
       document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
     </script>

@@ -5,4 +5,9 @@
     <description>Run a scheduling round every two minutes.</description>
     <schedule>every 2 minutes</schedule>
   </cron>
+  <cron>
+    <url>/cron/update_stats</url>
+    <description>Update the server statistics every fifteen minutes.</description>
+    <schedule>every 15 minutes</schedule>
+  </cron>  
 </cronentries>
