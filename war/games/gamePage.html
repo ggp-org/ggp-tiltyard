@@ -1,0 +1,103 @@
+<html>
+  <head>
+    <title>GGP Apollo Server</title>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+    <link rel="stylesheet" type="text/css" href="/apollo.css" />
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+  </head>
+  <body>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+    <script type="text/javascript" src="/apolloHeader.js"></script>
+
+    <div id='header'></div>
+    <br>
+    
+  <center>
+  <table width=600px border=1px cellpadding=5px>
+    <tr>
+      <td border=1px width=50px height=50px>
+        <img width=50px height=50px src="http://placekitten.com/50/50"></img>
+      </td>
+      <td width=300px>
+        <font size=5> <b><div id="game_gameName"></div></b> </font>
+      </td>
+      <td>
+        <table width=100%>
+          <tr>
+            <td><div id="game_gameVersion"></div></td>
+          </tr>
+          <tr>
+            <td><div id="game_gameNumRoles"></div></td>
+          </tr>
+        </table>
+      </td>    
+    </tr>
+    <tr>
+      <td colspan=3>
+        <div id="game_gameDescription"></div>
+      </td>
+    </tr>
+  </table>
+  </center>
+  <br>
+
+    <!-- <center><div id='gameStatsDiv'></div></center><br> -->
+    <div id='gameMatchesDiv'></div>
+
+    <script type='text/javascript'>
+      generateHeader(document.getElementById('header'));
+      translateRepositoryCodename = function(x) { return x.replace("base/", "http://games.ggp.org/games/"); }
+
+      var toProperString = function (x) {
+        if (x <= 0) return "Zero";
+        if (x == 1) return "One";
+        if (x == 2) return "Two";
+        if (x == 3) return "Three";
+        if (x == 4) return "Four";
+        if (x == 5) return "Five";
+        if (x == 6) return "Six";
+        if (x == 7) return "Seven";
+        if (x == 8) return "Eight";
+        if (x == 9) return "Nine";
+        return "10+";
+      }
+
+      var gameName = translateRepositoryCodename(window.location.pathname.replace("/games/", ""));
+      var gameRawName = window.location.pathname.replace("/games/", "").split('/')[1];
+
+      //var statsJSON = ResourceLoader.load_json('/data/statistics/games/' + gameName);
+      //document.getElementById('gameStatsDiv').innerHTML = renderJSON(statsJSON);
+
+      var theGame = ResourceLoader.load_json('/data/games/' + gameName);
+      
+      if ("gameName" in theGame.metadata) {
+        document.getElementById('game_gameName').innerHTML = theGame.metadata.gameName;
+      } else {
+        document.getElementById('game_gameName').innerHTML = gameRawName;
+      }
+      document.getElementById('game_gameVersion').innerHTML = "<b>Version " + theGame.metadata.version + "</b>";
+      document.getElementById('game_gameNumRoles').innerHTML = "<b>" + toProperString(theGame.metadata.numRoles) + " players</b>";
+      if ("description" in theGame.metadata) {
+        document.getElementById('game_gameDescription').innerHTML = "<b>Game description:</b> " + ResourceLoader.load_raw(theGame.gameMetaURL + theGame.metadata.description);
+      } else {
+        document.getElementById('game_gameDescription').innerHTML = "<b>Game description:</b> <i>Not yet available.</i>";
+      }
+
+      var gameMatchesHTML = '';
+      var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
+      var recentMatches = theGame.recentMatches;
+      recentMatches.reverse();
+      if (recentMatches.length == 0) {
+        gameMatchesHTML += '<b>This game has not been used in any matches recently.</b>';
+      } else {
+        gameMatchesHTML += '<b>What are the ' + recentMatches.length + ' matches this game has been used in recently?</b> <ul>';      
+        for (var i = 0; i < recentMatches.length; i++) {
+          gameMatchesHTML += '<li>' + renderMatchEntry(recentMatches[i], ongoingMatches);
+        }
+        gameMatchesHTML += '</ul>';        
+      }
+      document.getElementById('gameMatchesDiv').innerHTML = gameMatchesHTML;
+    </script>
+  </body>  
+</html>

@@ -9,15 +9,26 @@
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type="text/javascript" src="/apolloHeader.js"></script>
-    
+  
     <div id='header'></div>
     <br>
-    
-    Hello! (etc)
-    TODO: Create an actual "Games" page.
+    <div id='gameList'></div>
 
     <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));    
+      generateHeader(document.getElementById('header'));      
+      translateRepositoryIntoCodename = function(x) { return x.replace("http://games.ggp.org/games/", "base/"); }
+
+      function drawGameList() {
+        var theGames = ResourceLoader.load_json('/data/games/');
+        var gameListHTML = '<ul>';
+        for (var i in theGames) {
+          gameListHTML += '<li><a href="/games/' + translateRepositoryIntoCodename(theGames[i].gameMetaURL) + '">' + theGames[i].metadata.gameName + '</a>';
+        }
+        gameListHTML += "</ul>"
+        document.getElementById('gameList').innerHTML = gameListHTML;
+      }
+      
+      drawGameList();
     </script>
   </body>  
 </html>

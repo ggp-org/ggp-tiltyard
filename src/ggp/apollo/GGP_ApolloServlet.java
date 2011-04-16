@@ -71,6 +71,14 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             reqURI = "/players/playerPage.html";
         }
+        if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
+            String gameName = translateRepositoryCodename(reqURI.replaceFirst("/games/", "").replaceFirst("index.html", ""));
+            if(Game.loadGame(gameName) == null) {
+                resp.setStatus(404);
+                return;
+            }
+            reqURI = "/games/gamePage.html";
+        }
         if (reqURI.startsWith("/matches/") && !reqURI.equals("/matches/index.html")) {            
             String matchName = reqURI.replaceFirst("/matches/", "").replace("index.html", "");
             if(CondensedMatch.loadCondensedMatch("http://matches.ggp.org/matches/" + matchName) == null) {
@@ -200,12 +208,16 @@ public class GGP_ApolloServlet extends HttpServlet {
         // Eventually we should support other repository servers. Figure out how
         // to do this in a safe, secure fashion (since the repository server can
         // inject arbitrary javascript into the visualizations).
-        String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/";        
+        String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/v0/";
+        Game theGame = Game.loadGame(theGameURL);
+        if (theGame == null) {
+            theGame = new Game(theGameURL);
+        }
 
         // Assign available players to roles in the game.
         String[] playerURLsForMatch = new String[nPlayersForGame];
         List<String> playerNamesForMatch = new ArrayList<String>();
-        List<Player> playersForMatch = new ArrayList<Player>();
+        Set<Player> playersForMatch = new HashSet<Player>();
         for (Player p : thePlayers) {
             if (busyPlayerNames.contains(p.getName())) continue;
             nPlayersForGame--;            
@@ -257,6 +269,8 @@ public class GGP_ApolloServlet extends HttpServlet {
             p.addRecentMatchURL(theSpectatorURL);
             p.save();
         }
+        theGame.addRecentMatchURL(theSpectatorURL);
+        theGame.save();
         theState.addRecentMatchURL(theSpectatorURL);
         theState.getRunningMatches().add(theSpectatorURL);
         theState.clearBackendErrors();
@@ -446,6 +460,20 @@ public class GGP_ApolloServlet extends HttpServlet {
                     return;
                 }
                 resp.getWriter().println(p.asJSON(p.isOwner(userId), true));
+            } else if (theRPC.equals("games/")) {
+                JSONObject theResponse = new JSONObject();
+                for (Game g : Game.loadGames()) {
+                    theResponse.put(g.getMetaURL(), g.asJSON(false));
+                }
+                resp.getWriter().println(theResponse.toString());                
+            } else if (theRPC.startsWith("games/")) {
+                String theGame = theRPC.replaceFirst("games/", "");
+                Game g = Game.loadGame(theGame);
+                if (g == null) {
+                    resp.setStatus(404);
+                    return;
+                }
+                resp.getWriter().println(g.asJSON(true));
             } else if (theRPC.equals("matches/")) {
                 // TODO: Should we have an RPC interface that lets you get
                 // the list of all matches ever? This might not scale.
@@ -515,7 +543,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                     theResponse.put("loggedIn", false);
                 }
                 resp.getWriter().println(theResponse.toString());
-            } else if (theRPC.startsWith("statistics/")) {                
+            } else if (theRPC.startsWith("statistics/")) {
                 String theStatistic = theRPC.replaceFirst("statistics/", "");                
                 JSONObject theResponse = null;
                 if (theStatistic.equals("overall")) {
@@ -631,5 +659,9 @@ public class GGP_ApolloServlet extends HttpServlet {
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "*");
         resp.setHeader("Access-Control-Allow-Age", "86400");    
+    }
+    
+    public String translateRepositoryCodename(String theURL) {
+        return theURL.replaceFirst("base/", "http://games.ggp.org/games/");
     }
 }
