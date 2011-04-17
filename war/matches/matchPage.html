@@ -47,7 +47,7 @@
       var sidePanelHTML = '<br>';
       var spectatorMatch = spectatorView.matchData;
       var theDate = new Date(spectatorMatch.startTime);
-      sidePanelHTML += '<b>Game:</b> <a href="/games/' + apolloMatch.gameMetaURL + '">' + spectatorMatch.gameName + '</a><br><br>';
+      sidePanelHTML += '<b>Game:</b> <a href="/games/' + translateRepositoryIntoCodename(apolloMatch.gameMetaURL) + '">' + spectatorMatch.gameName + '</a><br><br>';
       sidePanelHTML += '<b>Started at:</b> ' + theDate.toLocaleTimeString() + ' on ' + theDate.toLocaleDateString() + '<br><br>';
       sidePanelHTML += '<b>Start clock:</b> ' + spectatorMatch.startClock + '<br>';
       sidePanelHTML += '<b>Play clock:</b> ' + spectatorMatch.playClock + '<br><br>';
