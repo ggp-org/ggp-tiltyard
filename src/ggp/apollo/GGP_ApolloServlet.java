@@ -294,24 +294,42 @@ public class GGP_ApolloServlet extends HttpServlet {
         Map<String,WeightedAverage> playerAverageScore = new HashMap<String,WeightedAverage>();
         Map<String,WeightedAverage> playerDecayedAverageScore = new HashMap<String,WeightedAverage>();
         Map<String,Map<String,WeightedAverage>> averageScoreVersus = new HashMap<String,Map<String,WeightedAverage>>();
+        Map<String,WeightedAverage> gameAverageMoves = new HashMap<String,WeightedAverage>();
         
         WeightedAverage playersPerMatch = new WeightedAverage();
         WeightedAverage movesPerMatch = new WeightedAverage();
 
+        Set<String> toPurge = new HashSet<String>();
+        
         long nComputeBeganAt = System.currentTimeMillis();
         PersistenceManager pm = Persistence.getPersistenceManager();
         try {
             Iterator<?> sqr = ((AbstractQueryResult) pm.newQuery(CondensedMatch.class).execute()).iterator();
             while (sqr.hasNext()) {
                 CondensedMatch c = (CondensedMatch)sqr.next();
-                if (!c.isReady()) continue;                            
+                if (!c.isReady()) continue;
                 JSONObject theJSON = c.getCondensedJSON();
-                
+                                
                 nMatches++;
                 try {
+                    // Check whether this match needs to be purged from the Apollo server's
+                    // condensed match cache. This should very rarely need to be used: it is
+                    // a safety mechanism in case bad data gets into the cache and needs to
+                    // be cleared out.
+                    if (matchRequiringPurging(theJSON)) {
+                        toPurge.add(c.getSpectatorURL());
+                        continue;
+                    }
+                    
                     if (theJSON.getBoolean("isCompleted")) {
                         nMatchesFinished++;                        
                         movesPerMatch.addValue(theJSON.getInt("moveCount"));
+                        
+                        String theGame = theJSON.getString("gameMetaURL");
+                        if (!gameAverageMoves.containsKey(theGame)) {
+                            gameAverageMoves.put(theGame, new WeightedAverage());
+                        }
+                        gameAverageMoves.get(theGame).addValue(theJSON.getInt("moveCount"));                        
                         
                         // Score-related statistics.
                         for (int i = 0; i < c.getPlayers().size(); i++) {
@@ -367,10 +385,15 @@ public class GGP_ApolloServlet extends HttpServlet {
         }
         long nComputeTime = System.currentTimeMillis() - nComputeBeganAt;
         
+        for (String matchKey : toPurge) {
+            Persistence.clearSpecific(matchKey, CondensedMatch.class);
+        }
+        
         // Store the statistics as a JSON object in the datastore.
         try {
             JSONObject overall = new JSONObject();
             Map<String, JSONObject> perPlayer = new HashMap<String, JSONObject>();
+            Map<String, JSONObject> perGame = new HashMap<String, JSONObject>();
             
             // Store the overall statistics
             overall.put("matches", nMatches);
@@ -407,10 +430,21 @@ public class GGP_ApolloServlet extends HttpServlet {
                 perPlayer.get(playerName).put("averageScoreVersus", averageScoreVersus.get(playerName));
             }
             
+            // Store the per-game statistics
+            for (String gameName : gameAverageMoves.keySet()) {
+                if (!perGame.containsKey(gameName)) {
+                    perGame.put(gameName, new JSONObject());
+                }
+                perGame.get(gameName).put("averageMoves", gameAverageMoves.get(gameName));
+            }
+            
             StoredStatistics s = new StoredStatistics();
             s.setOverallStats(overall);
             for (String playerName : perPlayer.keySet()) {
                 s.setPlayerStats(playerName, perPlayer.get(playerName));
+            }
+            for (String gameName : perGame.keySet()) {
+                s.setGameStats(gameName, perGame.get(gameName));
             }
             s.save();
         } catch (JSONException e) {
@@ -553,9 +587,9 @@ public class GGP_ApolloServlet extends HttpServlet {
                     StoredStatistics s = StoredStatistics.loadStatistics();
                     theStatistic = theStatistic.replaceFirst("players/", "");
                     theResponse = s.getPlayerStats(theStatistic);
-                } else if (theStatistic.startsWith("game/")) {
+                } else if (theStatistic.startsWith("games/")) {
                     StoredStatistics s = StoredStatistics.loadStatistics();
-                    theStatistic = theStatistic.replaceFirst("game/", "");
+                    theStatistic = theStatistic.replaceFirst("games/", "");
                     theResponse = s.getGameStats(theStatistic);
                 } else if (theStatistic.equals("refresh")) {
                     computeStatistics();
@@ -653,15 +687,21 @@ public class GGP_ApolloServlet extends HttpServlet {
             throw new IOException(e);
         }        
     }
-    
+
     public void doOptions(HttpServletRequest req, HttpServletResponse resp) throws IOException {  
         resp.setHeader("Access-Control-Allow-Origin", "*");
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "*");
         resp.setHeader("Access-Control-Allow-Age", "86400");    
     }
-    
-    public String translateRepositoryCodename(String theURL) {
+
+    public static String translateRepositoryCodename(String theURL) {
         return theURL.replaceFirst("base/", "http://games.ggp.org/games/");
+    }
+
+    // Determine whether a match should be purged from the Apollo server's condensed
+    // match cache during the next batch statistics computation run.
+    public static boolean matchRequiringPurging(JSONObject theJSON) throws JSONException {
+        return false;
     }
 }

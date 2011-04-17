@@ -165,3 +165,10 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   }
   return theMatchHTML;
 }
+
+function translateRepositoryCodename(x) {
+  return x.replace("base/", "http://games.ggp.org/games/");
+}
+function translateRepositoryIntoCodename(x) {
+  return x.replace("http://games.ggp.org/games/", "base/");
+}

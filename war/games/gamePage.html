@@ -38,16 +38,19 @@
         <div id="game_gameDescription"></div>
       </td>
     </tr>
+    <tr>
+      <td colspan=3>
+        <div id="gameStatsDiv"></div>
+      </td>
+    </tr>
   </table>
   </center>
   <br>
 
-    <!-- <center><div id='gameStatsDiv'></div></center><br> -->
     <div id='gameMatchesDiv'></div>
 
     <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));
-      translateRepositoryCodename = function(x) { return x.replace("base/", "http://games.ggp.org/games/"); }
+      generateHeader(document.getElementById('header'));      
 
       var toProperString = function (x) {
         if (x <= 0) return "Zero";
@@ -63,11 +66,11 @@
         return "10+";
       }
 
-      var gameName = translateRepositoryCodename(window.location.pathname.replace("/games/", ""));
+      var gameName = translateRepositoryCodename(window.location.pathname.replace("/games/", ""));      
       var gameRawName = window.location.pathname.replace("/games/", "").split('/')[1];
 
-      //var statsJSON = ResourceLoader.load_json('/data/statistics/games/' + gameName);
-      //document.getElementById('gameStatsDiv').innerHTML = renderJSON(statsJSON);
+      var statsJSON = ResourceLoader.load_json('/data/statistics/games/' + gameName);
+      document.getElementById('gameStatsDiv').innerHTML = renderJSON(statsJSON);
 
       var theGame = ResourceLoader.load_json('/data/games/' + gameName);
       

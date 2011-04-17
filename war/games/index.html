@@ -16,7 +16,6 @@
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));      
-      translateRepositoryIntoCodename = function(x) { return x.replace("http://games.ggp.org/games/", "base/"); }
 
       function drawGameList() {
         var theGames = ResourceLoader.load_json('/data/games/');
