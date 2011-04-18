@@ -147,6 +147,22 @@ function renderJSON(x) {
 }
 
 function renderMatchEntry(theMatchJSON, theOngoingMatches) {
+  var hasErrors = false;
+  var hasErrorsForPlayer = [];
+  for (var i = 0; i < theMatchJSON.gameRoleNames.length; i++) {
+    hasErrorsForPlayer.push(false);
+  }
+  if ("errors" in theMatchJSON) {
+    for (var i = 0; i < theMatchJSON.errors.length; i++) {
+      for (var j = 0; j < theMatchJSON.errors[i].length; j++) {
+        if (theMatchJSON.errors[i][j] != "") {
+          hasErrors = true;
+          hasErrorsForPlayer[j] = true;
+        }
+      }
+    }
+  }
+    
   var theMatchHTML = "";
   var theDate = new Date(theMatchJSON.startTime);
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
@@ -155,14 +171,20 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   theMatchHTML += ' with ' + theMatchJSON.apolloPlayers.length + ' players (';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
     theMatchHTML += '<a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
+    if (hasErrorsForPlayer[j]) {
+      theMatchHTML += '<b><font color=#FFCC00>*</font></b>';
+    }
     if (j < theMatchJSON.apolloPlayers.length - 1) {
       theMatchHTML += ', ';
     }
   }
   theMatchHTML += '): <a href="' + theMatchJSON.apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+  if (hasErrors) {
+    theMatchHTML += '<b><font color=#FFCC00>(Errors)</font></b> ';
+  }
   if (theOngoingMatches.indexOf(theMatchJSON.apolloSpectatorURL) >= 0) {
     theMatchHTML += '<b>(Ongoing!)</b>';
-  }
+  }  
   return theMatchHTML;
 }
 
