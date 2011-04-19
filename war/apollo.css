@@ -3,6 +3,22 @@ body {
   padding:0;
 }
 
+a.apollogo {
+	color: #222222;
+	font-family: 'Droid Sans', bold;
+	font-size: 20px;
+	text-shadow: #AAAAAA 0px 0px 10px;
+	margin: 5px;
+	text-decoration:none;
+}
+span.apollogo2 {
+	color: #222222;
+	font-family: 'Droid Sans', bold;
+	font-size: 16px;
+	text-shadow: #AAAAAA 0px 0px 10px;
+	font-variant: small-caps;
+}
+
 a.darklink {
 	color: #222222;
 }

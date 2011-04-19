@@ -32,7 +32,7 @@
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
-      document.getElementById('navBuffer').innerHTML = '<td style="padding: 0; width: 20%"><table style="border: 0; margin: 0; border-spacing: 0px 0px; width: 100%"><tr><td class="navbarBottomAbrupt" height=10px></td></tr></table></td>' + document.getElementById('navBuffer').innerHTML;
+      document.getElementById('navBuffer').innerHTML = '<td colspan=2 style="padding: 0; width: 20%"><table style="border: 0; margin: 0; border-spacing: 0px 0px; width: 100%"><tr><td class="navbarBottomAbrupt" height=10px></td></tr></table></td>' + document.getElementById('navBuffer').innerHTML;
 
       var apolloMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
 
