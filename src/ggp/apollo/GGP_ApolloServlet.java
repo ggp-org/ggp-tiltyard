@@ -24,6 +24,10 @@ import javax.servlet.http.*;
 
 import org.datanucleus.store.query.AbstractQueryResult;
 
+import com.google.appengine.api.capabilities.CapabilitiesService;
+import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
+import com.google.appengine.api.capabilities.Capability;
+import com.google.appengine.api.capabilities.CapabilityStatus;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
@@ -145,8 +149,15 @@ public class GGP_ApolloServlet extends HttpServlet {
             //"ttcc4_2player:2",
             "ticTacToe:2"
     };
+    
+    public boolean isDatastoreWriteable() {
+        CapabilitiesService service = CapabilitiesServiceFactory.getCapabilitiesService();
+        CapabilityStatus status = service.getStatus(Capability.DATASTORE_WRITE).getStatus();
+        return (status != CapabilityStatus.DISABLED);
+    }
 
     public void runSchedulingRound() throws IOException {
+        if (!isDatastoreWriteable()) return;
         ServerState theState = ServerState.loadState();
         theState.incrementSchedulingRound();
         runSchedulingRound(theState);
@@ -276,6 +287,8 @@ public class GGP_ApolloServlet extends HttpServlet {
     }
     
     public void computeStatistics() throws IOException {
+        if (!isDatastoreWriteable()) return;
+        
         int nMatches = 0;
         int nMatchesFinished = 0;
         int nMatchesAbandoned = 0;
@@ -633,6 +646,8 @@ public class GGP_ApolloServlet extends HttpServlet {
     }    
     
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        if (!isDatastoreWriteable()) return;
+        
         resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "Content-Type");
