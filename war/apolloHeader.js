@@ -147,20 +147,6 @@ function renderJSON(x) {
   return s;
 }
 
-function renderDateTime(d) {    
-  var suffix = "AM";
-  var hours = d.getHours()
-  var minutes = d.getMinutes()  
-  if (hours >= 12) { suffix = "PM"; hours = hours - 12; }
-  if (hours == 0) { hours = 12; }
-  if (minutes < 10) { minutes = "0" + minutes; }
-
-  var out = "at ";
-  out += hours + ":" + minutes + " " + suffix + " on ";
-  out += (d.getMonth()+1) + "/" + d.getDate() + "/" + d.getFullYear();
-  return out;
-}
-
 function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   var hasErrors = false;
   var hasErrorsForPlayer = [];
@@ -181,8 +167,8 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   var theMatchHTML = "";
   var theDate = new Date(theMatchJSON.startTime);
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
-  theMatchHTML += '<a href="/matches/' + matchURL + '">Match</a> started ';
-  theMatchHTML += renderDateTime(theDate);
+  theMatchHTML += '<a href="/matches/' + matchURL + '">Match</a> started at ';
+  theMatchHTML += UserInterface.renderDateTime(theDate);
   theMatchHTML += ' with {';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
     theMatchHTML += '<a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
