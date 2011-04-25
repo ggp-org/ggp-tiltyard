@@ -51,7 +51,9 @@
       sidePanelHTML += '<b>Started at:</b> ' + UserInterface.renderDateTime(theDate) + '<br><br>';
       sidePanelHTML += '<b>Start clock:</b> ' + spectatorMatch.startClock + '<br>';
       sidePanelHTML += '<b>Play clock:</b> ' + spectatorMatch.playClock + '<br><br>';
-      sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator View</a>)<br><br>';
+      sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.VISUAL_VIEW);">Visual View</a><br>';
+      sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.LISTING_VIEW);">Listing View</a><br><br>';
+      sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator Page</a>)<br><br>';
       sidePanelHTML += 'There are ' + apolloMatch.apolloPlayers.length + ' players: <ol>';
       for (var i = 0; i < apolloMatch.apolloPlayers.length; i++) {
         sidePanelHTML += '<li><b>' + spectatorMatch.gameRoleNames[i] + ':</b> ';        
