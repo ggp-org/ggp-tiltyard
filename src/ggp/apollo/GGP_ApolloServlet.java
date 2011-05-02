@@ -62,6 +62,11 @@ public class GGP_ApolloServlet extends HttpServlet {
         }
         
         String reqURI = req.getRequestURI();
+        if (reqURI.equals("/games")) reqURI += "/";
+        if (reqURI.equals("/stats")) reqURI += "/";
+        if (reqURI.equals("/about")) reqURI += "/";
+        if (reqURI.equals("/players")) reqURI += "/";
+        if (reqURI.equals("/matches")) reqURI += "/";
         if (reqURI.endsWith("/")) {
             reqURI += "index.html";
         }
