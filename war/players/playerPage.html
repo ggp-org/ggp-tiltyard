@@ -12,17 +12,58 @@
     <script type="text/javascript" src="/apolloHeader.js"></script>
 
     <div id='header'></div>
-    <br>    
-    <div id='playerDiv'></div><br>
-    <center><div id='playerStatsDiv'></div></center><br>
+    <br>
+    <center>    
+      <div id='playerDiv'></div><br>
+      <div id='playerStatsDiv'></div><br>
+      <div id='playerStatsTableDiv'></div><br>
+    </center>
     <div id='playerMatchesDiv'></div>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
-      var playerName = window.location.pathname.replace("/players/", "");
-      
+      // special code for rendering Alex's win/tie/loss table
+      function renderWinLossTable(theTable) {
+        var theGames = ResourceLoader.load_json('/data/games/');
+        var theCols = [];
+        for (var aPlayer in theTable) {
+          for (var aGame in theTable[aPlayer]) {
+            if (theCols.indexOf(aGame) == -1) {
+              theCols.push(aGame);
+            }
+          }
+        }
+        var theTableHTML = "<table border=1px>";
+        theTableHTML += "<tr><th colspan=" + (theCols.length+1) + ">Aggregate Win-Tie-Loss Table</th></tr>";
+        theTableHTML += "<tr><th></th>";
+        for (var i = 0; i < theCols.length; i++) {          
+          theTableHTML += '<th><a href="/games/' + translateRepositoryIntoCodename(theCols[i]) + '">' + theGames[theCols[i]].metadata.gameName + '</a></th>';
+        }
+        theTableHTML += "</tr>";
+        for (var aPlayer in theTable) {
+          theTableHTML += '<tr>';
+          theTableHTML += '<td><a href="/players/' + aPlayer + '">' + aPlayer + '</a></td>';
+          for (var i = 0; i < theCols.length; i++) {
+            theTableHTML += '<td>';
+            if (theCols[i] in theTable[aPlayer]) {
+              theTableHTML += theTable[aPlayer][theCols[i]];
+            }
+            theTableHTML += '</td>';
+          }
+          theTableHTML += '</tr>'; 
+        }
+        theTableHTML += "</table>";
+        return theTableHTML;
+      }
+
+      var playerName = window.location.pathname.replace("/players/", "");      
       var statsJSON = ResourceLoader.load_json('/data/statistics/players/' + playerName);
+      
+      if ("winsVersusPlayerOnGame" in statsJSON) {
+        document.getElementById('playerStatsTableDiv').innerHTML = renderWinLossTable(statsJSON.winsVersusPlayerOnGame);
+        delete statsJSON.winsVersusPlayerOnGame; 
+      }
       document.getElementById('playerStatsDiv').innerHTML = renderJSON(statsJSON);
 
       var thePlayer = ResourceLoader.load_json('/data/players/' + playerName);
