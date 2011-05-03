@@ -30,7 +30,10 @@ public class WeightedAverage {
         return totalSum / totalWeight;
     }
     
+    // TODO: Right now this returns a string that needs to be interpreted using
+    // JSON.parse. This is awkward, since it's already being put into a JSON object
+    // that holds statistics. Can we have this list actually be JSON?
     public String toString() {
-        return "" + getWeightedAverage();
+        return "[" + getWeightedAverage() + "," + totalSum + "," + count + "]";
     }
 }

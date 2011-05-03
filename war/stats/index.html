@@ -37,10 +37,11 @@ td.name {
     <br>
     <center>
 
-      <table width=100%><tr><td width=20%></td><td valign=top width=150px>
+      <table width=100%><tr><td width=10%></td><td valign=top width=150px>
         <center>
         <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
-          <th colspan=3>Leaderboard</th>
+          <tr><th colspan=4>Leaderboard</th></tr>
+          <tr><th>Player</th><th>Matches</th><th>Total Score</th><th>Avg Score</th></tr>
         </table>
         </center>
       </td><td valign=top width=150px>
@@ -49,7 +50,7 @@ td.name {
           <th colspan=2>Server Statistics</th>
         </table>
         </center>
-      </td><td width=20%></td></tr></table>
+      </td><td width=10%></td></tr></table>
 
       <br>
       Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.
@@ -63,12 +64,19 @@ td.name {
       cleanFloat = function (x) { return Math.round(x*100)/100; };
       var sortablePairs = [];
       for (var pName in statsJSON.leaderboard) {
-        sortablePairs.push( [1*statsJSON.leaderboard[pName], pName] );
+        var theBoardStats = JSON.parse(statsJSON.leaderboard[pName]);
+        sortablePairs.push([1*theBoardStats[0], 1*theBoardStats[1], 1*theBoardStats[2], pName]);
       }
       sortablePairs.sort(function(a,b){return(b[0]-a[0]);});
       leadersHTML = "";
       for (var i = 0; i < sortablePairs.length; i++) {
-        leadersHTML += '<tr><td class="name"><a class="darklink" href=/players/'+sortablePairs[i][1]+'>'+sortablePairs[i][1]+'</a></td><td>'+cleanFloat(sortablePairs[i][0])+'</td><td>'+cleanFloat(statsJSON.decayedLeaderboard[sortablePairs[i][1]])+'</td></tr>'; 
+        var playerName = sortablePairs[i][3];
+        leadersHTML += '<tr><td class="name"><a class="darklink" href=/players/'+playerName+'>'+playerName+'</a></td>';
+        leadersHTML += '<td>'+cleanFloat(sortablePairs[i][2])+'</td>'
+        leadersHTML += '<td>'+cleanFloat(sortablePairs[i][1])+'</td>'
+        leadersHTML += '<td>'+cleanFloat(sortablePairs[i][0])+'</td></tr>'
+        // TODO: add back information about the decayed leaderboard
+        //'<td>'+cleanFloat(statsJSON.decayedLeaderboard[sortablePairs[i][1]])+'</td></tr>'; 
       }
       document.getElementById('leaderboard').children[0].innerHTML += leadersHTML;
       
@@ -86,9 +94,11 @@ td.name {
         "matchesAveragePlayers": "Average Players/Match"
       };
       
+      delete statsJSON.leaderboard;
+      delete statsJSON.decayedLeaderboard;
+      
       varsHTML = "";
       for (var varName in statsJSON) {
-        if (varName == "leaderboard" || varName == "decayedLeaderboard") continue;
         var varProperName = varName;
         if (varNameMapping[varName]) varProperName = varNameMapping[varName];
         var varValue = cleanFloat(statsJSON[varName]);        
