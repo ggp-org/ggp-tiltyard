@@ -1,4 +1,4 @@
-package ggp.apollo;
+package ggp.apollo.stats;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class MedianPerDay {
+public class MedianPerDay {
     private Map<Long,Integer> eventsPerDay;
     
     public MedianPerDay() {

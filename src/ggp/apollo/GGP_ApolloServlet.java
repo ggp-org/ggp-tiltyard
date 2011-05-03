@@ -1,28 +1,19 @@
 package ggp.apollo;
 
+import ggp.apollo.scheduling.Scheduling;
+import ggp.apollo.stats.Statistics;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import javax.jdo.JDOObjectNotFoundException;
-import javax.jdo.PersistenceManager;
 import javax.servlet.http.*;
-
-import org.datanucleus.store.query.AbstractQueryResult;
 
 import com.google.appengine.api.capabilities.CapabilitiesService;
 import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
@@ -40,14 +31,18 @@ public class GGP_ApolloServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         if (req.getRequestURI().equals("/cron/scheduling_round")) {
-            runSchedulingRound();
-            resp.setContentType("text/plain");
-            resp.getWriter().println("Starting scheduling round.");            
+            if (isDatastoreWriteable()) {
+                Scheduling.runSchedulingRound();            
+                resp.setContentType("text/plain");
+                resp.getWriter().println("Starting scheduling round.");
+            }
             return;
         } else if (req.getRequestURI().equals("/cron/update_stats")) {
-            computeStatistics();
-            resp.setContentType("text/plain");
-            resp.getWriter().println("Updated statistics.");            
+            if (isDatastoreWriteable()) {
+                Statistics.computeStatistics();
+                resp.setContentType("text/plain");
+                resp.getWriter().println("Updated statistics.");
+            }
             return;            
         }
 
@@ -130,30 +125,6 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.setStatus(404);
         }
     }
-
-    // Comment out games that are expensive for AppEngine-based players.
-    private final String[] someProperGames = {
-            //"3pConnectFour:3",
-            //"4pttc:4",
-            //"blocker:2",
-            //"breakthrough:2",
-            //"breakthroughSmall:2",
-            //"chess:2",
-            //"checkers:2",
-            "connectFour:2",
-            "connectFourSuicide:2",            
-            //"eightPuzzle:1",
-            //"knightThrough:2",
-            //"knightsTour:1",
-            //"pawnToQueen:2",
-            //"pawnWhopping:2",
-            //"peg:1",
-            //"pegEuro:1",            
-            //"qyshinsu:2",
-            "nineBoardTicTacToe:2",            
-            //"ttcc4_2player:2",
-            "ticTacToe:2"
-    };
     
     public boolean isDatastoreWriteable() {
         CapabilitiesService service = CapabilitiesServiceFactory.getCapabilitiesService();
@@ -161,310 +132,6 @@ public class GGP_ApolloServlet extends HttpServlet {
         return (status != CapabilityStatus.DISABLED);
     }
 
-    public void runSchedulingRound() throws IOException {
-        if (!isDatastoreWriteable()) return;
-        ServerState theState = ServerState.loadState();
-        theState.incrementSchedulingRound();
-        runSchedulingRound(theState);
-        theState.save();
-    }
-
-    public void runSchedulingRound(ServerState theState) throws IOException {
-        List<Player> thePlayers = new ArrayList<Player>(Player.loadPlayers());
-        for (int i = thePlayers.size()-1; i >= 0; i--) {
-            if (!thePlayers.get(i).isEnabled()) {
-                thePlayers.remove(i);
-            }
-        }
-
-        // Find and clear all of the completed or wedged matches. For matches
-        // which are still ongoing, mark the players in those matches as busy.
-        Set<String> doneMatches = new HashSet<String>();
-        Set<String> busyPlayerNames = new HashSet<String>();
-        for (String matchKey : theState.getRunningMatches()) {
-            CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);
-            try {
-                JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
-                if(theMatchInfo.getBoolean("isCompleted")) {
-                    doneMatches.add(matchKey);
-                } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
-                    // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
-                    doneMatches.add(matchKey);
-                } else {
-                    busyPlayerNames.addAll(m.getPlayers());
-                }
-                m.condenseFullJSON(theMatchInfo);
-                m.save();
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new IOException(e);
-            }
-        }
-        theState.getRunningMatches().removeAll(doneMatches);
-
-        // Figure out how many players are available. If no players are available,
-        // don't bother attempting to schedule a match.
-        int readyPlayers = thePlayers.size() - busyPlayerNames.size();
-        if (readyPlayers < 2) return;
-        
-        // Shuffle the list of known proper games, draw a game, and check whether
-        // we have enough players available to play it. Repeat until we have a game.
-        int nPlayersForGame;
-        String theGameKey = null;
-        List<String> theProperGames = Arrays.asList(someProperGames);
-        do {
-            Collections.shuffle(theProperGames);            
-            nPlayersForGame = Integer.parseInt(theProperGames.get(0).split(":")[1]);
-            if (readyPlayers >= nPlayersForGame){
-                theGameKey = theProperGames.get(0).split(":")[0];
-            }
-        } while (theGameKey == null);
-
-        // Eventually we should support other repository servers. Figure out how
-        // to do this in a safe, secure fashion (since the repository server can
-        // inject arbitrary javascript into the visualizations).
-        String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/v0/";
-        Game theGame = Game.loadGame(theGameURL);
-        if (theGame == null) {
-            theGame = new Game(theGameURL);
-        }
-
-        // Assign available players to roles in the game.
-        String[] playerURLsForMatch = new String[nPlayersForGame];
-        List<String> playerNamesForMatch = new ArrayList<String>();
-        Set<Player> playersForMatch = new HashSet<Player>();
-        for (Player p : thePlayers) {
-            if (busyPlayerNames.contains(p.getName())) continue;
-            nPlayersForGame--;            
-            playerURLsForMatch[nPlayersForGame] = p.getURL();
-            playerNamesForMatch.add(0,p.getName());
-            playersForMatch.add(p);
-            if (nPlayersForGame == 0)
-                break;
-        }
-
-        // Construct a JSON request to the Apollo backend with the information
-        // needed to run a match of the selected game w/ the selected players.
-        JSONObject theMatchRequest = new JSONObject();
-        try {
-            theMatchRequest.put("startClock", 45);
-            theMatchRequest.put("playClock", 15);
-            theMatchRequest.put("gameURL", theGameURL);
-            theMatchRequest.put("matchId", "apollo." + theGameKey + "." + System.currentTimeMillis());
-            theMatchRequest.put("players", playerURLsForMatch);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        // Send the match request to the Apollo backend, and get back the URL
-        // for the match on the spectator server.
-        String theSpectatorURL = null;
-        try {
-            URL url = new URL(theState.getBackendAddress() + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-            theSpectatorURL = reader.readLine();
-            reader.close();
-        } catch (Exception e) {
-            theState.incrementBackendErrors();
-            return;
-        }        
-
-        // Store the known match in the datastore for lookup later.
-        CondensedMatch c = new CondensedMatch(theSpectatorURL, playerNamesForMatch);
-        try {
-            // Attempt to populate the condensed match information immediately,
-            // if we can pull that out from the spectator server.
-            c.condenseFullJSON(RemoteResourceLoader.loadJSON(theSpectatorURL));
-            c.save();
-        } catch (Exception e) {
-            ;
-        }
-        for (Player p : playersForMatch) {
-            p.addRecentMatchURL(theSpectatorURL);
-            p.save();
-        }
-        theGame.addRecentMatchURL(theSpectatorURL);
-        theGame.save();
-        theState.addRecentMatchURL(theSpectatorURL);
-        theState.getRunningMatches().add(theSpectatorURL);
-        theState.clearBackendErrors();
-    }
-    
-    public void computeStatistics() throws IOException {
-        if (!isDatastoreWriteable()) return;
-        
-        int nMatches = 0;
-        int nMatchesFinished = 0;
-        int nMatchesAbandoned = 0;
-        int nMatchesStatErrors = 0;
-        int nMatchesInPastHour = 0;
-        int nMatchesInPastDay = 0;        
-        
-        MedianPerDay matchesPerDay = new MedianPerDay();
-        Map<String,MedianPerDay> playerErrorsPerDay = new HashMap<String,MedianPerDay>();  
-        Map<String,WeightedAverage> playerAverageScore = new HashMap<String,WeightedAverage>();
-        Map<String,WeightedAverage> playerDecayedAverageScore = new HashMap<String,WeightedAverage>();
-        Map<String,Map<String,WeightedAverage>> averageScoreVersus = new HashMap<String,Map<String,WeightedAverage>>();
-        Map<String,WeightedAverage> gameAverageMoves = new HashMap<String,WeightedAverage>();
-        
-        WeightedAverage playersPerMatch = new WeightedAverage();
-        WeightedAverage movesPerMatch = new WeightedAverage();
-
-        Set<String> toPurge = new HashSet<String>();
-        
-        long nComputeBeganAt = System.currentTimeMillis();
-        PersistenceManager pm = Persistence.getPersistenceManager();
-        try {
-            Iterator<?> sqr = ((AbstractQueryResult) pm.newQuery(CondensedMatch.class).execute()).iterator();
-            while (sqr.hasNext()) {
-                CondensedMatch c = (CondensedMatch)sqr.next();
-                if (!c.isReady()) continue;
-                JSONObject theJSON = c.getCondensedJSON();
-                                
-                nMatches++;
-                try {
-                    // Check whether this match needs to be purged from the Apollo server's
-                    // condensed match cache. This should very rarely need to be used: it is
-                    // a safety mechanism in case bad data gets into the cache and needs to
-                    // be cleared out.
-                    if (matchRequiringPurging(theJSON)) {
-                        toPurge.add(c.getSpectatorURL());
-                        continue;
-                    }
-                    
-                    if (theJSON.getBoolean("isCompleted")) {
-                        nMatchesFinished++;                        
-                        movesPerMatch.addValue(theJSON.getInt("moveCount"));
-                        
-                        String theGame = theJSON.getString("gameMetaURL");
-                        if (!gameAverageMoves.containsKey(theGame)) {
-                            gameAverageMoves.put(theGame, new WeightedAverage());
-                        }
-                        gameAverageMoves.get(theGame).addValue(theJSON.getInt("moveCount"));                        
-                        
-                        // Score-related statistics.
-                        for (int i = 0; i < c.getPlayers().size(); i++) {
-                            String aPlayer = c.getPlayers().get(i);
-                            int aPlayerScore = theJSON.getJSONArray("goalValues").getInt(i);
-                            
-                            if (!playerAverageScore.containsKey(aPlayer)) {
-                                playerAverageScore.put(aPlayer, new WeightedAverage());
-                            }
-                            playerAverageScore.get(aPlayer).addValue(aPlayerScore);
-                            
-                            double ageInDays = (double)(System.currentTimeMillis() - theJSON.getLong("startTime")) / (double)(86400000L);
-                            if (!playerDecayedAverageScore.containsKey(aPlayer)) {
-                                playerDecayedAverageScore.put(aPlayer, new WeightedAverage());
-                            }
-                            playerDecayedAverageScore.get(aPlayer).addValue(aPlayerScore, Math.pow(0.98, ageInDays));
-                            
-                            if (!playerErrorsPerDay.containsKey(aPlayer)) {
-                                playerErrorsPerDay.put(aPlayer, new MedianPerDay());
-                            }
-                            int nErrors = 0;
-                            if (theJSON.has("errors")) {
-                                JSONArray theErrors = theJSON.getJSONArray("errors");
-                                for (int j = 0; j < theErrors.length(); j++) {
-                                    if (!theErrors.getJSONArray(j).getString(i).isEmpty()) {
-                                        nErrors++;
-                                    }
-                                }
-                            }
-                            playerErrorsPerDay.get(aPlayer).addToDay(nErrors, theJSON.getLong("startTime"));
-                            
-                            for (String bPlayer : c.getPlayers()) {
-                                if (bPlayer.equals(aPlayer))
-                                    continue;
-                                if (!averageScoreVersus.containsKey(aPlayer)) {
-                                    averageScoreVersus.put(aPlayer, new HashMap<String,WeightedAverage>());
-                                }
-                                if (!averageScoreVersus.get(aPlayer).containsKey(bPlayer)) {
-                                    averageScoreVersus.get(aPlayer).put(bPlayer, new WeightedAverage());
-                                }
-                                averageScoreVersus.get(aPlayer).get(bPlayer).addValue(aPlayerScore);
-                            }
-                        }
-                    } else {
-                        nMatchesAbandoned++;
-                    }
-                    
-                    playersPerMatch.addValue(theJSON.getJSONArray("gameRoleNames").length());
-                    
-                    if (System.currentTimeMillis() - theJSON.getLong("startTime") < 3600000L) nMatchesInPastHour++;
-                    if (System.currentTimeMillis() - theJSON.getLong("startTime") < 86400000L) nMatchesInPastDay++;
-                                        
-                    matchesPerDay.addToDay(1, theJSON.getLong("startTime"));
-                } catch(JSONException ex) {
-                    nMatchesStatErrors++;
-                    throw new RuntimeException(ex);
-                }
-            }
-        } catch(JDOObjectNotFoundException e) {
-            throw new RuntimeException(e);
-        } finally {
-            pm.close();
-        }
-        long nComputeTime = System.currentTimeMillis() - nComputeBeganAt;
-        
-        for (String matchKey : toPurge) {
-            Persistence.clearSpecific(matchKey, CondensedMatch.class);
-        }
-        
-        // Store the statistics as a JSON object in the datastore.
-        try {
-            JSONObject overall = new JSONObject();
-            Map<String, JSONObject> perPlayer = new HashMap<String, JSONObject>();
-            Map<String, JSONObject> perGame = new HashMap<String, JSONObject>();
-            
-            // Store the overall statistics
-            overall.put("matches", nMatches);
-            overall.put("matchesFinished", nMatchesFinished);
-            overall.put("matchesAbandoned", nMatchesAbandoned);
-            overall.put("matchesAverageMoves", movesPerMatch.getWeightedAverage());
-            overall.put("matchesAveragePlayers", playersPerMatch.getWeightedAverage());
-            overall.put("matchesStatErrors", nMatchesStatErrors);
-            overall.put("computeTime", nComputeTime);
-            overall.put("leaderboard", playerAverageScore);
-            overall.put("decayedLeaderboard", playerDecayedAverageScore);
-            overall.put("computedAt", System.currentTimeMillis());
-            overall.put("matchesInPastHour", nMatchesInPastHour);
-            overall.put("matchesInPastDay", nMatchesInPastDay);            
-            overall.put("matchesPerDayMedian", matchesPerDay.getMedianPerDay());
-
-            // Store the per-player statistics
-            for (Player p : Player.loadPlayers()) {
-                String playerName = p.getName();
-                perPlayer.put(playerName, new JSONObject());
-                
-                perPlayer.get(playerName).put("averageScore", playerAverageScore.get(playerName));                
-                perPlayer.get(playerName).put("decayedAverageScore", playerDecayedAverageScore.get(playerName));
-                perPlayer.get(playerName).put("averageScoreVersus", averageScoreVersus.get(playerName));
-                perPlayer.get(playerName).put("medianErrorsPerDay", playerErrorsPerDay.get(playerName));
-            }
-            
-            // Store the per-game statistics
-            for (Game g : Game.loadGames()) {
-                String gameName = g.getMetaURL();
-                perGame.put(gameName, new JSONObject());
-                
-                perGame.get(gameName).put("averageMoves", gameAverageMoves.get(gameName));
-            }
-            
-            StoredStatistics s = new StoredStatistics();
-            s.setOverallStats(overall);
-            for (String playerName : perPlayer.keySet()) {
-                s.setPlayerStats(playerName, perPlayer.get(playerName));
-            }
-            for (String gameName : perGame.keySet()) {
-                s.setGameStats(gameName, perGame.get(gameName));
-            }
-            s.save();
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }    
-    
     public void writeStaticTextPage(HttpServletResponse resp, String theURI) throws IOException {
         FileReader fr = new FileReader(theURI);
         BufferedReader br = new BufferedReader(fr);
@@ -611,7 +278,9 @@ public class GGP_ApolloServlet extends HttpServlet {
                         theResponse = new JSONObject();
                     }
                 } else if (theStatistic.equals("refresh")) {
-                    computeStatistics();
+                    if (isDatastoreWriteable()) {
+                        Statistics.computeStatistics();
+                    }
                     StoredStatistics s = StoredStatistics.loadStatistics();
                     theResponse = s.getOverallStats();
                 }
@@ -718,11 +387,5 @@ public class GGP_ApolloServlet extends HttpServlet {
 
     public static String translateRepositoryCodename(String theURL) {
         return theURL.replaceFirst("base/", "http://games.ggp.org/games/");
-    }
-
-    // Determine whether a match should be purged from the Apollo server's condensed
-    // match cache during the next batch statistics computation run.
-    public static boolean matchRequiringPurging(JSONObject theJSON) throws JSONException {
-        return false;
     }
 }

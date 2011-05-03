@@ -1,6 +1,6 @@
-package ggp.apollo;
+package ggp.apollo.stats;
 
-class WeightedAverage {
+public class WeightedAverage {
     private int count = 0;
     private double totalWeight = 0;
     private double totalSum = 0;
