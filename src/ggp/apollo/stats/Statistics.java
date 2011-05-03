@@ -5,6 +5,9 @@ import ggp.apollo.Game;
 import ggp.apollo.Persistence;
 import ggp.apollo.Player;
 import ggp.apollo.StoredStatistics;
+import ggp.apollo.stats.counters.MedianPerDay;
+import ggp.apollo.stats.counters.WeightedAverage;
+import ggp.apollo.stats.counters.WinLossCounter;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -37,6 +40,7 @@ public class Statistics {
         Map<String,WeightedAverage> playerDecayedAverageScore = new HashMap<String,WeightedAverage>();
         Map<String,Map<String,WeightedAverage>> averageScoreVersus = new HashMap<String,Map<String,WeightedAverage>>();
         Map<String,WeightedAverage> gameAverageMoves = new HashMap<String,WeightedAverage>();
+        Map<String,Map<String,Map<String,WinLossCounter>>> playerWinsVersusPlayerOnGame = new HashMap<String,Map<String,Map<String,WinLossCounter>>>();
         
         WeightedAverage playersPerMatch = new WeightedAverage();
         WeightedAverage movesPerMatch = new WeightedAverage();
@@ -103,9 +107,12 @@ public class Statistics {
                             }
                             playerErrorsPerDay.get(aPlayer).addToDay(nErrors, theJSON.getLong("startTime"));
                             
-                            for (String bPlayer : c.getPlayers()) {
+                            for (int j = 0; j < c.getPlayers().size(); j++) {
+                                String bPlayer = c.getPlayers().get(j);
+                                int bPlayerScore = theJSON.getJSONArray("goalValues").getInt(j);
                                 if (bPlayer.equals(aPlayer))
                                     continue;
+                                
                                 if (!averageScoreVersus.containsKey(aPlayer)) {
                                     averageScoreVersus.put(aPlayer, new HashMap<String,WeightedAverage>());
                                 }
@@ -113,6 +120,17 @@ public class Statistics {
                                     averageScoreVersus.get(aPlayer).put(bPlayer, new WeightedAverage());
                                 }
                                 averageScoreVersus.get(aPlayer).get(bPlayer).addValue(aPlayerScore);
+                                
+                                if (!playerWinsVersusPlayerOnGame.containsKey(aPlayer)) {
+                                    playerWinsVersusPlayerOnGame.put(aPlayer, new HashMap<String,Map<String,WinLossCounter>>());
+                                }
+                                if (!playerWinsVersusPlayerOnGame.get(aPlayer).containsKey(bPlayer)) {
+                                    playerWinsVersusPlayerOnGame.get(aPlayer).put(bPlayer, new HashMap<String,WinLossCounter>());
+                                }
+                                if (!playerWinsVersusPlayerOnGame.get(aPlayer).get(bPlayer).containsKey(theGame)) {
+                                    playerWinsVersusPlayerOnGame.get(aPlayer).get(bPlayer).put(theGame, new WinLossCounter());
+                                }
+                                playerWinsVersusPlayerOnGame.get(aPlayer).get(bPlayer).get(theGame).addEntry(aPlayerScore, bPlayerScore);
                             }
                         }
                     } else {
@@ -171,6 +189,7 @@ public class Statistics {
                 perPlayer.get(playerName).put("decayedAverageScore", playerDecayedAverageScore.get(playerName));
                 perPlayer.get(playerName).put("averageScoreVersus", averageScoreVersus.get(playerName));
                 perPlayer.get(playerName).put("medianErrorsPerDay", playerErrorsPerDay.get(playerName));
+                perPlayer.get(playerName).put("winsVersusPlayerOnGame", playerWinsVersusPlayerOnGame.get(playerName));
             }
             
             // Store the per-game statistics

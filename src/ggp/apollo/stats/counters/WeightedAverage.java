@@ -1,4 +1,4 @@
-package ggp.apollo.stats;
+package ggp.apollo.stats.counters;
 
 public class WeightedAverage {
     private int count = 0;

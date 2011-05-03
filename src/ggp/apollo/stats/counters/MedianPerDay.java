@@ -1,4 +1,4 @@
-package ggp.apollo.stats;
+package ggp.apollo.stats.counters;
 
 import java.util.ArrayList;
 import java.util.Collection;
