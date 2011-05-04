@@ -20,6 +20,7 @@ public class Player {
     @Persistent private boolean isEnabled;
     @Persistent private String gdlVersion;    
     @Persistent private String theURL;
+    @Persistent private Integer nStrikes;
     
     @Persistent private List<String> recentMatchURLs;
     private static final int kRecentMatchURLsToRecord = 40;
@@ -34,10 +35,12 @@ public class Player {
         this.setEnabled(false);
         this.setGdlVersion("GDLv1");
         this.theOwners = new HashSet<String>();
-        this.theOwners.add(anOwner);
+        this.theOwners.add(anOwner);        
         
         this.setVisibleEmail("");
         this.recentMatchURLs = new ArrayList<String>();
+        
+        this.nStrikes = 0;
         
         save();
     }
@@ -64,6 +67,7 @@ public class Player {
 
     public void setEnabled(boolean isEnabled) {
         this.isEnabled = isEnabled;
+        this.nStrikes = 0;
     }
 
     public boolean isEnabled() {
@@ -91,6 +95,25 @@ public class Player {
     
     public boolean isOwner(String userId) {
         return theOwners.contains(userId);
+    }
+    
+    public void addStrike() {
+        if (nStrikes == null) {
+            nStrikes = 0;
+        }
+        if (nStrikes > 3) {
+            isEnabled = false;
+            nStrikes = 0;
+        } else {
+            nStrikes++;
+        }
+    }
+    
+    public void resetStrikes() {
+        if (nStrikes == null) {
+            nStrikes = 0;
+        }        
+        nStrikes = 0;
     }
     
     public JSONObject asJSON(boolean includePrivate, boolean includeMatches) throws IOException {
@@ -125,7 +148,7 @@ public class Player {
         PersistenceManager pm = Persistence.getPersistenceManager();
         pm.makePersistent(this);
         pm.close();        
-    }    
+    }
 
     /* Static accessor methods */
     public static Set<Player> loadPlayers() throws IOException {

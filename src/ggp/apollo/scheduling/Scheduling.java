@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
@@ -54,41 +55,47 @@ public class Scheduling {
     }
 
     public static void runSchedulingRound(ServerState theState) throws IOException {
-        List<Player> thePlayers = new ArrayList<Player>(Player.loadPlayers());
-        for (int i = thePlayers.size()-1; i >= 0; i--) {
-            if (!thePlayers.get(i).isEnabled()) {
-                thePlayers.remove(i);
-            }
-        }
+        List<Player> theAvailablePlayers = new ArrayList<Player>(Player.loadPlayers());
 
-        // Find and clear all of the completed or wedged matches. For matches
-        // which are still ongoing, mark the players in those matches as busy.
-        Set<String> doneMatches = new HashSet<String>();
-        Set<String> busyPlayerNames = new HashSet<String>();
-        for (String matchKey : theState.getRunningMatches()) {
-            CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);
-            try {
-                JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
-                if(theMatchInfo.getBoolean("isCompleted")) {
-                    doneMatches.add(matchKey);
-                } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
-                    // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
-                    doneMatches.add(matchKey);
-                } else {
-                    busyPlayerNames.addAll(m.getPlayers());
+        {
+            // Find and clear all of the completed or wedged matches. For matches
+            // which are still ongoing, mark the players in those matches as busy.
+            Set<String> doneMatches = new HashSet<String>();
+            Set<String> busyPlayerNames = new HashSet<String>();
+            for (String matchKey : theState.getRunningMatches()) {
+                CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);
+                try {
+                    JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
+                    if(theMatchInfo.getBoolean("isCompleted")) {
+                        doneMatches.add(matchKey);
+                        handleStrikesForPlayers(theMatchInfo, m.getPlayers(), theAvailablePlayers);
+                    } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
+                        // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
+                        doneMatches.add(matchKey);
+                    } else {
+                        busyPlayerNames.addAll(m.getPlayers());
+                    }
+                    m.condenseFullJSON(theMatchInfo);
+                    m.save();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new IOException(e);
                 }
-                m.condenseFullJSON(theMatchInfo);
-                m.save();
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new IOException(e);
+            }
+            theState.getRunningMatches().removeAll(doneMatches);
+    
+            // Remove all of the players that aren't actually available, either because
+            // they're busy or because they're disabled.
+            for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
+                if (!theAvailablePlayers.get(i).isEnabled() || busyPlayerNames.contains(theAvailablePlayers.get(i).getName())) {
+                    theAvailablePlayers.remove(i);
+                }
             }
         }
-        theState.getRunningMatches().removeAll(doneMatches);
-
+        
         // Figure out how many players are available. If no players are available,
         // don't bother attempting to schedule a match.
-        int readyPlayers = thePlayers.size() - busyPlayerNames.size();
+        int readyPlayers = theAvailablePlayers.size();
         if (readyPlayers < 2) return;
         
         // Shuffle the list of known proper games, draw a game, and check whether
@@ -114,15 +121,16 @@ public class Scheduling {
         }
 
         // Assign available players to roles in the game.
+        Collections.shuffle(theAvailablePlayers);
         String[] playerURLsForMatch = new String[nPlayersForGame];
         List<String> playerNamesForMatch = new ArrayList<String>();
         Set<Player> playersForMatch = new HashSet<Player>();
-        for (Player p : thePlayers) {
-            if (busyPlayerNames.contains(p.getName())) continue;
-            nPlayersForGame--;            
+        for (Player p : theAvailablePlayers) {
+            nPlayersForGame--;
             playerURLsForMatch[nPlayersForGame] = p.getURL();
             playerNamesForMatch.add(0,p.getName());
             playersForMatch.add(p);
+                        
             if (nPlayersForGame == 0)
                 break;
         }
@@ -173,6 +181,40 @@ public class Scheduling {
         theState.addRecentMatchURL(theSpectatorURL);
         theState.getRunningMatches().add(theSpectatorURL);
         theState.clearBackendErrors();
+    }
+
+    private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {
+        if (!theMatchInfo.has("errors")) return;
+        boolean[] hasLegalMove = new boolean[players.size()];
+        for (int i = 0; i < hasLegalMove.length; i++) {
+            hasLegalMove[i] = false;
+        }
+        
+        try {
+            JSONArray theErrors = theMatchInfo.getJSONArray("errors");
+            for (int i = 0; i < theErrors.length(); i++) {
+                JSONArray moveErrors = theErrors.getJSONArray(i);
+                for (int j = 0; j < moveErrors.length(); j++) {
+                    if (moveErrors.getString(j).isEmpty()) {
+                        hasLegalMove[j] = true;
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        
+        for (int i = 0; i < thePlayers.size(); i++) {            
+            int nPlayerIndex = players.indexOf(thePlayers.get(i).getName());
+            if (nPlayerIndex > -1) {
+                if (hasLegalMove[nPlayerIndex]) {
+                    thePlayers.get(i).resetStrikes();
+                } else {
+                    thePlayers.get(i).addStrike();
+                }
+                thePlayers.get(i).save();
+            }
+        }
     }
 
 }
