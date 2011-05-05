@@ -6,6 +6,7 @@ import ggp.apollo.Persistence;
 import ggp.apollo.Player;
 import ggp.apollo.StoredStatistics;
 import ggp.apollo.stats.counters.MedianPerDay;
+import ggp.apollo.stats.counters.QuickRank;
 import ggp.apollo.stats.counters.WeightedAverage;
 import ggp.apollo.stats.counters.WinLossCounter;
 
@@ -44,6 +45,7 @@ public class Statistics {
         
         WeightedAverage playersPerMatch = new WeightedAverage();
         WeightedAverage movesPerMatch = new WeightedAverage();
+        QuickRank thePlayerRanks = new QuickRank();
 
         Set<String> toPurge = new HashSet<String>();
         
@@ -55,7 +57,7 @@ public class Statistics {
                 CondensedMatch c = (CondensedMatch)sqr.next();
                 if (!c.isReady()) continue;
                 JSONObject theJSON = c.getCondensedJSON();
-                                
+                
                 nMatches++;
                 try {
                     // Check whether this match needs to be purged from the Apollo server's
@@ -76,12 +78,24 @@ public class Statistics {
                             gameAverageMoves.put(theGame, new WeightedAverage());
                         }
                         gameAverageMoves.get(theGame).addValue(theJSON.getInt("moveCount"));                        
+
+                        boolean matchHadErrors = false;
+                        if (theJSON.has("errors")) {
+                            JSONArray theErrors = theJSON.getJSONArray("errors");
+                            for (int j = 0; j < theErrors.length(); j++) {
+                                for (int i = 0; i < theErrors.getJSONArray(j).length(); i++) {
+                                    if (!theErrors.getJSONArray(j).getString(i).isEmpty()) {
+                                        matchHadErrors = true;
+                                    }
+                                }
+                            }
+                        }
                         
-                        // Score-related statistics.
+                        // Score-related statistics.                        
                         for (int i = 0; i < c.getPlayers().size(); i++) {
                             String aPlayer = c.getPlayers().get(i);
                             int aPlayerScore = theJSON.getJSONArray("goalValues").getInt(i);
-                            
+
                             if (!playerAverageScore.containsKey(aPlayer)) {
                                 playerAverageScore.put(aPlayer, new WeightedAverage());
                             }
@@ -112,6 +126,19 @@ public class Statistics {
                                 int bPlayerScore = theJSON.getJSONArray("goalValues").getInt(j);
                                 if (bPlayer.equals(aPlayer))
                                     continue;
+                                
+                                if (!matchHadErrors) {
+                                    if (aPlayerScore > 90) {
+                                        // When a player gets a score > 90, all of the other players
+                                        // in the match cast a PlayerRank vote for that player.
+                                        thePlayerRanks.addVote(aPlayer, bPlayer);
+                                    }
+                                    if (bPlayerScore < 10) {
+                                        // When a player gets a score < 0, they cast a PlayerRank vote
+                                        // for all other players in the match.
+                                        thePlayerRanks.addVote(aPlayer, bPlayer);
+                                    }
+                                }
                                 
                                 if (!averageScoreVersus.containsKey(aPlayer)) {
                                     averageScoreVersus.put(aPlayer, new HashMap<String,WeightedAverage>());
@@ -153,6 +180,7 @@ public class Statistics {
         } finally {
             pm.close();
         }
+        thePlayerRanks.computeRanks(50);        
         long nComputeTime = System.currentTimeMillis() - nComputeBeganAt;
         
         for (String matchKey : toPurge) {
@@ -177,8 +205,12 @@ public class Statistics {
             overall.put("decayedLeaderboard", playerDecayedAverageScore);
             overall.put("computedAt", System.currentTimeMillis());
             overall.put("matchesInPastHour", nMatchesInPastHour);
-            overall.put("matchesInPastDay", nMatchesInPastDay);            
+            overall.put("matchesInPastDay", nMatchesInPastDay);
             overall.put("matchesPerDayMedian", matchesPerDay.getMedianPerDay());
+            overall.put("playerRank", thePlayerRanks.getComputedRanks());
+            overall.put("playerRankDelta", thePlayerRanks.getComputedDelta());
+            overall.put("playerRankError", thePlayerRanks.getComputedError());
+            overall.put("playerRankVersion", thePlayerRanks.getRankVersion());
 
             // Store the per-player statistics
             for (Player p : Player.loadPlayers()) {
