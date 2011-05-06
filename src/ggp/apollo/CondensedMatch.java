@@ -1,6 +1,7 @@
 package ggp.apollo;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -16,11 +17,13 @@ public class CondensedMatch {
     @PrimaryKey @Persistent private String theSpectatorURL;
     @Persistent private Text theCondensedMatchJSON;
     @Persistent private List<String> thePlayers;
+    @Persistent private Date createdOn;
 
     public CondensedMatch(String theSpectatorURL, List<String> thePlayers) {
         this.theSpectatorURL = theSpectatorURL;
         this.thePlayers = thePlayers;
         this.theCondensedMatchJSON = new Text("");
+        this.createdOn = new Date();
         
         save();
     }
@@ -57,6 +60,11 @@ public class CondensedMatch {
 
     public String getSpectatorURL() {
         return theSpectatorURL;
+    }
+    
+    // Can sometimes be null.
+    public Date getCreationDate() {        
+        return createdOn;
     }
     
     public void save() {

@@ -46,7 +46,7 @@ public class Scheduling {
             //"ttcc4_2player:2",
             "ticTacToe:2"
     };    
-    
+
     public static void runSchedulingRound() throws IOException {
         ServerState theState = ServerState.loadState();
         theState.incrementSchedulingRound();
@@ -63,7 +63,7 @@ public class Scheduling {
             Set<String> doneMatches = new HashSet<String>();
             Set<String> busyPlayerNames = new HashSet<String>();
             for (String matchKey : theState.getRunningMatches()) {
-                CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);
+                CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);                                
                 try {
                     JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
                     if(theMatchInfo.getBoolean("isCompleted")) {
@@ -78,8 +78,13 @@ public class Scheduling {
                     m.condenseFullJSON(theMatchInfo);
                     m.save();
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new IOException(e);
+                    if (m.getCreationDate() != null && (System.currentTimeMillis() - m.getCreationDate().getTime()) > 21600000) {
+                        doneMatches.add(matchKey);
+                    } else {
+                        // For some reason the match isn't recorded on the match server, or the match server
+                        // is down. We'll wait for six hours and then assume the match is done, leaving our condensed
+                        // version of the match empty but freeing up the players.
+                    }
                 }
             }
             theState.getRunningMatches().removeAll(doneMatches);
