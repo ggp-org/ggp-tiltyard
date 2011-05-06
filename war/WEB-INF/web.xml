@@ -16,6 +16,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
     <security-constraint>
         <web-resource-collection>
             <url-pattern>/cron/*</url-pattern>
+            <url-pattern>/data/statistics/refresh</url-pattern>
         </web-resource-collection>
         <auth-constraint>
             <role-name>admin</role-name>
