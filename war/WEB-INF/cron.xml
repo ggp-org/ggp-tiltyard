@@ -7,7 +7,7 @@
   </cron>
   <cron>
     <url>/cron/update_stats</url>
-    <description>Update the server statistics every fifteen minutes.</description>
-    <schedule>every 15 minutes</schedule>
+    <description>Update the server statistics every hour.</description>
+    <schedule>every 1 hours</schedule>
   </cron>  
 </cronentries>
