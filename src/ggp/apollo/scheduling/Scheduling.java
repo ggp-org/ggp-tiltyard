@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import com.google.appengine.repackaged.org.json.JSONArray;
@@ -27,22 +28,24 @@ public class Scheduling {
     private static final String[] someProperGames = {
             //"3pConnectFour:3",
             //"4pttc:4",
-            //"blocker:2",
+            "blocker:2",
             //"breakthrough:2",
-            //"breakthroughSmall:2",
+            "breakthroughSmall:2",
             //"chess:2",
             //"checkers:2",
             "connectFour:2",
             "connectFourSuicide:2",            
-            //"eightPuzzle:1",
+            "eightPuzzle:1",
             //"knightThrough:2",
-            //"knightsTour:1",
+            "knightsTour:1",
             //"pawnToQueen:2",
             //"pawnWhopping:2",
-            //"peg:1",
-            //"pegEuro:1",            
+            "peg:1",
+            "pegEuro:1",
+            "lightsOut:1",
+            "2pffa_zerosum:2",
             //"qyshinsu:2",
-            "nineBoardTicTacToe:2",            
+            "nineBoardTicTacToe:2",
             //"ttcc4_2player:2",
             "ticTacToe:2"
     };    
@@ -88,7 +91,7 @@ public class Scheduling {
                 }
             }
             theState.getRunningMatches().removeAll(doneMatches);
-    
+            
             // Remove all of the players that aren't actually available, either because
             // they're busy or because they're disabled.
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
@@ -97,11 +100,17 @@ public class Scheduling {
                 }
             }
         }
-        
+
         // Figure out how many players are available. If no players are available,
         // don't bother attempting to schedule a match.
         int readyPlayers = theAvailablePlayers.size();
-        if (readyPlayers < 2) return;
+        if (readyPlayers == 0) {
+            return;
+        } else if (readyPlayers == 1 && (new Random().nextInt(100) < 90)) {
+            // Wait some random amount of time before assigning a puzzle game
+            // to a player, so that we don't lock them into always doing puzzles.
+            return;
+        }
         
         // Shuffle the list of known proper games, draw a game, and check whether
         // we have enough players available to play it. Repeat until we have a game.

@@ -23,6 +23,11 @@
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
+      function clip(s, n) {
+        if (s.length <= n) return s;
+        return s.substring(0,n-3) + "...";
+      }
+
       // special code for rendering Alex's win/tie/loss table
       function renderWinLossTable(theTable) {
         var theGames = ResourceLoader.load_json('/data/games/');
@@ -38,7 +43,7 @@
         theTableHTML += "<tr><th colspan=" + (theCols.length+1) + ">Aggregate Win-Tie-Loss Table</th></tr>";
         theTableHTML += "<tr><th></th>";
         for (var i = 0; i < theCols.length; i++) {          
-          theTableHTML += '<th><a href="/games/' + translateRepositoryIntoCodename(theCols[i]) + '">' + theGames[theCols[i]].metadata.gameName + '</a></th>';
+          theTableHTML += '<th><a href="/games/' + translateRepositoryIntoCodename(theCols[i]) + '">' + clip(theGames[theCols[i]].metadata.gameName,12) + '</a></th>';
         }
         theTableHTML += "</tr>";
         for (var aPlayer in theTable) {
