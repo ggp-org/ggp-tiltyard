@@ -74,6 +74,16 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             reqURI = "/players/playerPage.html";
         }
+        if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html") && reqURI.endsWith("/refresh")) {
+            String gameName = translateRepositoryCodename(reqURI.replaceFirst("/games/", "").replaceFirst("/refresh","/").replaceFirst("index.html", ""));
+            Game theGame = Game.loadGame(gameName);
+            if (theGame == null) {
+                resp.setStatus(404);
+                return;
+            }
+            theGame.refreshFromRepository();
+            reqURI = "/games/index.html";
+        }        
         if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
             String gameName = translateRepositoryCodename(reqURI.replaceFirst("/games/", "").replaceFirst("index.html", ""));
             if(Game.loadGame(gameName) == null) {
