@@ -132,11 +132,13 @@ public class Statistics {
                                         // When a player gets a score > 90, all of the other players
                                         // in the match cast a PlayerRank vote for that player.
                                         thePlayerRanks.addVote(aPlayer, bPlayer);
+                                        thePlayerRanks.removeVote(bPlayer, aPlayer);
                                     }
                                     if (bPlayerScore < 10) {
                                         // When a player gets a score < 0, they cast a PlayerRank vote
                                         // for all other players in the match.
                                         thePlayerRanks.addVote(aPlayer, bPlayer);
+                                        thePlayerRanks.removeVote(bPlayer, aPlayer);
                                     }
                                 }
                                 

@@ -41,7 +41,7 @@ td.name {
         <center>
         <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
           <tr><th colspan=5>Leaderboard</th></tr>
-          <tr><th>Player</th><th>Matches</th><th>Total Score</th><th>Avg Score</th><th>PlayerRank</th></tr>
+          <tr><th>Player</th><th>Matches</th><th>Average Score</th><th>PlayerRank</th></tr>
         </table>
         </center>
       </td><td valign=top width=150px>
@@ -77,7 +77,6 @@ td.name {
         var playerName = sortablePairs[i][4];
         leadersHTML += '<tr><td class="name"><a class="darklink" href=/players/'+playerName+'>'+playerName+'</a></td>';
         leadersHTML += '<td>'+cleanFloat(sortablePairs[i][2])+'</td>'
-        leadersHTML += '<td>'+cleanFloat(sortablePairs[i][1])+'</td>'
         leadersHTML += '<td>'+cleanFloat(sortablePairs[i][0])+'</td>'
         leadersHTML += '<td>'+cleanFloat(sortablePairs[i][3])+'</td></tr>'
         // TODO: add back information about the decayed leaderboard

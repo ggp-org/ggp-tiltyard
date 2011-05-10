@@ -21,6 +21,9 @@ public class QuickRank {
     public void addVote(String toNode, String fromNode) {
         addWeight(toNode, fromNode, 1.0);
     }
+    public void removeVote(String toNode, String fromNode) {
+        addWeight(toNode, fromNode, -1.0);
+    }
     
     public void addWeight(String toNode, String fromNode, double w) {
         if (!theWeights.containsKey(toNode)) {
@@ -30,7 +33,7 @@ public class QuickRank {
             theWeights.get(toNode).put(fromNode, w);
         } else {
             theWeights.get(toNode).put(fromNode, theWeights.get(toNode).get(fromNode)+w);
-        }        
+        }
                 
         distinctNodes.add(fromNode);
         distinctNodes.add(toNode);        
@@ -40,6 +43,13 @@ public class QuickRank {
     // have their outward flows normalized, so that they can be scaled by
     // the node's PlayerRank.
     private void normalizeWeights () {
+        for (String toNode : theWeights.keySet()) {
+            for (String fromNode : theWeights.get(toNode).keySet()) {
+                if (theWeights.get(toNode).get(fromNode) < 0) {
+                    theWeights.get(toNode).put(fromNode, 0.0);
+                }
+            }
+        }        
         for (String fromNode : distinctNodes) {
             double outgoingSum = 0;
             for (String toNode : theWeights.keySet()) {
@@ -52,10 +62,10 @@ public class QuickRank {
                 if (theWeights.get(toNode).containsKey(fromNode)) {
                     theWeights.get(toNode).put(fromNode, theWeights.get(toNode).get(fromNode)/outgoingSum);
                 }
-            }            
+            }
         }
     }
-    
+
     public void computeRanks(int nIterations) {
         normalizeWeights();
         
@@ -65,23 +75,27 @@ public class QuickRank {
         Map<String,Double> theNewRanks = new HashMap<String,Double>();
         for (String toNode : distinctNodes) {
             theOldRanks.put(toNode, MAX/N);
-            theNewRanks.put(toNode, MAX/N);
         }
         
         theDelta = -1;
         for (int i = 0; i < nIterations; i++) {
+            theNewRanks.clear();
+            theNewRanks.putAll(theOldRanks);
+            
             for (String toNode : theNewRanks.keySet()) {
-                double incoming = 0;
                 if (theWeights.containsKey(toNode)) {
-                    for (String fromNode : theWeights.get(toNode).keySet()) {
+                    double incoming = 0;
+                    for (String fromNode : theWeights.get(toNode).keySet()) {                        
                         double w = theWeights.get(toNode).get(fromNode);
                         double fromRank = theOldRanks.get(fromNode);
-                        incoming += w*fromRank;
+                        double delta = w*fromRank;
+
+                        incoming += delta;
+                        //theNewRanks.put(toNode, theNewRanks.get(toNode) + delta);
+                        //theNewRanks.put(fromNode, theNewRanks.get(fromNode) - delta);
                     }
+                    theNewRanks.put(toNode, (1-GAMMA)*theOldRanks.get(toNode) + GAMMA*incoming);
                 }
-                //double newRank = (1.0 - GAMMA)*(MAX/N) + GAMMA*(incoming);
-                double newRank = (1.0 - GAMMA)*theOldRanks.get(toNode) + GAMMA*(incoming);
-                theNewRanks.put(toNode, newRank);
             }
             
             theDelta = computeDifference(theOldRanks, theNewRanks);
@@ -89,7 +103,7 @@ public class QuickRank {
             theOldRanks.putAll(theNewRanks);            
         }
                 
-        theComputedRanks = theNewRanks;
+        theComputedRanks = theOldRanks;
         theError = computeError(theComputedRanks);
     }
     
@@ -130,6 +144,6 @@ public class QuickRank {
     }
     
     public int getRankVersion() {
-        return 11;
+        return 19;
     }
 }
