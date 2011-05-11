@@ -41,7 +41,7 @@ td.name {
         <center>
         <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
           <tr><th colspan=5>Leaderboard</th></tr>
-          <tr><th>Player</th><th>Matches</th><th>Average Score</th><th>PlayerRank</th></tr>
+          <tr><th>Player</th><th>Matches</th><th>Avg Score</th><th>PlayerRank</th><th>WinRank</th></tr>
         </table>
         </center>
       </td><td valign=top width=150px>
@@ -60,25 +60,31 @@ td.name {
       generateHeader(document.getElementById('header'));
       
       var statsJSON = ResourceLoader.load_json('/data/statistics/overall');
+      
+      function getOptionalMapValue(playerName, statsData, mapName) {
+        if (mapName in statsData && playerName in statsData[mapName]) {
+          return statsData[mapName][playerName];
+        }
+        return "";
+      }
 
       cleanFloat = function (x) { return Math.round(x*100)/100; };
       var sortablePairs = [];
       for (var pName in statsJSON.leaderboard) {
         var theBoardStats = JSON.parse(statsJSON.leaderboard[pName]);        
-        var thePlayerRank = "";
-        if ("playerRank" in statsJSON && pName in statsJSON.playerRank) {
-          thePlayerRank = statsJSON.playerRank[pName];
-        }
-        sortablePairs.push([1*theBoardStats[0], 1*theBoardStats[1], 1*theBoardStats[2], thePlayerRank, pName]);
+        var thePlayerRank = getOptionalMapValue(pName, statsJSON, "playerRank");
+        var theWinRank = getOptionalMapValue(pName, statsJSON, "winRank");
+        sortablePairs.push([1*theBoardStats[0], pName, 1*theBoardStats[1], thePlayerRank, theWinRank]);
       }
       sortablePairs.sort(function(a,b){return(b[0]-a[0]);});
       leadersHTML = "";
       for (var i = 0; i < sortablePairs.length; i++) {
-        var playerName = sortablePairs[i][4];
+        var playerName = sortablePairs[i][1];
         leadersHTML += '<tr><td class="name"><a class="darklink" href=/players/'+playerName+'>'+playerName+'</a></td>';
         leadersHTML += '<td>'+cleanFloat(sortablePairs[i][2])+'</td>'
         leadersHTML += '<td>'+cleanFloat(sortablePairs[i][0])+'</td>'
-        leadersHTML += '<td>'+cleanFloat(sortablePairs[i][3])+'</td></tr>'
+        leadersHTML += '<td>'+cleanFloat(sortablePairs[i][3])+'</td>'
+        leadersHTML += '<td>'+cleanFloat(sortablePairs[i][4])+'</td></tr>'
         // TODO: add back information about the decayed leaderboard
         //'<td>'+cleanFloat(statsJSON.decayedLeaderboard[sortablePairs[i][1]])+'</td></tr>'; 
       }
@@ -97,13 +103,14 @@ td.name {
         "matchesAverageMoves": "Average Moves/Match",
         "matchesAveragePlayers": "Average Players/Match",
         "playerRankError": "PlayerRank Error",
-        "playerRankVersion": "PlayerRank Version",
+        "statsVersion": "Stats Version",
         "playerRankDelta": "PlayerRank Delta"
       };
       
       delete statsJSON.leaderboard;
       delete statsJSON.decayedLeaderboard;
       delete statsJSON.playerRank;
+      delete statsJSON.winRank;
       
       varsHTML = "";
       for (var varName in statsJSON) {

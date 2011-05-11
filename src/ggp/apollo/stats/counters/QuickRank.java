@@ -142,8 +142,4 @@ public class QuickRank {
         }
         return x;
     }
-    
-    public int getRankVersion() {
-        return 19;
-    }
 }
