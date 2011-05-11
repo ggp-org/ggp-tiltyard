@@ -106,7 +106,7 @@ public class Scheduling {
         int readyPlayers = theAvailablePlayers.size();
         if (readyPlayers == 0) {
             return;
-        } else if (readyPlayers == 1 && (new Random().nextInt(100) < 90)) {
+        } else if (readyPlayers == 1 && (new Random().nextInt(100) < 95)) {
             // Wait some random amount of time before assigning a puzzle game
             // to a player, so that we don't lock them into always doing puzzles.
             return;
