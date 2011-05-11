@@ -36,7 +36,7 @@
 
       var apolloMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
 
-      spectatorView = SpectatorView.construct(apolloMatch.apolloSpectatorURL, document.getElementById('spectator_div'));
+      spectatorView = SpectatorView.construct(apolloMatch.apolloSpectatorURL, document.getElementById('spectator_div'), {});
       // TODO: Fix the width/height calculation properly.
       spectatorView.getHeight = function () { return document.getElementById("spectator_div").clientHeight * 0.95; };
       spectatorView.getWidth = function () { return document.getElementById("spectator_div").clientWidth * 0.95; };

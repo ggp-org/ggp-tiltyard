@@ -28,14 +28,14 @@
       generateHeader(document.getElementById('header'));    
 
       var views = [];
-    
+      
       var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
       var recentMatches = ResourceLoader.load_json('/data/matches/recent/');
       recentMatches.reverse();
       for (var i = 0; i < recentMatches.length; i++) {
         if (ongoingMatches.indexOf(recentMatches[i].apolloSpectatorURL) >= 0) {
           var theDiv = document.getElementById('sv_' + views.length)
-          var sV = SpectatorView.construct(recentMatches[i].apolloSpectatorURL, theDiv);
+          var sV = SpectatorView.construct(recentMatches[i].apolloSpectatorURL, theDiv, {});
           sV.getHeight = function () { return theDiv.clientHeight * 0.95; };
           sV.getWidth = function () { return theDiv.clientWidth * 0.95; };
           sV.render();
