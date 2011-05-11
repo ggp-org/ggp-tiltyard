@@ -31,36 +31,49 @@
     <div id="temp"></div>
 
     <script type='text/javascript'>
+      function renderSidePanel() {
+        var sidePanelHTML = '<br>';
+        var spectatorMatch = spectatorView.matchData;
+        var theDate = new Date(spectatorMatch.startTime);
+        sidePanelHTML += '<b>Game:</b> <a href="/games/' + translateRepositoryIntoCodename(apolloMatch.gameMetaURL) + '">' + spectatorMatch.gameName + '</a><br><br>';
+        sidePanelHTML += '<b>Started at:</b> ' + UserInterface.renderDateTime(theDate) + '<br><br>';
+        sidePanelHTML += '<b>Start clock:</b> ' + spectatorMatch.startClock + '<br>';
+        sidePanelHTML += '<b>Play clock:</b> ' + spectatorMatch.playClock + '<br><br>';
+        sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.VISUAL_VIEW);">Visual View</a><br>';
+        sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.LISTING_VIEW);">Listing View</a><br><br>';
+        sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator Page</a>)<br><br>';
+        sidePanelHTML += 'There are ' + apolloMatch.apolloPlayers.length + ' players: <ol>';
+        for (var i = 0; i < apolloMatch.apolloPlayers.length; i++) {
+          sidePanelHTML += '<li><b>' + spectatorMatch.gameRoleNames[i] + ':</b> ';        
+          sidePanelHTML += '<a href="/players/' + apolloMatch.apolloPlayers[i] + '">' + apolloMatch.apolloPlayers[i] + '</a> ';
+          if ("goalValues" in spectatorMatch) {
+            sidePanelHTML += '<br>(goal value: ' + spectatorMatch.goalValues[i] + ')';
+          }
+          sidePanelHTML += '</li>';
+        }
+        sidePanelHTML += '</ol>';
+        var nSteps = spectatorMatch.moves.length;
+        if (spectatorMatch.isCompleted) {
+          sidePanelHTML += '<b>Match done!</b> (in ' + nSteps + ' steps)';
+        } else {
+          sidePanelHTML += '<i>Match ongoing, ' + nSteps + ' steps in...</i>';
+        }
+        document.getElementById('sidePanel').innerHTML = sidePanelHTML;      
+      }      
+    
       generateHeader(document.getElementById('header'));
       document.getElementById('navBuffer').innerHTML = '<td colspan=2 style="padding: 0; width: 20%"><table style="border: 0; margin: 0; border-spacing: 0px 0px; width: 100%"><tr><td class="navbarBottomAbrupt" height=10px></td></tr></table></td>' + document.getElementById('navBuffer').innerHTML;
 
       var apolloMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
 
-      spectatorView = SpectatorView.construct(apolloMatch.apolloSpectatorURL, document.getElementById('spectator_div'), {});
+      spectatorView = SpectatorView.construct(apolloMatch.apolloSpectatorURL, document.getElementById('spectator_div'), {"update": renderSidePanel});
       // TODO: Fix the width/height calculation properly.
       spectatorView.getHeight = function () { return document.getElementById("spectator_div").clientHeight * 0.95; };
       spectatorView.getWidth = function () { return document.getElementById("spectator_div").clientWidth * 0.95; };
       //spectatorView.getHeight = function () { return window.innerHeight - 70; };
       //spectatorView.getWidth = function () { return window.innerWidth * 0.79; };      
       spectatorView.render();
-      
-      var sidePanelHTML = '<br>';
-      var spectatorMatch = spectatorView.matchData;
-      var theDate = new Date(spectatorMatch.startTime);
-      sidePanelHTML += '<b>Game:</b> <a href="/games/' + translateRepositoryIntoCodename(apolloMatch.gameMetaURL) + '">' + spectatorMatch.gameName + '</a><br><br>';
-      sidePanelHTML += '<b>Started at:</b> ' + UserInterface.renderDateTime(theDate) + '<br><br>';
-      sidePanelHTML += '<b>Start clock:</b> ' + spectatorMatch.startClock + '<br>';
-      sidePanelHTML += '<b>Play clock:</b> ' + spectatorMatch.playClock + '<br><br>';
-      sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.VISUAL_VIEW);">Visual View</a><br>';
-      sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.LISTING_VIEW);">Listing View</a><br><br>';
-      sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator Page</a>)<br><br>';
-      sidePanelHTML += 'There are ' + apolloMatch.apolloPlayers.length + ' players: <ol>';
-      for (var i = 0; i < apolloMatch.apolloPlayers.length; i++) {
-        sidePanelHTML += '<li><b>' + spectatorMatch.gameRoleNames[i] + ':</b> ';        
-        sidePanelHTML += '<a href="/players/' + apolloMatch.apolloPlayers[i] + '">' + apolloMatch.apolloPlayers[i] + '</a></li>';
-      }
-      sidePanelHTML += '</ol>';
-      document.getElementById('sidePanel').innerHTML = sidePanelHTML;
+      renderSidePanel();
     </script>
   </body>  
 </html>
