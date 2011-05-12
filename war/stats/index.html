@@ -37,11 +37,11 @@ td.name {
     <br>
     <center>
 
-      <table width=100%><tr><td width=10%></td><td valign=top width=150px>
+      <table width=100%><tr><td width=3%></td><td valign=top width=150px>
         <center>
         <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
-          <tr><th colspan=10>Leaderboard</th></tr>
-          <tr><th>Player</th><th>Matches</th><th>Avg Score</th><th>NetScore</th><th>PlayerRank</th></tr>
+          <tr><th colspan=6>Leaderboard</th></tr>
+          <tr><th>Player</th><th>Matches</th><th>Avg Score</th><th>NetScore</th><th>PlayerRank</th><th>EloRank</th></tr>
         </table>
         </center>
       </td><td valign=top width=150px>
@@ -50,7 +50,7 @@ td.name {
           <th colspan=2>Server Statistics</th>
         </table>
         </center>
-      </td><td width=10%></td></tr></table>
+      </td><td width=3%></td></tr></table>
 
       <br>
       Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.
@@ -74,8 +74,9 @@ td.name {
         var theBoardStats = JSON.parse(statsJSON.leaderboard[pName]);        
         var thePlayerRank = getOptionalMapValue(pName, statsJSON, "playerRank");
         var theNetScore = getOptionalMapValue(pName, statsJSON, "netScore");
+        var theEloRank = getOptionalMapValue(pName, statsJSON, "eloRank");
         var sortKey = cleanFloat(theNetScore);
-        sortablePairs.push([sortKey, pName, 1*theBoardStats[1], 1*theBoardStats[0], theNetScore, thePlayerRank]);
+        sortablePairs.push([sortKey, pName, 1*theBoardStats[1], 1*theBoardStats[0], theNetScore, thePlayerRank, theEloRank]);
       }
       sortablePairs.sort(function(a,b){return(b[0]-a[0]);});
       leadersHTML = "";
@@ -95,6 +96,7 @@ td.name {
       delete statsJSON.decayedLeaderboard;
       delete statsJSON.playerRank;
       delete statsJSON.netScore;
+      delete statsJSON.eloRank;
       
       var varNameMapping = {
         "matches": "Total Matches",

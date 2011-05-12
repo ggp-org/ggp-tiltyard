@@ -5,6 +5,7 @@ import ggp.apollo.Game;
 import ggp.apollo.Persistence;
 import ggp.apollo.Player;
 import ggp.apollo.StoredStatistics;
+import ggp.apollo.stats.counters.EloRank;
 import ggp.apollo.stats.counters.MedianPerDay;
 import ggp.apollo.stats.counters.QuickRank;
 import ggp.apollo.stats.counters.WeightedAverage;
@@ -14,8 +15,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -27,7 +31,43 @@ import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
 public class Statistics {
-    public static final int STATS_VERSION = 28;
+    public static final int STATS_VERSION = 33;
+
+    static final String[] dummyArray = new String[] {};
+    static class SortableTinyMatch implements Comparable<SortableTinyMatch> {
+        private long startTime;
+        private String theMatchURL;
+        private String[] thePlayers;
+        private int[] theGoalValues;
+        private String theGameURL;
+        
+        public SortableTinyMatch(String theURL, List<String> thePlayers, JSONObject theJSON) throws JSONException {
+            this.theMatchURL = theURL;
+            this.theGameURL = theJSON.getString("gameMetaURL");
+            this.startTime = theJSON.getLong("startTime");
+            
+            this.thePlayers = thePlayers.toArray(dummyArray);
+            this.theGoalValues = new int[theJSON.getJSONArray("goalValues").length()];
+            for (int i = 0; i < this.theGoalValues.length; i++) {
+                this.theGoalValues[i] = theJSON.getJSONArray("goalValues").getInt(i);
+            }            
+        }
+        public int compareTo(SortableTinyMatch k2) {
+            if (k2.startTime > startTime) return -1;
+            if (k2.startTime < startTime) return 1;
+            return k2.theMatchURL.compareTo(theMatchURL);
+        }
+        
+        public String[] getPlayers() {
+            return thePlayers;
+        }
+        public int[] getGoalValues() {
+            return theGoalValues;
+        }
+        public String getGameURL() {
+            return theGameURL;
+        }
+    }
     
     public static void computeStatistics() throws IOException {
         int nMatches = 0;
@@ -50,9 +90,12 @@ public class Statistics {
         WeightedAverage playersPerMatch = new WeightedAverage();
         WeightedAverage movesPerMatch = new WeightedAverage();
         QuickRank thePlayerRanks = new QuickRank();
-
+        
         Set<String> toPurge = new HashSet<String>();
         
+        SortedSet<SortableTinyMatch> theKeySet = new TreeSet<SortableTinyMatch>();
+
+        /* Compute most statistics in the initial unsorted first pass over the match data */
         long nComputeBeganAt = System.currentTimeMillis();
         PersistenceManager pm = Persistence.getPersistenceManager();
         try {
@@ -72,11 +115,11 @@ public class Statistics {
                         toPurge.add(c.getSpectatorURL());
                         continue;
                     }
-                    
+
                     if (theJSON.getBoolean("isCompleted")) {
                         nMatchesFinished++;                        
                         movesPerMatch.addValue(theJSON.getInt("moveCount"));
-                        
+
                         String theGame = theJSON.getString("gameMetaURL");
                         if (!gameAverageMoves.containsKey(theGame)) {
                             gameAverageMoves.put(theGame, new WeightedAverage());
@@ -94,12 +137,16 @@ public class Statistics {
                                 }
                             }
                         }
-                        
+
+                        if (!matchHadErrors) {
+                            theKeySet.add(new SortableTinyMatch(c.getSpectatorURL(), c.getPlayers(), theJSON));
+                        }
+
                         // Score-related statistics.                        
                         for (int i = 0; i < c.getPlayers().size(); i++) {
                             String aPlayer = c.getPlayers().get(i);
                             int aPlayerScore = theJSON.getJSONArray("goalValues").getInt(i);
-                            
+
                             if (!matchHadErrors) {
                                 if (!netScores.containsKey(aPlayer)) {
                                     netScores.put(aPlayer, 0.0);
@@ -111,13 +158,13 @@ public class Statistics {
                                 playerAverageScore.put(aPlayer, new WeightedAverage());
                             }
                             playerAverageScore.get(aPlayer).addValue(aPlayerScore);
-                            
+
                             double ageInDays = (double)(System.currentTimeMillis() - theJSON.getLong("startTime")) / (double)(86400000L);
                             if (!playerDecayedAverageScore.containsKey(aPlayer)) {
                                 playerDecayedAverageScore.put(aPlayer, new WeightedAverage());
                             }
                             playerDecayedAverageScore.get(aPlayer).addValue(aPlayerScore, Math.pow(0.98, ageInDays));
-                            
+
                             if (!playerErrorsPerDay.containsKey(aPlayer)) {
                                 playerErrorsPerDay.put(aPlayer, new MedianPerDay());
                             }
@@ -131,7 +178,7 @@ public class Statistics {
                                 }
                             }
                             playerErrorsPerDay.get(aPlayer).addToDay(nErrors, theJSON.getLong("startTime"));
-                            
+
                             if (!averageScoreOn.containsKey(aPlayer)) {
                                 averageScoreOn.put(aPlayer, new HashMap<String,WeightedAverage>());
                             }
@@ -139,13 +186,13 @@ public class Statistics {
                                 averageScoreOn.get(aPlayer).put(theGame, new WeightedAverage());
                             }
                             averageScoreOn.get(aPlayer).get(theGame).addValue(aPlayerScore);
-                            
+
                             for (int j = 0; j < c.getPlayers().size(); j++) {
                                 String bPlayer = c.getPlayers().get(j);
                                 int bPlayerScore = theJSON.getJSONArray("goalValues").getInt(j);
                                 if (bPlayer.equals(aPlayer))
                                     continue;
-                                
+
                                 if (!matchHadErrors) {
                                     if (aPlayerScore > 90) {
                                         // When a player gets a score > 90, all of the other players
@@ -202,6 +249,25 @@ public class Statistics {
             pm.close();
         }
         thePlayerRanks.computeRanks(50);        
+        
+        /* Compute more statistics in a second pass over matches, now sorted by time */
+        EloRank theEloRank = new EloRank();
+        for (SortableTinyMatch k : theKeySet) {
+            k.getGoalValues();
+            k.getPlayers();
+
+            for (int i = 0; i < k.getPlayers().length; i++) {
+                String aPlayer = k.getPlayers()[i];
+                int aPlayerScore = k.getGoalValues()[i];
+                for (int j = i+1; j < k.getPlayers().length; j++) {
+                    String bPlayer = k.getPlayers()[j];
+                    int bPlayerScore = k.getGoalValues()[j];
+                    theEloRank.addNextMatch(aPlayer, bPlayer, aPlayerScore, bPlayerScore);
+                }
+            }
+        }
+        
+        /* Finally we're done with computing statistics */
         long nComputeTime = System.currentTimeMillis() - nComputeBeganAt;
         
         for (String matchKey : toPurge) {
@@ -229,6 +295,7 @@ public class Statistics {
             overall.put("matchesInPastDay", nMatchesInPastDay);
             overall.put("matchesPerDayMedian", matchesPerDay.getMedianPerDay());
             overall.put("playerRank", thePlayerRanks.getComputedRanks());
+            overall.put("eloRank", theEloRank.getComputedRanks());
             overall.put("netScore", netScores);
             overall.put("playerRankDelta", thePlayerRanks.getComputedDelta());
             overall.put("playerRankError", thePlayerRanks.getComputedError());
@@ -238,7 +305,7 @@ public class Statistics {
             for (Player p : Player.loadPlayers()) {
                 String playerName = p.getName();
                 perPlayer.put(playerName, new JSONObject());
-                
+
                 perPlayer.get(playerName).put("averageScore", playerAverageScore.get(playerName));                
                 perPlayer.get(playerName).put("decayedAverageScore", playerDecayedAverageScore.get(playerName));
                 perPlayer.get(playerName).put("averageScoreOn", averageScoreOn.get(playerName));
