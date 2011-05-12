@@ -23,13 +23,18 @@
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
+      cleanFloat = function (x) { return Math.round(x*100)/100; };
       function clip(s, n) {
         if (s.length <= n) return s;
         return s.substring(0,n-3) + "...";
       }
+      function renderAvg(x) {
+        var y = JSON.parse(x);
+        return '<table width=100% padding=0px cellspacing=0px><tr><td width=100%><b>' + cleanFloat(y[0]) + '</b></td><td><i>' + y[1] + '</i></td></tr></table>';
+      }
 
       // special code for rendering Alex's win/tie/loss table
-      function renderWinLossTable(theTable) {
+      function renderWinLossTable(theTable, perPlayer, perGame, avgScore) {
         var theGames = ResourceLoader.load_json('/data/games/');
         var theCols = [];
         for (var aPlayer in theTable) {
@@ -40,19 +45,37 @@
           }
         }
         var theTableHTML = "<table border=1px>";
-        theTableHTML += "<tr><th colspan=" + (theCols.length+1) + ">Aggregate Win-Tie-Loss Table</th></tr>";
-        theTableHTML += "<tr><th></th>";
+        theTableHTML += "<tr><th colspan=" + (theCols.length+2) + ">Aggregate Win-Tie-Loss Table</th></tr>";
+        theTableHTML += "<tr><th></th><th>Avg Score</th>";
         for (var i = 0; i < theCols.length; i++) {          
           theTableHTML += '<th><a href="/games/' + translateRepositoryIntoCodename(theCols[i]) + '">' + clip(theGames[theCols[i]].metadata.gameName,12) + '</a></th>';
         }
         theTableHTML += "</tr>";
+        // avg score row
+        theTableHTML += "<tr><td><b>Average Score</b></td><td>" + renderAvg(avgScore) + "</td>";
+        for (var i = 0; i < theCols.length; i++) {
+          theTableHTML += '<td>';
+          if (theCols[i] in perGame) {
+            theTableHTML += renderAvg(perGame[theCols[i]]);
+          }
+          theTableHTML += '</td>';
+        }                
+        theTableHTML += "</tr>";        
+        // real rows
         for (var aPlayer in theTable) {
-          theTableHTML += '<tr>';
-          theTableHTML += '<td><a href="/players/' + aPlayer + '">' + aPlayer + '</a></td>';
+          theTableHTML += '<tr>';          
+          theTableHTML += '<td><b><a href="/players/' + aPlayer + '">' + aPlayer + '</a></b></td>';
+          // avg score column
+          theTableHTML += '<td>';
+          if (aPlayer in perPlayer) {
+            theTableHTML += renderAvg(perPlayer[aPlayer]);
+          }
+          theTableHTML += '</td>';
+          // real columns          
           for (var i = 0; i < theCols.length; i++) {
             theTableHTML += '<td>';
             if (theCols[i] in theTable[aPlayer]) {
-              theTableHTML += theTable[aPlayer][theCols[i]];
+              theTableHTML += '<center>' + theTable[aPlayer][theCols[i]] + '</center>';
             }
             theTableHTML += '</td>';
           }
@@ -66,8 +89,11 @@
       var statsJSON = ResourceLoader.load_json('/data/statistics/players/' + playerName);
       
       if ("winsVersusPlayerOnGame" in statsJSON) {
-        document.getElementById('playerStatsTableDiv').innerHTML = renderWinLossTable(statsJSON.winsVersusPlayerOnGame);
-        delete statsJSON.winsVersusPlayerOnGame; 
+        document.getElementById('playerStatsTableDiv').innerHTML = renderWinLossTable(statsJSON.winsVersusPlayerOnGame, statsJSON.averageScoreVersus, statsJSON.averageScoreOn, statsJSON.averageScore);
+        delete statsJSON.winsVersusPlayerOnGame;
+        delete statsJSON.averageScoreVersus;
+        delete statsJSON.averageScoreOn;
+        delete statsJSON.averageScore; 
       }
       document.getElementById('playerStatsDiv').innerHTML = renderJSON(statsJSON);
 
