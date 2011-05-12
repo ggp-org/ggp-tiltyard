@@ -9,7 +9,6 @@ import ggp.apollo.stats.counters.MedianPerDay;
 import ggp.apollo.stats.counters.QuickRank;
 import ggp.apollo.stats.counters.WeightedAverage;
 import ggp.apollo.stats.counters.WinLossCounter;
-import ggp.apollo.stats.counters.WinRank;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,7 +27,7 @@ import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
 public class Statistics {
-    public static final int STATS_VERSION = 23;
+    public static final int STATS_VERSION = 28;
     
     public static void computeStatistics() throws IOException {
         int nMatches = 0;
@@ -46,11 +45,11 @@ public class Statistics {
         Map<String,Map<String,WeightedAverage>> averageScoreVersus = new HashMap<String,Map<String,WeightedAverage>>();
         Map<String,WeightedAverage> gameAverageMoves = new HashMap<String,WeightedAverage>();
         Map<String,Map<String,Map<String,WinLossCounter>>> playerWinsVersusPlayerOnGame = new HashMap<String,Map<String,Map<String,WinLossCounter>>>();
+        Map<String,Double> netScores = new HashMap<String,Double>();
         
         WeightedAverage playersPerMatch = new WeightedAverage();
         WeightedAverage movesPerMatch = new WeightedAverage();
         QuickRank thePlayerRanks = new QuickRank();
-        WinRank theWinRanks = new WinRank();
 
         Set<String> toPurge = new HashSet<String>();
         
@@ -100,6 +99,13 @@ public class Statistics {
                         for (int i = 0; i < c.getPlayers().size(); i++) {
                             String aPlayer = c.getPlayers().get(i);
                             int aPlayerScore = theJSON.getJSONArray("goalValues").getInt(i);
+                            
+                            if (!matchHadErrors) {
+                                if (!netScores.containsKey(aPlayer)) {
+                                    netScores.put(aPlayer, 0.0);
+                                }
+                                netScores.put(aPlayer, netScores.get(aPlayer) + (aPlayerScore-50.0)/50.0);
+                            }
 
                             if (!playerAverageScore.containsKey(aPlayer)) {
                                 playerAverageScore.put(aPlayer, new WeightedAverage());
@@ -142,9 +148,6 @@ public class Statistics {
                                 
                                 if (!matchHadErrors) {
                                     if (aPlayerScore > 90) {
-                                        // aPlayer just won a match vs bPlayer
-                                        theWinRanks.recordWin(aPlayer, bPlayer);
-                                        
                                         // When a player gets a score > 90, all of the other players
                                         // in the match cast a PlayerRank vote for that player.
                                         thePlayerRanks.addVote(aPlayer, bPlayer);
@@ -226,7 +229,7 @@ public class Statistics {
             overall.put("matchesInPastDay", nMatchesInPastDay);
             overall.put("matchesPerDayMedian", matchesPerDay.getMedianPerDay());
             overall.put("playerRank", thePlayerRanks.getComputedRanks());
-            overall.put("winRank", theWinRanks.getComputedRanks());
+            overall.put("netScore", netScores);
             overall.put("playerRankDelta", thePlayerRanks.getComputedDelta());
             overall.put("playerRankError", thePlayerRanks.getComputedError());
             overall.put("statsVersion", STATS_VERSION);
