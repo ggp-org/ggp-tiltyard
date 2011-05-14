@@ -52,7 +52,7 @@
         }
         theTableHTML += "</tr>";
         // avg score row
-        theTableHTML += "<tr><td><b>Average Score</b></td><td>" + renderAvg(avgScore) + "</td>";
+        theTableHTML += "<tr><td><b>Average Score</b></td><td></td>";
         for (var i = 0; i < theCols.length; i++) {
           theTableHTML += '<td>';
           if (theCols[i] in perGame) {
@@ -93,7 +93,6 @@
         delete statsJSON.winsVersusPlayerOnGame;
         delete statsJSON.averageScoreVersus;
         delete statsJSON.averageScoreOn;
-        delete statsJSON.averageScore; 
       }
       document.getElementById('playerStatsDiv').innerHTML = renderJSON(statsJSON);
 

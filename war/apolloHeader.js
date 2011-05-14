@@ -169,17 +169,20 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
   theMatchHTML += '<a href="/matches/' + matchURL + '">Match</a> started at ';
   theMatchHTML += UserInterface.renderDateTime(theDate);
-  theMatchHTML += ' with {';
+  theMatchHTML += ' with ';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
     theMatchHTML += '<a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
     if (hasErrorsForPlayer[j]) {
       theMatchHTML += '<b><font color=#FFCC00>*</font></b>';
     }
+    if ("goalValues" in theMatchJSON) {
+      theMatchHTML += '<sup>' + theMatchJSON.goalValues[j] + '</sup>';
+    }
     if (j < theMatchJSON.apolloPlayers.length - 1) {
       theMatchHTML += ', ';
     }
   }
-  theMatchHTML += '}: <a href="' + theMatchJSON.apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+  theMatchHTML += ': <a href="' + theMatchJSON.apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
   if (hasErrors) {
     theMatchHTML += '<b><font color=#FFCC00>(Errors)</font></b> ';
   }
