@@ -40,8 +40,8 @@ td.name {
       <table width=100%><tr><td width=3%></td><td valign=top width=150px>
         <center>
         <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
-          <tr><th colspan=6>Leaderboard</th></tr>
-          <tr><th>Player</th><th>Matches</th><th>Avg Score</th><th>NetScore</th><th>PlayerRank</th><th>EloRank</th></tr>
+          <tr><th colspan=5>Leaderboard</th></tr>
+          <tr><th>Player</th><th>Matches</th><th>Avg Score</th><th>NetScore</th><th>EloRank</th></tr>
         </table>
         </center>
       </td><td valign=top width=150px>
@@ -76,7 +76,7 @@ td.name {
         var theNetScore = getOptionalMapValue(pName, statsJSON, "netScore");
         var theEloRank = getOptionalMapValue(pName, statsJSON, "eloRank");
         var sortKey = cleanFloat(theEloRank);
-        sortablePairs.push([sortKey, pName, 1*theBoardStats[1], 1*theBoardStats[0], theNetScore, thePlayerRank, theEloRank]);
+        sortablePairs.push([sortKey, pName, 1*theBoardStats[1], 1*theBoardStats[0], theNetScore, theEloRank]);
       }
       sortablePairs.sort(function(a,b){return(b[0]-a[0]);});
       leadersHTML = "";
