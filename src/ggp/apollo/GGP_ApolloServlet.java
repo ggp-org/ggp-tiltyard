@@ -248,6 +248,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                     theResponse.put("userId", user.getUserId());
                     theResponse.put("logoutURL", userService.createLogoutURL("http://apollo.ggp.org/REPLACEME"));
                     theResponse.put("loggedIn", true);
+                    theResponse.put("isAdmin", userService.isUserAdmin());
                 } else {
                     Map<String, String> openIdProviders = new HashMap<String, String>();
                     openIdProviders = new HashMap<String, String>();
@@ -288,7 +289,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                         theResponse = new JSONObject();
                     }
                 } else if (theStatistic.equals("refresh")) {
-                    if (isDatastoreWriteable()) {
+                    if (isDatastoreWriteable() && userService.isUserAdmin()) {
                         Statistics.computeStatistics();
                     }
                     StoredStatistics s = StoredStatistics.loadStatistics();

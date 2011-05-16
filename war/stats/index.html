@@ -52,12 +52,18 @@ td.name {
         </center>
       </td><td width=3%></td></tr></table>
 
-      <br>
-      Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.
+      <div id="refresh_stats_div" style="display: none;"><br>Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.</div>
     </center>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
+      
+      var loginState = ResourceLoader.load_json('/data/login');
+      if (loginState.loggedIn && loginState.isAdmin) {
+        // This is also protected via server-side mechanisms; hiding it here
+        // is purely to improve the user interface, so there isn't a link to a 500.
+        document.getElementById("refresh_stats_div").style.cssText = "";
+      }
       
       var statsJSON = ResourceLoader.load_json('/data/statistics/overall');
       
