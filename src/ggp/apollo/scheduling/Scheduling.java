@@ -162,6 +162,7 @@ public class Scheduling {
             theMatchRequest.put("gameURL", theGameURL);
             theMatchRequest.put("matchId", "apollo." + theGameKey + "." + System.currentTimeMillis());
             theMatchRequest.put("players", playerURLsForMatch);
+            theMatchRequest.put("playerNames", playerNamesForMatch);
         } catch (JSONException e) {
             e.printStackTrace();
             return;
