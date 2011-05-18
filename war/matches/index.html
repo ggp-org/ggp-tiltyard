@@ -28,7 +28,7 @@
       var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
       var recentMatches = ResourceLoader.load_json('/data/matches/recent/');
       recentMatches.reverse();
-      var recentMatchesHTML = 'Listing of the ' + recentMatches.length + ' most recently played matches: <ul>';
+      var recentMatchesHTML = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing: <ul>';
       for (var i = 0; i < recentMatches.length; i++) {
         recentMatchesHTML += '<li>' + renderMatchEntry(recentMatches[i], ongoingMatches);
       }
