@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import util.crypto.SignableJSON;
+
 import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
@@ -69,17 +71,19 @@ public class Scheduling {
                 CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);                                
                 try {
                     JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
-                    if(theMatchInfo.getBoolean("isCompleted")) {
-                        doneMatches.add(matchKey);
-                        handleStrikesForPlayers(theMatchInfo, m.getPlayers(), theAvailablePlayers);
-                    } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
-                        // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
-                        doneMatches.add(matchKey);
-                    } else {
-                        busyPlayerNames.addAll(m.getPlayers());
+                    if (verifyApolloCryptography(theMatchInfo)) {                    
+                        if(theMatchInfo.getBoolean("isCompleted")) {
+                            doneMatches.add(matchKey);
+                            handleStrikesForPlayers(theMatchInfo, m.getPlayers(), theAvailablePlayers);
+                        } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
+                            // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
+                            doneMatches.add(matchKey);
+                        } else {
+                            busyPlayerNames.addAll(m.getPlayers());
+                        }
+                        m.condenseFullJSON(theMatchInfo);
+                        m.save();
                     }
-                    m.condenseFullJSON(theMatchInfo);
-                    m.save();
                 } catch (Exception e) {
                     if (m.getCreationDate() != null && (System.currentTimeMillis() - m.getCreationDate().getTime()) > 21600000) {
                         doneMatches.add(matchKey);
@@ -230,5 +234,16 @@ public class Scheduling {
             }
         }
     }
-
+    
+    public static final String apolloPublicKey = "0MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAgjPUn3Zkr1u+BQb2fMOUcypSsJY4c/IRFDaA5Gjg022gZCY+a5yC61nSIwYnfTdWcnDEadUvbLWvD3IXmhxKZY69k6GpfgGZBp90bS918vuFiRQ16UcEzSloeVQs0jt7Nq+9EKvBBlULGxZcwXH30G+wIyoo/9qGJOwN+XmhFj9PC/WbPGvzB8ABKo08XIGyqDbv+xF0xVw0Pdfd2sYKUuSQawIFHxQBztbySTydl5r5qUwETxw5JuZkuK0c3cNer7M24/fokGuyukmnBI3k6V9lkguAOzVXjnknKaEAh4KassLwQK9Byc84hEyFFZk4USTneS2Kz3ZcjxRGOYjWKMHEVJVsbR2rHA7nN1PZbk14bNdemwwAbwYB2ONWe3Bhmg9JY2USdChqlR+dD0NfWPzEWV1hgt2o7X9OhB2B5sOrnsaJrkBDkbwa7yC4Y3E8AEV8KekQrNLOynoKbh7cZHs4bPKBKULnhAKzy22XoHYMw9G5vsXlMx+jLpyUhwrzAgMBAAE=";
+    public static boolean verifyApolloCryptography(JSONObject theMatchInfo) {
+        try {
+            if (!SignableJSON.isSignedJSON(new external.JSON.JSONObject(theMatchInfo.toString()))) return false;
+            if (!SignableJSON.verifySignedJSON(new external.JSON.JSONObject(theMatchInfo.toString()))) return false;
+            if (!theMatchInfo.getString("matchHostPK").equals(apolloPublicKey)) return false;
+            return true;
+        } catch (Exception e) {
+            return false;
+        }        
+    }
 }

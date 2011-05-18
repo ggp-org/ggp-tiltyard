@@ -165,6 +165,9 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   }
     
   var theMatchHTML = "";
+  if ("matchHostPK" in theMatchJSON && "matchHostSignature" in theMatchJSON) {
+    theMatchHTML += '<img src="/static/images/GreenLock.png" width=10px height=16px></img> ';
+  }  
   var theDate = new Date(theMatchJSON.startTime);
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
   theMatchHTML += '<a href="/matches/' + matchURL + '">Match</a> started at ';
@@ -188,7 +191,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   }
   if (theOngoingMatches.indexOf(theMatchJSON.apolloSpectatorURL) >= 0) {
     theMatchHTML += '<b>(Ongoing!)</b>';
-  }  
+  }
   return theMatchHTML;
 }
 

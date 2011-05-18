@@ -16,6 +16,7 @@
     <center>    
       <div id='playerDiv'></div><br>
       <div id='playerStatsDiv'></div><br>
+      <div id='playerStatsPuzzleDiv'></div><br>
       <div id='playerStatsTableDiv'></div><br>
     </center>
     <div id='playerMatchesDiv'></div>
@@ -84,11 +85,31 @@
         theTableHTML += "</table>";
         return theTableHTML;
       }
+      
+      function renderPuzzleTable(theWinLossTable, perGameOriginal) {
+        var perGame = JSON.parse(JSON.stringify(perGameOriginal));
+        var theGames = ResourceLoader.load_json('/data/games/');
+        for (var aPlayer in theWinLossTable) {
+          for (var aGame in theWinLossTable[aPlayer]) {
+            if (aGame in perGame) {
+              delete perGame[aGame];
+            }
+          }
+        }
+        var theTableHTML = "<table border=1px>";
+        theTableHTML += "<tr><th colspan=2>Aggregate Puzzle Scores</th></tr>";
+        for (var aGame in perGame) {
+          theTableHTML += '<tr><td><b><a href="/games/' + translateRepositoryIntoCodename(aGame) + '">' + theGames[aGame].metadata.gameName + '</a></b></td><td>' + renderAvg(perGame[aGame]) + '</td></tr>';
+        }
+        theTableHTML += "</table>";
+        return theTableHTML;
+      }
 
       var playerName = window.location.pathname.replace("/players/", "");      
       var statsJSON = ResourceLoader.load_json('/data/statistics/players/' + playerName);
       
       if ("winsVersusPlayerOnGame" in statsJSON) {
+        document.getElementById('playerStatsPuzzleDiv').innerHTML = renderPuzzleTable(statsJSON.winsVersusPlayerOnGame, statsJSON.averageScoreOn);
         document.getElementById('playerStatsTableDiv').innerHTML = renderWinLossTable(statsJSON.winsVersusPlayerOnGame, statsJSON.averageScoreVersus, statsJSON.averageScoreOn, statsJSON.averageScore);
         delete statsJSON.winsVersusPlayerOnGame;
         delete statsJSON.averageScoreVersus;
