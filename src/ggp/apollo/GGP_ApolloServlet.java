@@ -25,6 +25,11 @@ import com.google.appengine.api.users.UserServiceFactory;
 import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
+import com.google.appengine.api.taskqueue.TaskOptions.Method;
+import com.google.appengine.api.taskqueue.QueueFactory;
+
+import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
+import static com.google.appengine.api.taskqueue.RetryOptions.Builder.*;
 
 @SuppressWarnings("serial")
 public class GGP_ApolloServlet extends HttpServlet {    
@@ -38,12 +43,14 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             return;
         } else if (req.getRequestURI().equals("/cron/update_stats")) {
+            QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(1)));
+            return;
+        } else if (req.getRequestURI().equals("/tasks/update_stats")) {
             if (isDatastoreWriteable()) {
                 Statistics.computeStatistics();
-                resp.setContentType("text/plain");
-                resp.getWriter().println("Updated statistics.");
             }
-            return;            
+            resp.setStatus(200);
+            return;
         }
 
         resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
@@ -289,11 +296,11 @@ public class GGP_ApolloServlet extends HttpServlet {
                         theResponse = new JSONObject();
                     }
                 } else if (theStatistic.equals("refresh")) {
-                    if (isDatastoreWriteable() && userService.isUserAdmin()) {
-                        Statistics.computeStatistics();
+                    if (userService.isUserAdmin()) {
+                        QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(1)));
                     }
                     StoredStatistics s = StoredStatistics.loadStatistics();
-                    theResponse = s.getOverallStats();
+                    theResponse = s.getOverallStats(); 
                 }
                 if (theResponse != null) {
                     resp.getWriter().println(theResponse.toString());
