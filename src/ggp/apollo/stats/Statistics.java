@@ -34,7 +34,6 @@ import com.google.appengine.repackaged.org.json.JSONObject;
 public class Statistics {
     public static final int STATS_VERSION = 33;
 
-    static final String[] dummyArray = new String[] {};
     static class SortableTinyMatch implements Comparable<SortableTinyMatch> {
         private static List<String> thePlayerNames;
         private long startTime;
