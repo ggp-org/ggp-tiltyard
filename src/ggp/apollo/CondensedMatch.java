@@ -40,6 +40,9 @@ public class CondensedMatch {
         } catch (Exception e) {
             theJSON.put("moveCount", 0);
         }
+        theJSON.remove("matchHostPK");
+        theJSON.remove("matchHostSignature");
+        theJSON.put("apolloSigned", true);        
         theJSON.remove("states");      // Strip out all of the large fields
         theJSON.remove("moves");       // that we won't need most of the time.        
         theJSON.remove("stateTimes");  // This is why we can store it here.        

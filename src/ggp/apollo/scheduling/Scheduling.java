@@ -71,7 +71,7 @@ public class Scheduling {
                 CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);                                
                 try {
                     JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
-                    if (verifyApolloCryptography(theMatchInfo)) {                    
+                    if (verifyApolloCryptography(theMatchInfo)) {
                         if(theMatchInfo.getBoolean("isCompleted")) {
                             doneMatches.add(matchKey);
                             handleStrikesForPlayers(theMatchInfo, m.getPlayers(), theAvailablePlayers);

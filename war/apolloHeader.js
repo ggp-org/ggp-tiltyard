@@ -165,7 +165,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
   }
     
   var theMatchHTML = "";
-  if ("matchHostPK" in theMatchJSON && "matchHostSignature" in theMatchJSON) {
+  if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {
     theMatchHTML += '<img src="/static/images/GreenLock.png" width=10px height=16px></img> ';
   }  
   var theDate = new Date(theMatchJSON.startTime);
