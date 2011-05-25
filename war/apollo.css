@@ -3,6 +3,9 @@ body {
   padding:0;
 }
 
+a {
+  text-decoration:none;
+}
 a.apollogo {
 	color: #222222;
 	font-family: 'Droid Sans', bold;
