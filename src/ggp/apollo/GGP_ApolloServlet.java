@@ -43,7 +43,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             return;
         } else if (req.getRequestURI().equals("/cron/update_stats")) {
-            QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(1)));
+            QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(0)));
             return;
         } else if (req.getRequestURI().equals("/tasks/update_stats")) {
             if (isDatastoreWriteable()) {
@@ -297,7 +297,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                     }
                 } else if (theStatistic.equals("refresh")) {
                     if (userService.isUserAdmin()) {
-                        QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(1)));
+                        QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(0)));
                     }
                     StoredStatistics s = StoredStatistics.loadStatistics();
                     theResponse = s.getOverallStats(); 

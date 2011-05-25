@@ -1,9 +1,11 @@
 package ggp.apollo.mapreduce;
 
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Text;
-import com.google.appengine.repackaged.org.json.JSONObject;
+import com.google.appengine.repackaged.org.json.*;
 import com.google.appengine.tools.mapreduce.AppEngineMapper;
 
 import org.apache.hadoop.io.NullWritable;
@@ -46,8 +48,36 @@ public class CryptoKeyMapper extends AppEngineMapper<Key, Entity, NullWritable, 
     try {
         String theJSON = ((Text)value.getProperty("theCondensedMatchJSON")).getValue();
         JSONObject theMatch = new JSONObject(theJSON);
+
+        boolean isAllRobots = true;
+        JSONArray thePlayers = theMatch.getJSONArray("apolloPlayers");
+        for (int i = 0; i < thePlayers.length(); i++) {
+            if (!thePlayers.getString(i).startsWith("Webplayer-")) {
+                isAllRobots = false;
+            }
+        }
+        if (isAllRobots) {
+            if (theMatch.getLong("startTime") < System.currentTimeMillis() - 1209600000L) {
+                DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+                datastore.delete(key);
+                
+                context.getCounter("MatchType", "oldRobotMatch").increment(1);
+            } else {
+                context.getCounter("MatchType", "robotMatch").increment(1);
+            }
+        } else {
+            context.getCounter("MatchType", "realMatch").increment(1);
+        }
         
-        if (theMatch.has("apolloSigned") && theMatch.getBoolean("apolloSigned")) {            
+        if (theMatch.has("errors")) {
+            context.getCounter("RecordedErrors", "hasRecord").increment(1);
+        } else {
+            context.getCounter("RecordedErrors", "lacksRecord").increment(1);
+        }
+        
+        if (theMatch.has("matchHostPK") || theMatch.has("matchHostSignature")) {
+            context.getCounter("Cryptography", "Signed Long").increment(1);
+        } else if (theMatch.has("apolloSigned") && theMatch.getBoolean("apolloSigned")) {            
             context.getCounter("Cryptography", "Signed").increment(1);
         } else {
             context.getCounter("Cryptography", "Unsigned").increment(1);

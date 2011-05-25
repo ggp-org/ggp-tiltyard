@@ -247,6 +247,7 @@ public class Statistics {
                 theJSON = null;
                 c = null;
             }
+            theQuery.closeAll();
         } catch(JDOObjectNotFoundException e) {
             throw new RuntimeException(e);
         } finally {
