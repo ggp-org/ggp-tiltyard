@@ -86,6 +86,13 @@ table.player {
     float: left;
     margin: 5px;
 }
+table.matchlist {
+  border:1px solid #cccccc;
+  border-collapse:collapse;
+}
+td.padded {
+  padding-left: 10px;
+}
 
 tr.navbarTop {
   background-image: -webkit-gradient(

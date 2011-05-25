@@ -147,7 +147,19 @@ function renderJSON(x) {
   return s;
 }
 
-function renderMatchEntry(theMatchJSON, theOngoingMatches) {
+function renderMatchEntries(theMatchEntries, theOngoingMatches) {
+    var theGames = ResourceLoader.load_json('/data/games/');
+    
+    var theHTML = '<br><br><center><table class="matchlist">';
+    for (var i = 0; i < theMatchEntries.length; i++) {
+      theHTML += "<tr>" + renderMatchEntry(theMatchEntries[i], theOngoingMatches, theGames) + "</tr>";
+    }
+    theHTML += "</table></center>";
+    return theHTML;
+}
+
+function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames) {
+  var theGame = theGames[theMatchJSON.gameMetaURL];
   var hasErrors = false;
   var hasErrorsForPlayer = [];
   for (var i = 0; i < theMatchJSON.gameRoleNames.length; i++) {
@@ -163,54 +175,59 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches) {
       }
     }
   }
-  
-  // This is pretty hacky: caches the list of games for displaying
-  // multiple matches at the same time. Ultimately we should have this function
-  // take a list of matches and render all of them, so we don't have to do this.
-  if (!("apolloHeader_theGames" in this)) {
-      apolloHeader_theGames = ResourceLoader.load_json('/data/games/');
-  }
-  var theGames = apolloHeader_theGames;
-  var theGame = theGames[theMatchJSON.gameMetaURL];
 
-  // This is CRAZY-hacky: we should show the full name of the game,
-  // but right now we clip it so that things still look kinda aligned.
-  // (go ahead, comment out the clipping, see what it looks like :-)
-  function clip(s, n) {
-      if (s.length <= n) return s;
-      return s.substring(0,n-3) + "...";
-  }
-  
   var theMatchHTML = "";
-  if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {
-    theMatchHTML += '<img src="/static/images/GreenLock.png" width=10px height=16px></img> ';
-  }
+  
+  // Match game profile.
+  theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';
+  
+  // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
-  var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
-  theMatchHTML += '<a href="/matches/' + matchURL + '">Match</a> started at ';
-  theMatchHTML += UserInterface.renderDateTime(theDate);
-  theMatchHTML += ' playing ';
-  theMatchHTML += '<a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + clip(theGame.metadata.gameName,10) + '</a>';
-  theMatchHTML += ' with ';
+  theMatchHTML += '<td class="padded">' + UserInterface.renderDateTime(theDate) + '</td>';
+  
+  // Match players...
+  theMatchHTML += '<td class="padded"><table bgcolor=#EEEEEE class="matchlist" width=100%>';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
-    theMatchHTML += '<a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
+    theMatchHTML += '<tr>'
+    theMatchHTML += '<td class="padded"><a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
     if (hasErrorsForPlayer[j]) {
       theMatchHTML += '<b><font color=#FFCC00>*</font></b>';
     }
+    theMatchHTML += '</td>'
     if ("goalValues" in theMatchJSON) {
-      theMatchHTML += '<sup>' + theMatchJSON.goalValues[j] + '</sup>';
+      theMatchHTML += '<td class="padded" style="text-align: right;">' + theMatchJSON.goalValues[j] + '</td>';
+    } else {
+      theMatchHTML += '<td class="padded"></td>';
     }
-    if (j < theMatchJSON.apolloPlayers.length - 1) {
-      theMatchHTML += ', ';
-    }
+    theMatchHTML += '<td width="5px"></td></tr>';
   }
-  theMatchHTML += ': <a href="' + theMatchJSON.apolloSpectatorURL + 'viz.html">Spectator View</a>. ';
+  theMatchHTML += '</table></td>';
+  
+  // Match page URL.
+  var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
+  theMatchHTML += '<td class="padded"><a href="/matches/' + matchURL + '">View Match</a></td>';  
+
+  // Spectator view
+  //theMatchHTML += '<td class="padded"><a href="' + theMatchJSON.apolloSpectatorURL + 'viz.html">Spectator View</a></td>';
+  
+  // Signature badge.
+  if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {
+    theMatchHTML += '<td class="padded"><img src="/static/images/GreenLock.png" title="Match has a valid digital signature." width=10px height=16px></img></td>';
+  } else {
+    theMatchHTML += '<td class="padded"><img src="/static/images/RedLock.png" title="Match has no digital signature." width=10px height=16px></img></td>';
+  }  
+  
+  // Status tab
+  theMatchHTML += '<td class="padded">';
   if (hasErrors) {
     theMatchHTML += '<b><font color=#FFCC00>(Errors)</font></b> ';
   }
   if (theOngoingMatches.indexOf(theMatchJSON.apolloSpectatorURL) >= 0) {
     theMatchHTML += '<b>(Ongoing!)</b>';
   }
+  theMatchHTML += '</td>';
+
+  theMatchHTML += '<td width="5px"></td>';
   return theMatchHTML;
 }
 

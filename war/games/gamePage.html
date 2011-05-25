@@ -95,11 +95,8 @@
       if (recentMatches.length == 0) {
         gameMatchesHTML += '<b>This game has not been used in any matches recently.</b>';
       } else {
-        gameMatchesHTML += '<b>What are the ' + recentMatches.length + ' matches this game has been used in recently?</b> <ul>';      
-        for (var i = 0; i < recentMatches.length; i++) {
-          gameMatchesHTML += '<li>' + renderMatchEntry(recentMatches[i], ongoingMatches);
-        }
-        gameMatchesHTML += '</ul>';        
+        gameMatchesHTML += '<b>What are the ' + recentMatches.length + ' matches this game has been used in recently?</b>';
+        gameMatchesHTML += renderMatchEntries(recentMatches, ongoingMatches);
       }
       document.getElementById('gameMatchesDiv').innerHTML = gameMatchesHTML;
     </script>
