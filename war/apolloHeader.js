@@ -152,13 +152,13 @@ function renderMatchEntries(theMatchEntries, theOngoingMatches) {
     
     var theHTML = '<br><br><center><table class="matchlist">';
     for (var i = 0; i < theMatchEntries.length; i++) {
-      theHTML += "<tr>" + renderMatchEntry(theMatchEntries[i], theOngoingMatches, theGames) + "</tr>";
+      theHTML += renderMatchEntry(theMatchEntries[i], theOngoingMatches, theGames, i%2);
     }
     theHTML += "</table></center>";
     return theHTML;
 }
 
-function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames) {
+function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow) {
   var theGame = theGames[theMatchJSON.gameMetaURL];
   var hasErrors = false;
   var hasErrorsForPlayer = [];
@@ -176,7 +176,12 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames) {
     }
   }
 
-  var theMatchHTML = "";
+  var theMatchHTML = "<tr>";
+  if (showShadow == 1) {
+    theMatchHTML = "<tr bgcolor=#EEEEEE>";
+  } else {
+    theMatchHTML = "<tr bgcolor=#F5F5F5>";
+  }
   
   // Match game profile.
   theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';
@@ -186,7 +191,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames) {
   theMatchHTML += '<td class="padded">' + UserInterface.renderDateTime(theDate) + '</td>';
   
   // Match players...
-  theMatchHTML += '<td class="padded"><table bgcolor=#EEEEEE class="matchlist" width=100%>';
+  theMatchHTML += '<td class="padded"><table class="matchlist" width=100%>';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
     theMatchHTML += '<tr>'
     theMatchHTML += '<td class="padded"><a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
@@ -228,7 +233,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames) {
   theMatchHTML += '</td>';
 
   theMatchHTML += '<td width="5px"></td>';
-  return theMatchHTML;
+  return theMatchHTML + "</tr>";
 }
 
 function translateRepositoryCodename(x) {
