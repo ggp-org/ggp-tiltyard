@@ -37,10 +37,11 @@
       function drawGameList() {
         var theGames = ResourceLoader.load_json('/data/games/');
         var gameListHTML = '<table class="matchlist" cellpadding=5px border=1px>';
-        gameListHTML += '<tr><th>Game Name</th><th>Players</th><th>Has Description?</th></tr>';
+        gameListHTML += '<tr><th>Game Name</th><th>Players</th><th>Version</th><th>Has Description?</th></tr>';
         for (var i in theGames) {
           gameListHTML += '<tr><td><a href="/games/' + translateRepositoryIntoCodename(theGames[i].gameMetaURL) + '">' + theGames[i].metadata.gameName + '</a></td>';
           gameListHTML += '<td>' + toProperString(theGames[i].metadata.numRoles) + '</td>';
+          gameListHTML += '<td>' + toProperString(theGames[i].metadata.version) + '</td>';
           gameListHTML += '<td>' + ("description" in theGames[i].metadata ? "Yes" : "No") + '</td></tr>';
         }
         gameListHTML += "</table>"
