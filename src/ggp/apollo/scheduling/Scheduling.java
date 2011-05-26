@@ -97,11 +97,36 @@ public class Scheduling {
                 }
             }
             theState.getRunningMatches().removeAll(doneMatches);
+
+            // For all of the players listed as enabled, record whether or not they're actually
+            // identifying themselves as available. Right now we do nothing with this information
+            // except surface it in the UI.
+            for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
+                Player p = theAvailablePlayers.get(i);
+                if (p.isEnabled()) {
+                    String thePingStatus = null;
+                    try {
+                        String theProperURL = p.getURL();
+                        if (!theProperURL.startsWith("http://")) {
+                            theProperURL = "http://" + theProperURL;
+                        }
+                        thePingStatus = RemoteResourceLoader.postRawWithTimeout(theProperURL, "( ping )", 1000);
+                    } catch (IOException e) {
+                        thePingStatus = "error";
+                    }
+                    if (thePingStatus != p.getPingStatus()) {
+                        p.setPingStatus(thePingStatus);
+                        p.save();
+                    }
+                }
+            }
             
             // Remove all of the players that aren't actually available, either because
-            // they're busy or because they're disabled.
+            // we know they're in a match, or because they say they're busy, or because
+            // they're disabled.
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
-                if (!theAvailablePlayers.get(i).isEnabled() || busyPlayerNames.contains(theAvailablePlayers.get(i).getName())) {
+                Player p = theAvailablePlayers.get(i);
+                if (!p.isEnabled() || !("available".equals(p.getPingStatus())) || busyPlayerNames.contains(p.getName())) {
                     theAvailablePlayers.remove(i);
                 }
             }

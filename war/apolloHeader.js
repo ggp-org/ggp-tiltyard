@@ -62,9 +62,20 @@ function generatePlayerInnerHTML(aPlayer) {
         return s.substring(0,n-3) + "...";
     }
     
+    var statusColor = 'grey';
+    if ("pingStatus" in aPlayer) {
+      if (aPlayer.pingStatus == "available") {
+        statusColor = 'green';
+      } else if (aPlayer.pingStatus == "busy") {
+        statusColor = 'yellow';
+      } else {
+        statusColor = 'red';
+      }
+    }
+    
     var thePlayerHTML = "";
     thePlayerHTML += '<tr><td width=5></td>';
-    thePlayerHTML += '<td width=60><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><table style="border-width: 2px; border-style: inset;" cellspacing=0 cellpadding=0><tr><td><img width=50 height=50 src="http://placekitten.com/g/50/50"/></tr></td></table></a></td>';
+    thePlayerHTML += '<td width=60><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><table style="border-width: 2px; border-style: inset; border-color: ' + statusColor + ';" cellspacing=0 cellpadding=0><tr><td><img width=50 height=50 src="http://placekitten.com/g/50/50"/></tr></td></table></a></td>';
     thePlayerHTML += '<td width=5></td>';
     thePlayerHTML += '<td width=255><a style="text-decoration:none; color: #222222;" href="/players/' + aPlayer.name + '"><font size=6><b>' + clip(aPlayer.name,15) + '</b></font></a>';
     thePlayerHTML += '<div id=player_' + aPlayer.name + '_email>'; 
@@ -175,17 +186,50 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow)
       }
     }
   }
+  
+  // TODO(schreib): Factor this out into a general function.
+  renderDuration = function(x) {
+      var s = Math.round(x/1000);
+      var sV = "" + (s % 60);
+      
+      var m = Math.floor(s/60);
+      var mV = "" + (m % 60);
+      
+      var h = Math.floor(m/60);
+      var hV = "" + h;
+      
+      if (m != 0) {
+          while (sV.length < 2) sV = "0" + sV;
+      }
+      if (h != 0) {
+          while (mV.length < 2) mV = "0" + mV;
+          while (sV.length < 2) sV = "0" + sV;
+      }
+
+      hV += ":";
+      mV += ":";
+      
+      if (h == 0) {
+        if (m == 0) {
+          mV = "";
+          sV += "s";
+        }
+        hV = "";
+      }
+
+      return hV + mV + sV;
+  }
 
   var theMatchHTML = "<tr>";
   if (showShadow == 1) {
-    theMatchHTML = "<tr bgcolor=#EEEEEE>";
+    theMatchHTML = "<tr bgcolor=#E0E0E0>";
   } else {
     theMatchHTML = "<tr bgcolor=#F5F5F5>";
   }
   
   // Match game profile.
   theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';
-  
+
   // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
   theMatchHTML += '<td class="padded">' + UserInterface.renderDateTime(theDate) + '</td>';
@@ -220,7 +264,14 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow)
     theMatchHTML += '<td class="padded"><img src="/static/images/GreenLock.png" title="Match has a valid digital signature." width=10px height=16px></img></td>';
   } else {
     theMatchHTML += '<td class="padded"><img src="/static/images/RedLock.png" title="Match has no digital signature." width=10px height=16px></img></td>';
-  }  
+  }
+
+  // TODO(schreib): Find the right place for this.
+  updateLiveDuration = function (objName, startTime) {
+    var theSpan = document.getElementById(objName);
+    theSpan.innerHTML = renderDuration(new Date() - new Date(startTime));
+    setTimeout("updateLiveDuration('" + objName + "'," + startTime + ")", 1000);
+  }
   
   // Status tab
   theMatchHTML += '<td class="padded">';
@@ -228,7 +279,8 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow)
     theMatchHTML += '<b><font color=#FFCC00>(Errors)</font></b> ';
   }
   if (theOngoingMatches.indexOf(theMatchJSON.apolloSpectatorURL) >= 0) {
-    theMatchHTML += '<b>(Ongoing!)</b>';
+    theMatchHTML += '<b>(Ongoing! <span id="dlx_' + theMatchJSON.randomToken + '">' + renderDuration(new Date() - new Date(theMatchJSON.startTime)) + '</span>)</b>';
+    setTimeout("updateLiveDuration('dlx_" + theMatchJSON.randomToken + "'," + theMatchJSON.startTime + ")", 1000);
   }
   theMatchHTML += '</td>';
 

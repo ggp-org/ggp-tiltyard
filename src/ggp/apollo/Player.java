@@ -21,6 +21,7 @@ public class Player {
     @Persistent private String gdlVersion;    
     @Persistent private String theURL;
     @Persistent private Integer nStrikes;
+    @Persistent private String pingStatus;
     
     @Persistent private List<String> recentMatchURLs;
     private static final int kRecentMatchURLsToRecord = 40;
@@ -116,6 +117,14 @@ public class Player {
         nStrikes = 0;
     }
     
+    public void setPingStatus(String theNewStatus) {
+        pingStatus = theNewStatus;
+    }
+    
+    public String getPingStatus() {
+        return pingStatus;
+    }
+    
     public JSONObject asJSON(boolean includePrivate, boolean includeMatches) throws IOException {
         try {
             JSONObject theJSON = new JSONObject();
@@ -137,6 +146,9 @@ public class Player {
                     theMatches.put(c.getCondensedJSON());
                 }
                 theJSON.put("recentMatches", theMatches);
+            }
+            if (pingStatus != null && !pingStatus.isEmpty()) {
+                theJSON.put("pingStatus", pingStatus);
             }
             return theJSON;
         } catch (JSONException e) {

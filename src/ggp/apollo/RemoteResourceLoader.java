@@ -3,10 +3,12 @@ package ggp.apollo;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.net.URLConnection;
 
-import com.google.appengine.repackaged.org.json.*;
+import com.google.appengine.repackaged.org.json.JSONArray;
+import com.google.appengine.repackaged.org.json.JSONObject;
 
 /**
  * RemoteResourceLoader loads remotely-stored resources. It can load resources
@@ -44,5 +46,24 @@ public class RemoteResourceLoader {
             theJSON.append(nextLine);
         } while (true);
         return theJSON.toString();
+    }
+
+    public static String postRawWithTimeout(String theURL, String toPost, int nTimeout) throws IOException {
+        URL url = new URL(theURL);
+        URLConnection urlConnection = url.openConnection();
+        urlConnection.setDoOutput(true);
+        urlConnection.setConnectTimeout(nTimeout);
+        OutputStreamWriter out = new OutputStreamWriter(urlConnection.getOutputStream());
+        out.write(toPost);
+        out.close();
+        
+        BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+        StringBuilder decodedString = new StringBuilder();
+        String decodedLine;
+        while ((decodedLine = in.readLine()) != null) {
+            decodedString.append(decodedLine);
+        }
+        in.close();
+        return decodedString.toString();
     }
 }
