@@ -13,7 +13,7 @@
     
     <div id='header'></div>
     <br>
-    <div id='stateInfo'></div>
+    <center><div id='stateInfo'></div></center>
     <br>
     <div id='recentMatchesInfo'></div>
 
@@ -28,8 +28,8 @@
       var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
       var recentMatches = ResourceLoader.load_json('/data/matches/recent/');
       recentMatches.reverse();
-      var recentMatchesHTML = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
-      recentMatchesHTML += renderMatchEntries(recentMatches, ongoingMatches);
+      var matchListCaption = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
+      var recentMatchesHTML = renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, null);
       document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
     </script>
   </body>  

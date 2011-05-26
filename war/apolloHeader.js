@@ -158,18 +158,19 @@ function renderJSON(x) {
   return s;
 }
 
-function renderMatchEntries(theMatchEntries, theOngoingMatches) {
+function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, playerToHighlight) {
     var theGames = ResourceLoader.load_json('/data/games/');
     
-    var theHTML = '<br><br><center><table class="matchlist">';
+    var theHTML = '<center><table class="matchlist">';
+    theHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=7>' + topCaption + '</th></tr>';
     for (var i = 0; i < theMatchEntries.length; i++) {
-      theHTML += renderMatchEntry(theMatchEntries[i], theOngoingMatches, theGames, i%2);
+      theHTML += renderMatchEntry(theMatchEntries[i], theOngoingMatches, playerToHighlight, theGames, i%2);
     }
     theHTML += "</table></center>";
     return theHTML;
 }
 
-function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow) {
+function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, theGames, showShadow) {
   var theGame = theGames[theMatchJSON.gameMetaURL];
   var hasErrors = false;
   var hasErrorsForPlayer = [];
@@ -186,7 +187,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow)
       }
     }
   }
-  
+
   // TODO(schreib): Factor this out into a general function.
   renderDuration = function(x) {
       var s = Math.round(x/1000);
@@ -219,6 +220,13 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow)
 
       return hV + mV + sV;
   }
+  
+  // TODO(schreib): Find the right place for this.
+  updateLiveDuration = function (objName, startTime) {
+    var theSpan = document.getElementById(objName);
+    theSpan.innerHTML = renderDuration(new Date() - new Date(startTime));
+    setTimeout("updateLiveDuration('" + objName + "'," + startTime + ")", 1000);
+  }
 
   var theMatchHTML = "<tr>";
   if (showShadow == 1) {
@@ -232,15 +240,24 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow)
 
   // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
-  theMatchHTML += '<td class="padded">' + UserInterface.renderDateTime(theDate) + '</td>';
+  theMatchHTML += '<td class="padded">' + UserInterface.renderDateTime(theDate);
+  if (theOngoingMatches.indexOf(theMatchJSON.apolloSpectatorURL) >= 0) {
+      theMatchHTML += '<br><center><b>(Ongoing! <span id="dlx_' + theMatchJSON.randomToken + '">' + renderDuration(new Date() - new Date(theMatchJSON.startTime)) + '</span>)</b></center>';
+      setTimeout("updateLiveDuration('dlx_" + theMatchJSON.randomToken + "'," + theMatchJSON.startTime + ")", 1000);
+  }
+  theMatchHTML += "</td>"  
   
   // Match players...
   theMatchHTML += '<td class="padded"><table class="matchlist" width=100%>';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
     theMatchHTML += '<tr>'
-    theMatchHTML += '<td class="padded"><a href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
+    var highlightAttribute = '';    
+    if (playerToHighlight == theMatchJSON.apolloPlayers[j]) {
+      highlightAttribute = 'style="background-color: #CCEECC;"';
+    }
+    theMatchHTML += '<td class="padded"><a ' + highlightAttribute + ' href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
     if (hasErrorsForPlayer[j]) {
-      theMatchHTML += '<b><font color=#FFCC00>*</font></b>';
+      theMatchHTML += ' <img src="/static/images/WarningLarge2.png" title="This player had an error in this match." width=20px height=20px>';
     }
     theMatchHTML += '</td>'
     if ("goalValues" in theMatchJSON) {
@@ -256,33 +273,19 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, theGames, showShadow)
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
   theMatchHTML += '<td class="padded"><a href="/matches/' + matchURL + '">View Match</a></td>';  
 
-  // Spectator view
-  //theMatchHTML += '<td class="padded"><a href="' + theMatchJSON.apolloSpectatorURL + 'viz.html">Spectator View</a></td>';
-  
   // Signature badge.
   if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {
     theMatchHTML += '<td class="padded"><img src="/static/images/GreenLock.png" title="Match has a valid digital signature." width=10px height=16px></img></td>';
   } else {
     theMatchHTML += '<td class="padded"><img src="/static/images/RedLock.png" title="Match has no digital signature." width=10px height=16px></img></td>';
   }
-
-  // TODO(schreib): Find the right place for this.
-  updateLiveDuration = function (objName, startTime) {
-    var theSpan = document.getElementById(objName);
-    theSpan.innerHTML = renderDuration(new Date() - new Date(startTime));
-    setTimeout("updateLiveDuration('" + objName + "'," + startTime + ")", 1000);
-  }
   
-  // Status tab
-  theMatchHTML += '<td class="padded">';
+  // Warning badge.
   if (hasErrors) {
-    theMatchHTML += '<b><font color=#FFCC00>(Errors)</font></b> ';
+    theMatchHTML += '<td class="padded"><img src="/static/images/WarningLarge2.png" title="Players had errors during this match." width=20px height=20px></img></td>';
+  } else {
+    theMatchHTML += '<td></td>';
   }
-  if (theOngoingMatches.indexOf(theMatchJSON.apolloSpectatorURL) >= 0) {
-    theMatchHTML += '<b>(Ongoing! <span id="dlx_' + theMatchJSON.randomToken + '">' + renderDuration(new Date() - new Date(theMatchJSON.startTime)) + '</span>)</b>';
-    setTimeout("updateLiveDuration('dlx_" + theMatchJSON.randomToken + "'," + theMatchJSON.startTime + ")", 1000);
-  }
-  theMatchHTML += '</td>';
 
   theMatchHTML += '<td width="5px"></td>';
   return theMatchHTML + "</tr>";

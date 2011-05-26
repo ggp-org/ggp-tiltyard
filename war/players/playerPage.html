@@ -130,8 +130,8 @@
       if (recentMatches.length == 0) {
         playerMatchesHTML += '<b>This player has not played in any matches recently.</b>';
       } else {
-        playerMatchesHTML += '<b>What are the ' + recentMatches.length + ' matches this player has played in recently?</b>';
-        playerMatchesHTML += renderMatchEntries(recentMatches, ongoingMatches);
+        var matchListCaption = 'What are the ' + recentMatches.length + ' matches this player has played in recently?';
+        playerMatchesHTML += renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, playerName);
       }
       document.getElementById('playerMatchesDiv').innerHTML = playerMatchesHTML;
     </script>
