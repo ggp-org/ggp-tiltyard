@@ -257,7 +257,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
     }
     theMatchHTML += '<td class="padded"><a ' + highlightAttribute + ' href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
     if (hasErrorsForPlayer[j]) {
-      theMatchHTML += ' <img src="/static/images/WarningLarge2.png" title="This player had an error in this match." width=20px height=20px>';
+      theMatchHTML += ' <img src="/static/images/OrangeAlert.png" title="This player had an error in this match." width=20px height=20px>';
     }
     theMatchHTML += '</td>'
     if ("goalValues" in theMatchJSON) {
@@ -282,7 +282,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   
   // Warning badge.
   if (hasErrors) {
-    theMatchHTML += '<td class="padded"><img src="/static/images/WarningLarge2.png" title="Players had errors during this match." width=20px height=20px></img></td>';
+    theMatchHTML += '<td class="padded"><img src="/static/images/OrangeAlert.png" title="Players had errors during this match." width=20px height=20px></img></td>';
   } else {
     theMatchHTML += '<td></td>';
   }
