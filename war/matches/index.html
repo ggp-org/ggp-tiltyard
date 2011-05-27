@@ -19,11 +19,16 @@
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));    
-    
-      var serverState = ResourceLoader.load_json('/data/serverState');
-      var serverStateHTML = 'Currently on scheduling round ' + serverState.schedulingRound + '.<br>';
-      serverStateHTML += 'Consecutive backend errors so far: ' + serverState.backendErrors + '.<br>';
-      document.getElementById('stateInfo').innerHTML = serverStateHTML;
+
+      var loginState = ResourceLoader.load_json('/data/login');
+      if (loginState.loggedIn && loginState.isAdmin) {
+        // This isn't sensitive data, but it just clutters up the UI if we show it to everyone,
+        // and only the admin really needs to see it.
+        var serverState = ResourceLoader.load_json('/data/serverState');
+        var serverStateHTML = 'Currently on scheduling round ' + serverState.schedulingRound + '.<br>';
+        serverStateHTML += 'Consecutive backend errors so far: ' + serverState.backendErrors + '.<br>';
+        document.getElementById('stateInfo').innerHTML = serverStateHTML;
+      }    
 
       var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
       var recentMatches = ResourceLoader.load_json('/data/matches/recent/');
