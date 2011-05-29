@@ -3,7 +3,6 @@ package ggp.apollo.scheduling;
 import ggp.apollo.CondensedMatch;
 import ggp.apollo.Game;
 import ggp.apollo.Player;
-import ggp.apollo.RemoteResourceLoader;
 import ggp.apollo.ServerState;
 
 import java.io.BufferedReader;
@@ -18,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import util.configuration.RemoteResourceLoader;
 import util.crypto.SignableJSON;
 
 import com.google.appengine.repackaged.org.json.JSONArray;
@@ -111,7 +111,7 @@ public class Scheduling {
                         if (!theProperURL.startsWith("http://")) {
                             theProperURL = "http://" + theProperURL;
                         }
-                        thePingStatus = RemoteResourceLoader.postRawWithTimeout(theProperURL, "( ping )", 1000);
+                        thePingStatus = RemoteResourceLoader.postRawWithTimeout(theProperURL, "( ping )", 2500);
                         thePingError = "";
                     } catch (IOException e) {
                         thePingStatus = "error";

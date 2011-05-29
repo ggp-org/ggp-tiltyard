@@ -2,6 +2,7 @@ package ggp.apollo;
 
 import ggp.apollo.scheduling.Scheduling;
 import ggp.apollo.stats.Statistics;
+import ggp.apollo.stats.StoredStatistics;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

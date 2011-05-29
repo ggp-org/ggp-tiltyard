@@ -4,7 +4,6 @@ import ggp.apollo.CondensedMatch;
 import ggp.apollo.Game;
 import ggp.apollo.Persistence;
 import ggp.apollo.Player;
-import ggp.apollo.StoredStatistics;
 import ggp.apollo.stats.counters.EloRank;
 import ggp.apollo.stats.counters.MedianPerDay;
 import ggp.apollo.stats.counters.WeightedAverage;

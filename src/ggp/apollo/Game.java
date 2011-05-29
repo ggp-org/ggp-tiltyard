@@ -8,6 +8,8 @@ import java.util.Set;
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
+import util.configuration.RemoteResourceLoader;
+
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
