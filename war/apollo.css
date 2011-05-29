@@ -93,6 +93,9 @@ table.matchlist {
   border:1px solid #cccccc;
   border-collapse:collapse;
 }
+th.padded {
+  padding-left: 10px;
+}
 td.padded {
   padding-left: 10px;
 }

@@ -15,8 +15,7 @@
     <br>
     <center><div id="add_player_promo">You can <a rel="nofollow" href="javascript:add_new_player()">add your player</a> to this list!</div></center>
     <br>
-    <div id='ownedPlayerList' style='display: table;'></div><br>
-    <div id='playerList' style='display: table;'></div>
+    <div id='playerList'></div>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
@@ -42,21 +41,70 @@
         }
       }
 
+      function renderPlayerListEntry(aPlayer, nPlayer) {
+        var theHTML = '';
+        if (nPlayer % 2 == 0) {
+          theHTML += "<tr bgcolor=#F5F5F5>";
+        } else {          
+          theHTML += "<tr bgcolor=#E0E0E0>";
+        }
+        
+        function renderCell(x) {
+          if (x) {
+            return '<td class="padded">' + x + '</td>';
+          } else {
+            return '<td></td>';
+          }
+        }
+        
+        pingStatusIcon = function(aPlayer) {
+          var z = aPlayer.pingStatus;
+          if (!aPlayer.isEnabled || z == null) {
+            return '<img src="/static/images/StatusGrey.png" title="Player is inactive."></img>';
+          }
+          if (z == "available") return '<img src="/static/images/StatusGreen.png" title="Player is listed as active, and is currently ready for new matches."></img>';
+          if (z == "waiting") return '<img src="/static/images/StatusWhite.png" title="Player was just activated: waiting to get its status..."></img>';
+          if (z == "error") return '<img src="/static/images/StatusError.png" title="Player is listed as active, but is being unresponsive, so its current status is unknown."></img>';          
+          if (z == "busy") return '<img src="/static/images/StatusOrange.png" title="Player is listed as active, and is currently busy playing a match."></img>';
+          return '<img src="/static/images/StatusError.png" title="Player is listed as active, but its current status is unrecognizable: ' + z + '."></img>';
+        }
+        
+        theHTML += renderCell(pingStatusIcon(aPlayer));
+        theHTML += renderCell('<a href="/players/' + aPlayer.name + '">' + aPlayer.name + '</a>');
+        theHTML += renderCell(aPlayer.visibleEmail);
+        theHTML += renderCell(("theURL" in aPlayer) ? "Yours!" : null);
+        theHTML += "<td width=10px></td>";
+        
+        theHTML += "</tr>";
+        return theHTML;
+      }
+      
+      // Returns a positive number if "aPlayer" should appear in the player
+      // listing after "bPlayer".
+      function playerComesAfter(aPlayer, bPlayer) {
+        if (("theURL" in aPlayer) && !("theURL" in bPlayer)) return -1;
+        if (!("theURL" in aPlayer) && ("theURL" in bPlayer)) return 1;      
+        if (aPlayer.isEnabled && !bPlayer.isEnabled) return -1;
+        if (!aPlayer.isEnabled && bPlayer.isEnabled) return 1;
+        if (aPlayer.name > bPlayer.name) return 1;
+        if (aPlayer.name < bPlayer.name) return -1;
+        return 0;
+      }
+
       function drawPlayerList() {
         var thePlayers = ResourceLoader.load_json('/data/players/');
-        var playerListHTML = '';
-        var ownedPlayerListHTML = '';
-        for (var i in thePlayers) {
-          if ("theURL" in thePlayers[i]) {
-            ownedPlayerListHTML += generatePlayerHTML(thePlayers[i]);
-          }
+        var thePlayersList = [];
+        for (var theName in thePlayers) {
+          thePlayersList.push(thePlayers[theName]);
         }
-        for (var i in thePlayers) {
-          if (!("theURL" in thePlayers[i])) {
-            playerListHTML += generatePlayerHTML(thePlayers[i]);
-          }
+        thePlayersList.sort(playerComesAfter);
+        
+        var playerListHTML = '<center><table class="matchlist" cellpadding="5px">';
+        playerListHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=5>Player List</th></tr>';
+        for (var i = 0; i < thePlayersList.length; i++) {
+          playerListHTML += renderPlayerListEntry(thePlayersList[i], i);
         }
-        document.getElementById('ownedPlayerList').innerHTML = ownedPlayerListHTML;
+        playerListHTML += '</table></center>';
         document.getElementById('playerList').innerHTML = playerListHTML;
       }
       

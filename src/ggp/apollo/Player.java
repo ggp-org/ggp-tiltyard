@@ -22,6 +22,7 @@ public class Player {
     @Persistent private String theURL;
     @Persistent private Integer nStrikes;
     @Persistent private String pingStatus;
+    @Persistent private String pingError;
     
     @Persistent private List<String> recentMatchURLs;
     private static final int kRecentMatchURLsToRecord = 40;
@@ -69,6 +70,13 @@ public class Player {
     public void setEnabled(boolean isEnabled) {
         this.isEnabled = isEnabled;
         this.nStrikes = 0;
+        if (isEnabled == false) {
+            this.pingStatus = null;
+            this.pingError = null;
+        } else if (isEnabled == true) {
+            this.pingStatus = "waiting";
+            this.pingError = null;
+        }
     }
 
     public boolean isEnabled() {
@@ -102,9 +110,8 @@ public class Player {
         if (nStrikes == null) {
             nStrikes = 0;
         }
-        if (nStrikes > 3) {
-            isEnabled = false;
-            nStrikes = 0;
+        if (nStrikes > 2) {
+            setEnabled(false);
         } else {
             nStrikes++;
         }
@@ -117,11 +124,16 @@ public class Player {
         nStrikes = 0;
     }
     
-    public void setPingStatus(String theNewStatus) {
+    public void setPingStatus(String theNewStatus, String theError) {
         pingStatus = theNewStatus;
+        pingError = theError;
     }
     
     public String getPingStatus() {
+        return pingStatus;
+    }
+    
+    public String getPingError() {
         return pingStatus;
     }
     
@@ -132,11 +144,13 @@ public class Player {
             theJSON.put("isEnabled", isEnabled);
             theJSON.put("gdlVersion", gdlVersion);
             theJSON.put("visibleEmail", visibleEmail);
+            theJSON.put("pingStatus", pingStatus);
             if (includePrivate) {
                 // Not sure if we want to expose the userID information,
                 // even to the owners themselves.
                 //theJSON.put("theOwners", theOwners);
-                theJSON.put("theURL", theURL);                
+                theJSON.put("theURL", theURL);
+                theJSON.put("pingError", pingError);
             }
             if (includeMatches) {
                 JSONArray theMatches = new JSONArray();
@@ -146,9 +160,6 @@ public class Player {
                     theMatches.put(c.getCondensedJSON());
                 }
                 theJSON.put("recentMatches", theMatches);
-            }
-            if (pingStatus != null && !pingStatus.isEmpty()) {
-                theJSON.put("pingStatus", pingStatus);
             }
             return theJSON;
         } catch (JSONException e) {

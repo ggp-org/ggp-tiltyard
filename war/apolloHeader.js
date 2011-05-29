@@ -172,10 +172,15 @@ function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, play
 
 function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, theGames, showShadow) {
   var theGame = theGames[theMatchJSON.gameMetaURL];
+  var noErrorCandidates = true;
   var hasErrors = false;
+  var allErrors = true;
   var hasErrorsForPlayer = [];
+  var allErrorsForPlayer = [];
+  var allErrorsForSomePlayer = false;
   for (var i = 0; i < theMatchJSON.gameRoleNames.length; i++) {
     hasErrorsForPlayer.push(false);
+    allErrorsForPlayer.push(true);
   }
   if ("errors" in theMatchJSON) {
     for (var i = 0; i < theMatchJSON.errors.length; i++) {
@@ -183,8 +188,26 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
         if (theMatchJSON.errors[i][j] != "") {
           hasErrors = true;
           hasErrorsForPlayer[j] = true;
+        } else {
+          allErrorsForPlayer[j] = false;
+          allErrors = false;
         }
+        noErrorCandidates = false;
       }
+    }
+  }
+  if (noErrorCandidates) {
+    // If there are no moves so far, technically "all moves have been errors",
+    // but that's a confusing way to present things, so it's better to show the
+    // equally-true information "all moves have been error-free".
+    allErrors = false;
+    for (var i = 0; i < allErrorsForPlayer.length; i++) {
+      allErrorsForPlayer[i] = false;
+    }
+  }
+  for (var i = 0; i < allErrorsForPlayer.length; i++) {
+    if (allErrorsForPlayer[i]) {
+      allErrorsForSomePlayer = true;
     }
   }
 
@@ -256,9 +279,12 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
       highlightAttribute = 'style="background-color: #CCEECC;"';
     }
     theMatchHTML += '<td class="padded"><a ' + highlightAttribute + ' href="/players/' + theMatchJSON.apolloPlayers[j] + '">' + theMatchJSON.apolloPlayers[j] + '</a>';
-    if (hasErrorsForPlayer[j]) {
-      theMatchHTML += ' <img src="/static/images/OrangeAlert.png" title="This player had an error in this match." width=20px height=20px>';
+    if (allErrorsForPlayer[j]) {
+      theMatchHTML += ' <img src="/static/images/YellowAlert.png" title="This player had all errors in this match." height=20px>';
+    } else if (hasErrorsForPlayer[j]) {
+      theMatchHTML += ' <img src="/static/images/WhiteAlert.png" title="This player had errors in this match." height=20px>';
     }
+    
     theMatchHTML += '</td>'
     if ("goalValues" in theMatchJSON) {
       theMatchHTML += '<td class="padded" style="text-align: right;">' + theMatchJSON.goalValues[j] + '</td>';
@@ -275,14 +301,18 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
 
   // Signature badge.
   if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {
-    theMatchHTML += '<td class="padded"><img src="/static/images/GreenLock.png" title="Match has a valid digital signature." width=10px height=16px></img></td>';
+    theMatchHTML += '<td class="padded"><img src="/static/images/GreenLock.png" title="Match has a valid digital signature." height=20px></img></td>';
   } else {
-    theMatchHTML += '<td class="padded"><img src="/static/images/RedLock.png" title="Match has no digital signature." width=10px height=16px></img></td>';
+    theMatchHTML += '<td class="padded"><img src="/static/images/RedLock.png" title="Match has no digital signature." height=20px></img></td>';
   }
   
   // Warning badge.
-  if (hasErrors) {
-    theMatchHTML += '<td class="padded"><img src="/static/images/OrangeAlert.png" title="Players had errors during this match." width=20px height=20px></img></td>';
+  if (allErrors) {
+    theMatchHTML += '<td class="padded"><img src="/static/images/OrangeAlert.png" title="Every player had all errors during this match." height=20px></img></td>';
+  } else if (allErrorsForSomePlayer) {
+    theMatchHTML += '<td class="padded"><img src="/static/images/YellowAlert.png" title="At least one player had all errors during this match." height=20px></img></td>';
+  } else if (hasErrors) {
+    theMatchHTML += '<td class="padded"><img src="/static/images/WhiteAlert.png" title="Players had errors during this match." height=20px></img></td>';
   } else {
     theMatchHTML += '<td></td>';
   }

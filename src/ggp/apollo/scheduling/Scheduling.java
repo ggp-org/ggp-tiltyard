@@ -27,8 +27,8 @@ import com.google.appengine.repackaged.org.json.JSONObject;
 public class Scheduling {
     // Comment out games that are expensive for AppEngine-based players.
     private static final String[] someProperGames = {
-            "2pttc:2",
-            "3pttc:3",
+            //"2pttc:2",
+            //"3pttc:3",
             "3pConnectFour:3",
             //"4pttc:4",
             "blocker:2",
@@ -41,7 +41,7 @@ public class Scheduling {
             //"eightPuzzle:1",
             "knightThrough:2",
             //"knightsTour:1",
-            "pawnToQueen:2",
+            //"pawnToQueen:2",
             "pawnWhopping:2",
             //"peg:1",
             //"pegEuro:1",
@@ -104,20 +104,21 @@ public class Scheduling {
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                 Player p = theAvailablePlayers.get(i);
                 if (p.isEnabled()) {
-                    String thePingStatus = null;
+                    String thePingError = null;
+                    String thePingStatus = null;                    
                     try {
                         String theProperURL = p.getURL();
                         if (!theProperURL.startsWith("http://")) {
                             theProperURL = "http://" + theProperURL;
                         }
                         thePingStatus = RemoteResourceLoader.postRawWithTimeout(theProperURL, "( ping )", 1000);
+                        thePingError = "";
                     } catch (IOException e) {
                         thePingStatus = "error";
+                        thePingError = e.toString();
                     }
-                    if (thePingStatus != p.getPingStatus()) {
-                        p.setPingStatus(thePingStatus);
-                        p.save();
-                    }
+                    p.setPingStatus(thePingStatus, thePingError);
+                    p.save();
                 }
             }
             
