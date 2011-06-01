@@ -134,7 +134,7 @@ public class Player {
     }
     
     public String getPingError() {
-        return pingStatus;
+        return pingError;
     }
     
     public JSONObject asJSON(boolean includePrivate, boolean includeMatches) throws IOException {
