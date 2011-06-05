@@ -42,16 +42,16 @@
         sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.VISUAL_VIEW);">Visual View</a><br>';
         sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.LISTING_VIEW);">Listing View</a><br><br>';
         sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator Page</a>)<br><br>';
-        sidePanelHTML += 'There are ' + apolloMatch.apolloPlayers.length + ' players: <ol>';
+        sidePanelHTML += '<b>Players involved:</b> <br> <table>';
         for (var i = 0; i < apolloMatch.apolloPlayers.length; i++) {
-          sidePanelHTML += '<li><b>' + spectatorMatch.gameRoleNames[i] + ':</b> ';        
-          sidePanelHTML += '<a href="/players/' + apolloMatch.apolloPlayers[i] + '">' + apolloMatch.apolloPlayers[i] + '</a> ';
+          sidePanelHTML += '<tr><td width=10px></td><td style="text-align: right;"><a href="/players/' + apolloMatch.apolloPlayers[i] + '">' + apolloMatch.apolloPlayers[i] + '</a></td>';
+          sidePanelHTML += '<td>as <b>' + spectatorMatch.gameRoleNames[i] + '</b></td>';                  
           if ("goalValues" in spectatorMatch) {
-            sidePanelHTML += '<br>(goal value: ' + spectatorMatch.goalValues[i] + ')';
+            sidePanelHTML += '<td><i>(' + spectatorMatch.goalValues[i] + ')</i></td>';
           }
-          sidePanelHTML += '</li>';
+          sidePanelHTML += '</tr>';
         }
-        sidePanelHTML += '</ol>';
+        sidePanelHTML += '</table><br>';
         var nSteps = spectatorMatch.moves.length;
         if (spectatorMatch.isCompleted) {
           sidePanelHTML += '<b>Match done!</b> (in ' + nSteps + ' steps)';
