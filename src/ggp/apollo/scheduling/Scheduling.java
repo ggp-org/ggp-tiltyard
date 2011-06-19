@@ -17,12 +17,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import util.configuration.RemoteResourceLoader;
-import util.crypto.SignableJSON;
-
 import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
+
+import util.configuration.RemoteResourceLoader;
+import util.crypto.SignableJSON;
 
 public class Scheduling {
     // Comment out games that are expensive for AppEngine-based players.
@@ -267,8 +267,8 @@ public class Scheduling {
     public static final String apolloPublicKey = "0MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAgjPUn3Zkr1u+BQb2fMOUcypSsJY4c/IRFDaA5Gjg022gZCY+a5yC61nSIwYnfTdWcnDEadUvbLWvD3IXmhxKZY69k6GpfgGZBp90bS918vuFiRQ16UcEzSloeVQs0jt7Nq+9EKvBBlULGxZcwXH30G+wIyoo/9qGJOwN+XmhFj9PC/WbPGvzB8ABKo08XIGyqDbv+xF0xVw0Pdfd2sYKUuSQawIFHxQBztbySTydl5r5qUwETxw5JuZkuK0c3cNer7M24/fokGuyukmnBI3k6V9lkguAOzVXjnknKaEAh4KassLwQK9Byc84hEyFFZk4USTneS2Kz3ZcjxRGOYjWKMHEVJVsbR2rHA7nN1PZbk14bNdemwwAbwYB2ONWe3Bhmg9JY2USdChqlR+dD0NfWPzEWV1hgt2o7X9OhB2B5sOrnsaJrkBDkbwa7yC4Y3E8AEV8KekQrNLOynoKbh7cZHs4bPKBKULnhAKzy22XoHYMw9G5vsXlMx+jLpyUhwrzAgMBAAE=";
     public static boolean verifyApolloCryptography(JSONObject theMatchInfo) {
         try {
-            if (!SignableJSON.isSignedJSON(new external.JSON.JSONObject(theMatchInfo.toString()))) return false;
-            if (!SignableJSON.verifySignedJSON(new external.JSON.JSONObject(theMatchInfo.toString()))) return false;
+            if (!SignableJSON.isSignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
+            if (!SignableJSON.verifySignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
             if (!theMatchInfo.getString("matchHostPK").equals(apolloPublicKey)) return false;
             return true;
         } catch (Exception e) {

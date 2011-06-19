@@ -5,9 +5,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 
+import com.google.appengine.repackaged.org.json.JSONException;
+import com.google.appengine.repackaged.org.json.JSONObject;
+
 import util.crypto.CanonicalJSON.CanonicalizationStrategy;
-import external.JSON.JSONException;
-import external.JSON.JSONObject;
 
 public class SignableJSON {
     // If we need to use a canonicalization strategy that's not SIMPLE,
