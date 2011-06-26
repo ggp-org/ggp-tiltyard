@@ -1,0 +1,139 @@
+<html>
+  <head>
+    <title>GGP Apollo Server</title>
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+    <link rel="stylesheet" type="text/css" href="/apollo.css" />
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+  </head>
+  <body>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+    <script type="text/javascript" src="/apolloHeader.js"></script>
+
+<style>
+th {
+  background-image: -webkit-gradient(
+    linear,
+    left bottom,
+    left top,
+    color-stop(0.24, #CCC),
+    color-stop(0.81, #AAA)
+  );
+  background-image: -moz-linear-gradient(
+    center bottom,
+    rgb(230,230,230) 24%,
+    rgb(184,184,184) 81%
+  );
+  font-variant: small-caps;
+  font-size: 20px;
+}
+td.name {
+  font-weight:bold;
+  width: 200px;
+}
+</style>
+
+    <div id='header'></div>
+    <br>
+    <center>
+
+      <table width=100%><tr><td width=3%></td><td valign=top width=150px>
+        <center>
+        <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
+          <tr><th colspan=5>Leaderboard</th></tr>
+          <tr><th>Player</th><th>Matches</th><th>Avg Score</th><th>NetScore</th><th>EloRank</th></tr>
+        </table>
+        </center>
+      </td><td valign=top width=150px>
+        <center>
+        <table id="server_stats" border=1px bgcolor=#CCC cellpadding=5px>
+          <th colspan=2>Server Statistics</th>
+        </table>
+        </center>
+      </td><td width=3%></td></tr></table>
+
+      <div id="refresh_stats_div" style="display: none;"><br>Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.</div>
+    </center>
+
+    <script type='text/javascript'>
+      generateHeader(document.getElementById('header'));
+      
+      var loginState = ResourceLoader.load_json('/data/login');
+      if (loginState.loggedIn && loginState.isAdmin) {
+        // This is also protected via server-side mechanisms; hiding it here
+        // is purely to improve the user interface, so there isn't a link to a 500.
+        document.getElementById("refresh_stats_div").style.cssText = "";
+      }
+      
+      var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/90bd08a7df7b8113a45f1e537c1853c3974006b2/overall');
+      
+      function getOptionalMapValue(playerName, statsData, mapName) {
+        if (mapName in statsData && playerName in statsData[mapName]) {
+          return statsData[mapName][playerName];
+        }
+        return "";
+      }
+
+      cleanFloat = function (x) { return Math.round(x*100)/100; };
+      var sortablePairs = [];
+      for (var pName in statsJSON.leaderboard) {
+        var theBoardStats = JSON.parse(statsJSON.leaderboard[pName]);        
+        var thePlayerRank = getOptionalMapValue(pName, statsJSON, "playerRank");
+        var theNetScore = getOptionalMapValue(pName, statsJSON, "netScore");
+        var theEloRank = getOptionalMapValue(pName, statsJSON, "eloRank");
+        var sortKey = cleanFloat(theEloRank);
+        sortablePairs.push([sortKey, pName, 1*theBoardStats[1], 1*theBoardStats[0], theNetScore, theEloRank]);
+      }
+      sortablePairs.sort(function(a,b){return(b[0]-a[0]);});
+      leadersHTML = "";
+      for (var i = 0; i < sortablePairs.length; i++) {
+        var playerName = sortablePairs[i][1];
+        leadersHTML += '<tr><td class="name"><a class="darklink" href=/players/'+playerName+'>'+playerName+'</a></td>';
+        for (var j = 2; j < sortablePairs[i].length; j++) {
+          leadersHTML += '<td>'+cleanFloat(sortablePairs[i][j])+'</td>';
+        }
+        leadersHTML += '</tr>';
+        // TODO: add back information about the decayed leaderboard
+        //'<td>'+cleanFloat(statsJSON.decayedLeaderboard[sortablePairs[i][1]])+'</td></tr>'; 
+      }
+      document.getElementById('leaderboard').children[0].innerHTML += leadersHTML;
+      
+      delete statsJSON.leaderboard;
+      delete statsJSON.decayedLeaderboard;
+      delete statsJSON.playerRank;
+      delete statsJSON.netScore;
+      delete statsJSON.eloRank;
+      
+      var varNameMapping = {
+        "matches": "Total Matches",
+        "matchesFinished": "Matches Finished",
+        "matchesAbandoned": "Matches Abandoned",
+        "matchesStatErrors": "Matches Unreadable",
+        "computeTime": "Time Updating Stats",
+        "matchesPerDayMedian": "Median Matches/Day",
+        "matchesInPastHour": "Matches in Past Hour",
+        "matchesInPastDay": "Matches in Past Day",
+        "computedAt": "Stats Last Updated",
+        "matchesAverageMoves": "Average Moves/Match",
+        "matchesAveragePlayers": "Average Players/Match",
+        "playerRankError": "PlayerRank Error",
+        "statsVersion": "Stats Version",
+        "playerRankDelta": "PlayerRank Delta",
+        "computeRAM": "Memory Updating Stats"
+      };
+      
+      varsHTML = "";
+      for (var varName in statsJSON) {
+        var varProperName = varName;
+        if (varNameMapping[varName]) varProperName = varNameMapping[varName];
+        var varValue = cleanFloat(statsJSON[varName]);        
+        if (varName == "computedAt") varValue = Math.round((new Date() - 1*statsJSON[varName])/1000) + 's ago';
+        if (varName == "computeRAM") varValue = cleanFloat(1*statsJSON[varName]/(1024*1024)) + ' MB';  
+        varsHTML += '<tr><td class="name">'+varProperName+'</td><td>'+varValue+'</td></tr>';
+      }
+      document.getElementById('server_stats').children[0].innerHTML += varsHTML;
+      
+      //document.getElementById('stats').innerHTML = renderJSON(statsJSON);
+    </script>
+  </body>  
+</html>
