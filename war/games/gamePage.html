@@ -69,10 +69,8 @@
 
       var gameName = translateRepositoryCodename(window.location.pathname.replace("/games/", ""));      
       var gameRawName = window.location.pathname.replace("/games/", "").split('/')[1];
-
-      // The value "90bd08a7df7b8113a45f1e537c1853c3974006b2" is the public key for the Apollo server.
-      // We request statistics for all of the matches which are signed using the Apollo server's key.
-      var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/90bd08a7df7b8113a45f1e537c1853c3974006b2/games/' + gameName);
+      
+      var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/' + hashedApolloPK + '/games/' + gameName);
       document.getElementById('gameStatsDiv').innerHTML = renderJSON(statsJSON);
 
       var theGame = ResourceLoader.load_json('/data/games/' + gameName);

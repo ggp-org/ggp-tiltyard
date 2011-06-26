@@ -327,3 +327,7 @@ function translateRepositoryCodename(x) {
 function translateRepositoryIntoCodename(x) {
   return x.replace("http://games.ggp.org/games/", "base/");
 }
+
+// The value "90bd08a7df7b8113a45f1e537c1853c3974006b2" is the hashed public key for the Apollo server.
+// We request statistics for all of the matches which are signed using the Apollo server's key.
+var hashedApolloPK = "90bd08a7df7b8113a45f1e537c1853c3974006b2";
