@@ -65,7 +65,9 @@ td.name {
         document.getElementById("refresh_stats_div").style.cssText = "";
       }
       
-      var statsJSON = ResourceLoader.load_json('/data/statistics/overall');
+      // The value "90bd08a7df7b8113a45f1e537c1853c3974006b2" is the public key for the Apollo server.
+      // We request statistics for all of the matches which are signed using the Apollo server's key.
+      var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/90bd08a7df7b8113a45f1e537c1853c3974006b2/overall');
       
       function getOptionalMapValue(playerName, statsData, mapName) {
         if (mapName in statsData && playerName in statsData[mapName]) {
