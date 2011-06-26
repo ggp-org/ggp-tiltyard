@@ -1,8 +1,6 @@
 package ggp.apollo;
 
 import ggp.apollo.scheduling.Scheduling;
-import ggp.apollo.stats.Statistics;
-import ggp.apollo.stats.StoredStatistics;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -26,11 +24,6 @@ import com.google.appengine.api.users.UserServiceFactory;
 import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
-import com.google.appengine.api.taskqueue.TaskOptions.Method;
-import com.google.appengine.api.taskqueue.QueueFactory;
-
-import static com.google.appengine.api.taskqueue.TaskOptions.Builder.*;
-import static com.google.appengine.api.taskqueue.RetryOptions.Builder.*;
 
 @SuppressWarnings("serial")
 public class GGP_ApolloServlet extends HttpServlet {    
@@ -42,15 +35,6 @@ public class GGP_ApolloServlet extends HttpServlet {
                 resp.setContentType("text/plain");
                 resp.getWriter().println("Starting scheduling round.");
             }
-            return;
-        } else if (req.getRequestURI().equals("/cron/update_stats")) {
-            QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(0)));
-            return;
-        } else if (req.getRequestURI().equals("/tasks/update_stats")) {
-            if (isDatastoreWriteable()) {
-                Statistics.computeStatistics();
-            }
-            resp.setStatus(200);
             return;
         }
 
@@ -276,38 +260,6 @@ public class GGP_ApolloServlet extends HttpServlet {
                     theResponse.put("loggedIn", false);
                 }
                 resp.getWriter().println(theResponse.toString());
-            } else if (theRPC.startsWith("statistics/")) {
-                String theStatistic = theRPC.replaceFirst("statistics/", "");                
-                JSONObject theResponse = null;
-                if (theStatistic.equals("overall")) {
-                    StoredStatistics s = StoredStatistics.loadStatistics();
-                    theResponse = s.getOverallStats();
-                } else if (theStatistic.startsWith("players/")) {
-                    StoredStatistics s = StoredStatistics.loadStatistics();
-                    theStatistic = theStatistic.replaceFirst("players/", "");
-                    theResponse = s.getPlayerStats(theStatistic);
-                    if (theResponse == null && Player.loadPlayer(theStatistic) != null) {
-                        theResponse = new JSONObject();
-                    }
-                } else if (theStatistic.startsWith("games/")) {
-                    StoredStatistics s = StoredStatistics.loadStatistics();
-                    theStatistic = theStatistic.replaceFirst("games/", "");
-                    theResponse = s.getGameStats(theStatistic);
-                    if (theResponse == null && Game.loadGame(theStatistic) != null) {
-                        theResponse = new JSONObject();
-                    }
-                } else if (theStatistic.equals("refresh")) {
-                    if (userService.isUserAdmin()) {
-                        QueueFactory.getDefaultQueue().add(withUrl("/tasks/update_stats").method(Method.GET).retryOptions(withTaskRetryLimit(0)));
-                    }
-                    StoredStatistics s = StoredStatistics.loadStatistics();
-                    theResponse = s.getOverallStats(); 
-                }
-                if (theResponse != null) {
-                    resp.getWriter().println(theResponse.toString());
-                } else {
-                    resp.setStatus(404);
-                }
             } else {
                 resp.setStatus(404);
             }
