@@ -36,7 +36,6 @@ td.name {
     <div id='header'></div>
     <br>
     <center>
-
       <table width=100%><tr><td width=3%></td><td valign=top width=150px>
         <center>
         <table id="leaderboard" border=1px bgcolor=#CCC cellpadding=5px>
@@ -51,24 +50,15 @@ td.name {
         </table>
         </center>
       </td><td width=3%></td></tr></table>
-
-      <div id="refresh_stats_div" style="display: none;"><br>Click <a href="/data/statistics/refresh">here</a> to force a stats refresh. This may take a few seconds.</div>
     </center>
 
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
       
-      var loginState = ResourceLoader.load_json('/data/login');
-      if (loginState.loggedIn && loginState.isAdmin) {
-        // This is also protected via server-side mechanisms; hiding it here
-        // is purely to improve the user interface, so there isn't a link to a 500.
-        document.getElementById("refresh_stats_div").style.cssText = "";
-      }
-      
       // The value "90bd08a7df7b8113a45f1e537c1853c3974006b2" is the public key for the Apollo server.
       // We request statistics for all of the matches which are signed using the Apollo server's key.
       var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/90bd08a7df7b8113a45f1e537c1853c3974006b2/overall');
-      
+
       function getOptionalMapValue(playerName, statsData, mapName) {
         if (mapName in statsData && playerName in statsData[mapName]) {
           return statsData[mapName][playerName];
