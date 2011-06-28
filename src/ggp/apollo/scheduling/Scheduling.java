@@ -27,23 +27,23 @@ import util.crypto.SignableJSON;
 public class Scheduling {
     // Comment out games that are expensive for AppEngine-based players.
     private static final String[] someProperGames = {
-            //"2pttc:2",
-            //"3pttc:3",
-            //"3pConnectFour:3",
-            //"4pttc:4",
-            //"blocker:2",
-            //"breakthrough:2",
+            "2pttc:2",
+            "3pttc:3",
+            "3pConnectFour:3",
+            "4pttc:4",
+            "blocker:2",
+            "breakthrough:2",
             "breakthroughSmall:2",
             "breakthroughWalls:2",
             "biddingTicTacToe:2",
             //"chess:2",
-            //"checkers:2",
+            "checkers:2",
             "cittaceot:2",
             "connectFour:2",
             "connectFourSuicide:2",            
             //"eightPuzzle:1",
             "escortLatch:2",
-            //"knightThrough:2",
+            "knightThrough:2",
             //"knightsTour:1",
             //"pawnToQueen:2",
             //"pawnWhopping:2",
@@ -51,11 +51,11 @@ public class Scheduling {
             //"pegEuro:1",
             //"lightsOut:1",
             "2pffa_zerosum:2",
-            //"qyshinsu:2",
-            //"sheepAndWolf:2",
-            //"nineBoardTicTacToe:2",
+            "qyshinsu:2",
+            "sheepAndWolf:2",
+            "nineBoardTicTacToe:2",
             "ttcc4_2player:2",
-            //"ticTacToe:2"
+            "ticTacToe:2"
     };    
 
     public static void runSchedulingRound() throws IOException {
