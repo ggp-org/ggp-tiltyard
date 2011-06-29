@@ -287,7 +287,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
     
     theMatchHTML += '</td>'
     if ("goalValues" in theMatchJSON) {
-      theMatchHTML += '<td class="padded" style="text-align: right;">' + theMatchJSON.goalValues[j] + '</td>';
+      theMatchHTML += '<td class="padded" style="text-align: right;"><span ' + highlightAttribute + '>' + theMatchJSON.goalValues[j] + '</span></td>';
     } else {
       theMatchHTML += '<td class="padded"></td>';
     }
