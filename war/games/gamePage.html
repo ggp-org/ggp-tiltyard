@@ -41,6 +41,15 @@
     </tr>
     <tr>
       <td colspan=3>
+        <table style="width:100%,height:100%">
+          <tr id="difficulty_tr">
+            <th>Agon Difficulty</th>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td colspan=3>
         <div id="gameStatsDiv"></div>
       </td>
     </tr>
@@ -66,11 +75,35 @@
         if (x == 9) return "Nine";
         return "10+";
       }
+      
+      var cleanFloat = function (x) { return Math.round(x*100)/100; };
+      var generateEaseGradient = function (x) {
+        if (x <= 0.5) {
+          var r = 2*x;
+          var g = 1.0;
+        } else {
+          var r = 1.0;
+          var g = 1.0 - 2*(x-0.5);
+        }
+        return [r,g];
+      }
 
       var gameName = translateRepositoryCodename(window.location.pathname.replace("/games/", ""));      
       var gameRawName = window.location.pathname.replace("/games/", "").split('/')[1];
       
       var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/' + hashedApolloPK + '/games/' + gameName);
+      if ("agonScaledDifficulty" in statsJSON) {
+        var difficultyHTML = "";
+        for (var i = 0; i < statsJSON.agonScaledDifficulty.length; i++) {
+          var easeColors = generateEaseGradient(statsJSON.agonScaledDifficulty[i]);
+          difficultyHTML += "<td width=10px></td><td style='background-color: rgb(" + Math.round(255*easeColors[0]) + ", " + Math.round(255*easeColors[1]) + ", 0);'>";
+          difficultyHTML += "for Player " + toProperString(i+1) + ": " + cleanFloat(statsJSON.agonDifficulty[i]);
+          difficultyHTML += "</td>";
+        }
+        document.getElementById('difficulty_tr').innerHTML += difficultyHTML;
+        delete statsJSON.agonScaledDifficulty;
+        delete statsJSON.agonDifficulty;        
+      } 
       document.getElementById('gameStatsDiv').innerHTML = renderJSON(statsJSON);
 
       var theGame = ResourceLoader.load_json('/data/games/' + gameName);
