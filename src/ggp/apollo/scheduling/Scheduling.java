@@ -27,35 +27,35 @@ import util.crypto.SignableJSON;
 public class Scheduling {
     // Comment out games that are expensive for AppEngine-based players.
     private static final String[] someProperGames = {
-            "2pttc:2",
-            "3pttc:3",
-            "3pConnectFour:3",
-            "4pttc:4",
-            "blocker:2",
-            "breakthrough:2",
-            "breakthroughSmall:2",
-            "breakthroughWalls:2",
-            "biddingTicTacToe:2",
+            "2pttc:2:v1",
+            "3pttc:3:v1",
+            "3pConnectFour:3:v0",
+            "4pttc:4:v1",
+            "blocker:2:v0",
+            "breakthrough:2:v0",
+            "breakthroughSmall:2:v0",
+            "breakthroughWalls:2:v0",
+            "biddingTicTacToe:2:v0",
             //"chess:2",
-            "checkers:2",
-            "cittaceot:2",
-            "connectFour:2",
-            "connectFourSuicide:2",            
+            "checkers:2:v1",
+            "cittaceot:2:v0",
+            "connectFour:2:v0",
+            "connectFourSuicide:2:v0",            
             //"eightPuzzle:1",
-            "escortLatch:2",
-            "knightThrough:2",
+            "escortLatch:2:v0",
+            "knightThrough:2:v0",
             //"knightsTour:1",
             //"pawnToQueen:2",
             //"pawnWhopping:2",
             //"peg:1",
             //"pegEuro:1",
             //"lightsOut:1",
-            "2pffa_zerosum:2",
-            "qyshinsu:2",
-            "sheepAndWolf:2",
-            "nineBoardTicTacToe:2",
-            "ttcc4_2player:2",
-            "ticTacToe:2"
+            "2pffa_zerosum:2:v0",
+            "qyshinsu:2:v0",
+            "sheepAndWolf:2:v0",
+            "nineBoardTicTacToe:2:v0",
+            "ttcc4_2player:2:v0",
+            "ticTacToe:2:v0"
     };    
 
     public static void runSchedulingRound() throws IOException {
@@ -148,18 +148,21 @@ public class Scheduling {
         // we have enough players available to play it. Repeat until we have a game.
         int nPlayersForGame;
         String theGameKey = null;
+        String theGameVersion = null;
         List<String> theProperGames = Arrays.asList(someProperGames);
         do {
             Collections.shuffle(theProperGames);            
             nPlayersForGame = Integer.parseInt(theProperGames.get(0).split(":")[1]);
             if (readyPlayers >= nPlayersForGame){
                 theGameKey = theProperGames.get(0).split(":")[0];
+                theGameVersion = theProperGames.get(0).split(":")[2];
             }
         } while (theGameKey == null);
 
         // Eventually we should support other repository servers. Figure out how
         // to do this in a safe, secure fashion (since the repository server can
         // inject arbitrary javascript into the visualizations).
+        //String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/" + theGameVersion + "/";
         String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/v0/";
         Game theGame = Game.loadGame(theGameURL);
         if (theGame == null) {
