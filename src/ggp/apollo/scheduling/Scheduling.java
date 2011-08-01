@@ -148,7 +148,7 @@ public class Scheduling {
         // we have enough players available to play it. Repeat until we have a game.
         int nPlayersForGame;
         String theGameKey = null;
-        String theGameVersion = null;
+        @SuppressWarnings("unused") String theGameVersion = null;
         List<String> theProperGames = Arrays.asList(someProperGames);
         do {
             Collections.shuffle(theProperGames);            
