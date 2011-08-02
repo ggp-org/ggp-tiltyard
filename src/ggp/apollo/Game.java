@@ -8,7 +8,6 @@ import java.util.Set;
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
-import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
@@ -61,20 +60,11 @@ public class Game {
         }
     }
 
-    public JSONObject asJSON(boolean includeMatches) throws IOException {
+    public JSONObject asJSON() throws IOException {
         try {
             JSONObject theJSON = new JSONObject();
             theJSON.put("gameMetaURL", gameMetaURL);
             theJSON.put("metadata", new JSONObject(jsonMetadata.getValue()));
-            if (includeMatches) {
-                JSONArray theMatches = new JSONArray();
-                for (String recentMatchURL : recentMatchURLs) {
-                    CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
-                    if (!c.isReady()) continue;
-                    theMatches.put(c.getCondensedJSON());
-                }
-                theJSON.put("recentMatches", theMatches);
-            }
             return theJSON;
         } catch (JSONException e) {
             return null;

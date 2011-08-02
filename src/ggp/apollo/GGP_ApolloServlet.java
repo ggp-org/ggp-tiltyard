@@ -21,7 +21,6 @@ import com.google.appengine.api.capabilities.CapabilityStatus;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
-import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
@@ -165,7 +164,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             if (theRPC.equals("players/")) {
                 JSONObject theResponse = new JSONObject();
                 for (Player p : Player.loadPlayers()) {
-                    theResponse.put(p.getName(), p.asJSON(p.isOwner(userId), false));
+                    theResponse.put(p.getName(), p.asJSON(p.isOwner(userId)));
                 }
                 resp.getWriter().println(theResponse.toString());
             } else if (theRPC.startsWith("players/")) {
@@ -175,11 +174,11 @@ public class GGP_ApolloServlet extends HttpServlet {
                     resp.setStatus(404);
                     return;
                 }
-                resp.getWriter().println(p.asJSON(p.isOwner(userId), true));
+                resp.getWriter().println(p.asJSON(p.isOwner(userId)));
             } else if (theRPC.equals("games/")) {
                 JSONObject theResponse = new JSONObject();
                 for (Game g : Game.loadGames()) {
-                    theResponse.put(g.getMetaURL(), g.asJSON(false));
+                    theResponse.put(g.getMetaURL(), g.asJSON());
                 }
                 resp.getWriter().println(theResponse.toString());                
             } else if (theRPC.startsWith("games/")) {
@@ -189,33 +188,9 @@ public class GGP_ApolloServlet extends HttpServlet {
                     resp.setStatus(404);
                     return;
                 }
-                resp.getWriter().println(g.asJSON(true));
+                resp.getWriter().println(g.asJSON());
             } else if (theRPC.equals("matches/")) {
-                // TODO: Should we have an RPC interface that lets you get
-                // the list of all matches ever? This might not scale.
                 resp.setStatus(404);
-            } else if (theRPC.equals("matches/recent/")) {
-                ServerState serverState = ServerState.loadState();
-                JSONArray theMatches = new JSONArray();
-                for (String recentMatchURL : serverState.getRecentMatchURLs()) {
-                    CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
-                    if (!c.isReady()) continue;
-                    theMatches.put(c.getCondensedJSON());
-                }
-                resp.getWriter().println(theMatches.toString());
-            } else if (theRPC.equals("matches/ongoing/")) {
-                ServerState serverState = ServerState.loadState();
-                JSONArray theMatches = new JSONArray();
-                for (String recentMatchURL : serverState.getRunningMatches()) {
-                    CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
-                    if (!c.isReady()) continue;
-                    theMatches.put(c.getCondensedJSON());
-                }
-                resp.getWriter().println(theMatches.toString());
-            } else if (theRPC.equals("matches/ongoing/set")) {
-                ServerState serverState = ServerState.loadState();                
-                JSONArray theMatches = new JSONArray(serverState.getRunningMatches());
-                resp.getWriter().println(theMatches.toString());                
             } else if (theRPC.startsWith("matches/")) {
                 String theMatchURL = theRPC.replaceFirst("matches/", "");
                 CondensedMatch c = CondensedMatch.loadCondensedMatch(theMatchURL);
@@ -340,7 +315,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                 p.setVisibleEmail(sanitize(playerInfo.getString("visibleEmail")));
                 p.save();
 
-                resp.getWriter().println(p.asJSON(true, false));
+                resp.getWriter().println(p.asJSON(true));
             } else {
                 resp.setStatus(404);
             }

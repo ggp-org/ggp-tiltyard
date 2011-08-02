@@ -172,43 +172,51 @@ function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, play
 
 function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, theGames, showShadow) {
   var theGame = theGames[theMatchJSON.gameMetaURL];
-  var noErrorCandidates = true;
-  var hasErrors = false;
-  var allErrors = true;
-  var hasErrorsForPlayer = [];
-  var allErrorsForPlayer = [];
-  var allErrorsForSomePlayer = false;
-  for (var i = 0; i < theMatchJSON.gameRoleNames.length; i++) {
-    hasErrorsForPlayer.push(false);
-    allErrorsForPlayer.push(true);
-  }
   if ("errors" in theMatchJSON) {
-    for (var i = 0; i < theMatchJSON.errors.length; i++) {
-      for (var j = 0; j < theMatchJSON.errors[i].length; j++) {
-        if (theMatchJSON.errors[i][j] != "") {
-          hasErrors = true;
-          hasErrorsForPlayer[j] = true;
-        } else {
-          allErrorsForPlayer[j] = false;
-          allErrors = false;
-        }
-        noErrorCandidates = false;
+      var noErrorCandidates = true;
+      var hasErrors = false;
+      var allErrors = true;
+      var hasErrorsForPlayer = [];
+      var allErrorsForPlayer = [];
+      var allErrorsForSomePlayer = false;
+      for (var i = 0; i < theMatchJSON.gameRoleNames.length; i++) {
+        hasErrorsForPlayer.push(false);
+        allErrorsForPlayer.push(true);
       }
-    }
-  }
-  if (noErrorCandidates) {
-    // If there are no moves so far, technically "all moves have been errors",
-    // but that's a confusing way to present things, so it's better to show the
-    // equally-true information "all moves have been error-free".
-    allErrors = false;
-    for (var i = 0; i < allErrorsForPlayer.length; i++) {
-      allErrorsForPlayer[i] = false;
-    }
-  }
-  for (var i = 0; i < allErrorsForPlayer.length; i++) {
-    if (allErrorsForPlayer[i]) {
-      allErrorsForSomePlayer = true;
-    }
+      if ("errors" in theMatchJSON) {
+        for (var i = 0; i < theMatchJSON.errors.length; i++) {
+          for (var j = 0; j < theMatchJSON.errors[i].length; j++) {
+            if (theMatchJSON.errors[i][j] != "") {
+              hasErrors = true;
+              hasErrorsForPlayer[j] = true;
+            } else {
+              allErrorsForPlayer[j] = false;
+              allErrors = false;
+            }
+            noErrorCandidates = false;
+          }
+        }
+      }
+      if (noErrorCandidates) {
+        // If there are no moves so far, technically "all moves have been errors",
+        // but that's a confusing way to present things, so it's better to show the
+        // equally-true information "all moves have been error-free".
+        allErrors = false;
+        for (var i = 0; i < allErrorsForPlayer.length; i++) {
+          allErrorsForPlayer[i] = false;
+        }
+      }
+      for (var i = 0; i < allErrorsForPlayer.length; i++) {
+        if (allErrorsForPlayer[i]) {
+          allErrorsForSomePlayer = true;
+        }
+      }
+  } else {
+    var hasErrors = theMatchJSON.hasErrors;
+    var allErrors = theMatchJSON.allErrors;
+    var hasErrorsForPlayer = theMatchJSON.hasErrorsForPlayer;
+    var allErrorsForPlayer = theMatchJSON.allErrorsForPlayer;
+    var allErrorsForSomePlayer = theMatchJSON.allErrorsForSomePlayer;
   }
 
   // TODO(schreib): Factor this out into a general function.
@@ -261,6 +269,10 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   // Match game profile.
   theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';
 
+  if ("matchURL" in theMatchJSON) {
+    theMatchJSON.apolloSpectatorURL = theMatchJSON.matchURL;
+  }  
+  
   // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
   theMatchHTML += '<td class="padded">' + UserInterface.renderDateTime(theDate);
@@ -271,6 +283,10 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   theMatchHTML += "</td>"  
   
   // Match players...
+  if ("playerNamesFromHost" in theMatchJSON) {
+    theMatchJSON.apolloPlayers = theMatchJSON.playerNamesFromHost;
+  }
+      
   theMatchHTML += '<td class="padded"><table class="matchlist" width=100%>';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
     theMatchHTML += '<tr>'
@@ -296,6 +312,10 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   theMatchHTML += '</table></td>';
   
   // Match page URL.
+  if ("hashedMatchHostPK" in theMatchJSON) {
+    theMatchJSON.apolloSigned = true;
+  }
+  
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
   theMatchHTML += '<td class="padded"><a href="/matches/' + matchURL + '">View Match</a></td>';  
 

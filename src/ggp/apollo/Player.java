@@ -9,7 +9,6 @@ import java.util.Set;
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
-import com.google.appengine.repackaged.org.json.JSONArray;
 import com.google.appengine.repackaged.org.json.JSONException;
 import com.google.appengine.repackaged.org.json.JSONObject;
 
@@ -137,7 +136,7 @@ public class Player {
         return pingError;
     }
     
-    public JSONObject asJSON(boolean includePrivate, boolean includeMatches) throws IOException {
+    public JSONObject asJSON(boolean includePrivate) throws IOException {
         try {
             JSONObject theJSON = new JSONObject();
             theJSON.put("name", theName);
@@ -151,15 +150,6 @@ public class Player {
                 //theJSON.put("theOwners", theOwners);
                 theJSON.put("theURL", theURL);
                 theJSON.put("pingError", pingError);
-            }
-            if (includeMatches) {
-                JSONArray theMatches = new JSONArray();
-                for (String recentMatchURL : recentMatchURLs) {
-                    CondensedMatch c = CondensedMatch.loadCondensedMatch(recentMatchURL);
-                    if (!c.isReady()) continue;
-                    theMatches.put(c.getCondensedJSON());
-                }
-                theJSON.put("recentMatches", theMatches);
             }
             return theJSON;
         } catch (JSONException e) {

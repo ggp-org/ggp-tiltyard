@@ -30,9 +30,8 @@
         document.getElementById('stateInfo').innerHTML = serverStateHTML;
       }    
 
-      var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
-      var recentMatches = ResourceLoader.load_json('/data/matches/recent/');
-      recentMatches.reverse();
+      var ongoingMatches = ResourceLoader.load_json('//filter.ggp.org/data/filterActiveSet,recent,'+hashedApolloPK).queryMatches;
+      var recentMatches = ResourceLoader.load_json('//filter.ggp.org/data/filter,recent,'+hashedApolloPK).queryMatches;      
       var matchListCaption = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
       var recentMatchesHTML = renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, null);
       document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;

@@ -3,7 +3,6 @@ package ggp.apollo;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
@@ -78,11 +77,7 @@ public class CondensedMatch {
     }    
 
     /* Static accessor methods */
-    public static Set<CondensedMatch> loadCondensedMatches() throws IOException {
-        return Persistence.loadAll(CondensedMatch.class);
-    }
-    
     public static CondensedMatch loadCondensedMatch(String theSpectatorURL) throws IOException {
         return Persistence.loadSpecific(theSpectatorURL, CondensedMatch.class);
-    }    
+    }
 }

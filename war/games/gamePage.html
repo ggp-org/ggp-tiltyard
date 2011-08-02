@@ -122,9 +122,8 @@
       }
 
       var gameMatchesHTML = '';
-      var ongoingMatches = ResourceLoader.load_json('/data/matches/ongoing/set');      
-      var recentMatches = theGame.recentMatches;
-      recentMatches.reverse();
+      var ongoingMatches = ResourceLoader.load_json('//filter.ggp.org/data/filterActiveSet,recent,'+hashedApolloPK).queryMatches;
+      var recentMatches = ResourceLoader.load_json('//filter.ggp.org/data/filterGame,recent,'+hashedApolloPK+',' + gameName).queryMatches;      
       if (recentMatches.length == 0) {
         gameMatchesHTML += '<b>This game has not been used in any matches recently.</b>';
       } else {
