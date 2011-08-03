@@ -171,6 +171,16 @@ function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, play
 }
 
 function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, theGames, showShadow) {
+  if ("matchURL" in theMatchJSON) {
+    theMatchJSON.apolloSpectatorURL = theMatchJSON.matchURL;
+  }
+  if ("hashedMatchHostPK" in theMatchJSON) {
+    theMatchJSON.apolloSigned = true;
+  }
+  if ("playerNamesFromHost" in theMatchJSON) {
+    theMatchJSON.apolloPlayers = theMatchJSON.playerNamesFromHost;
+  }    
+    
   var theGame = theGames[theMatchJSON.gameMetaURL];
   if ("errors" in theMatchJSON) {
       var noErrorCandidates = true;
@@ -268,10 +278,6 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   
   // Match game profile.
   theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';
-
-  if ("matchURL" in theMatchJSON) {
-    theMatchJSON.apolloSpectatorURL = theMatchJSON.matchURL;
-  }  
   
   // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
@@ -282,11 +288,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   }
   theMatchHTML += "</td>"  
   
-  // Match players...
-  if ("playerNamesFromHost" in theMatchJSON) {
-    theMatchJSON.apolloPlayers = theMatchJSON.playerNamesFromHost;
-  }
-      
+  // Match players...      
   theMatchHTML += '<td class="padded"><table class="matchlist" width=100%>';
   for (var j = 0; j < theMatchJSON.apolloPlayers.length; j++) {
     theMatchHTML += '<tr>'
@@ -311,11 +313,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   }
   theMatchHTML += '</table></td>';
   
-  // Match page URL.
-  if ("hashedMatchHostPK" in theMatchJSON) {
-    theMatchJSON.apolloSigned = true;
-  }
-  
+  // Match page URL.  
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
   theMatchHTML += '<td class="padded"><a href="/matches/' + matchURL + '">View Match</a></td>';  
 

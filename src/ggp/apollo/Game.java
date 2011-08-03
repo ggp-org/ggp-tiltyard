@@ -1,8 +1,6 @@
 package ggp.apollo;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -20,12 +18,8 @@ public class Game {
     @PrimaryKey @Persistent private String gameMetaURL;
     @Persistent private Text jsonMetadata;
 
-    @Persistent private List<String> recentMatchURLs;
-    private static final int kRecentMatchURLsToRecord = 40;
-
     public Game(String gameMetaURL) {
         this.gameMetaURL = gameMetaURL;
-        this.recentMatchURLs = new ArrayList<String>();
         
         try {
             JSONObject theMetadata = RemoteResourceLoader.loadJSON(gameMetaURL);
@@ -46,17 +40,6 @@ public class Game {
             return new JSONObject(jsonMetadata.getValue());
         } catch (JSONException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    public List<String> getRecentMatchURLs() {
-        return recentMatchURLs;
-    }    
-
-    public void addRecentMatchURL(String theURL) {
-        recentMatchURLs.add(theURL);
-        if (recentMatchURLs.size() > kRecentMatchURLsToRecord) {
-            recentMatchURLs.remove(0);
         }
     }
 

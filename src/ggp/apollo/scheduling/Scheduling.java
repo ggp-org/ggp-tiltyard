@@ -1,6 +1,5 @@
 package ggp.apollo.scheduling;
 
-import ggp.apollo.CondensedMatch;
 import ggp.apollo.Game;
 import ggp.apollo.Player;
 import ggp.apollo.ServerState;
@@ -73,31 +72,31 @@ public class Scheduling {
             // which are still ongoing, mark the players in those matches as busy.
             Set<String> doneMatches = new HashSet<String>();
             Set<String> busyPlayerNames = new HashSet<String>();
-            for (String matchKey : theState.getRunningMatches()) {
-                CondensedMatch m = CondensedMatch.loadCondensedMatch(matchKey);                                
+            for (String matchURL : theState.getRunningMatches()) {
                 try {
-                    JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(m.getSpectatorURL());
+                    JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(matchURL);
                     if (verifyApolloCryptography(theMatchInfo)) {
-                        if(theMatchInfo.getBoolean("isCompleted")) {
-                            doneMatches.add(matchKey);
-                            handleStrikesForPlayers(theMatchInfo, m.getPlayers(), theAvailablePlayers);
-                        } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
-                            // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
-                            doneMatches.add(matchKey);
-                        } else {
-                            busyPlayerNames.addAll(m.getPlayers());
+                        List<String> matchPlayers = new ArrayList<String>();
+                        {
+                          JSONArray thePlayers = theMatchInfo.getJSONArray("playerNamesFromHost");
+                          for (int i = 0; i < thePlayers.length(); i++) {
+                            matchPlayers.add(thePlayers.getString(i));
+                          }
                         }
-                        m.condenseFullJSON(theMatchInfo);
-                        m.save();
+
+                        if(theMatchInfo.getBoolean("isCompleted")) {
+                          doneMatches.add(matchURL);
+                          handleStrikesForPlayers(theMatchInfo, matchPlayers, theAvailablePlayers);
+                        } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
+                          // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
+                          doneMatches.add(matchURL);
+                        } else {
+                          busyPlayerNames.addAll(matchPlayers);
+                        }
                     }
                 } catch (Exception e) {
-                    if (m.getCreationDate() != null && (System.currentTimeMillis() - m.getCreationDate().getTime()) > 21600000) {
-                        doneMatches.add(matchKey);
-                    } else {
-                        // For some reason the match isn't recorded on the match server, or the match server
-                        // is down. We'll wait for six hours and then assume the match is done, leaving our condensed
-                        // version of the match empty but freeing up the players.
-                    }
+                    // For some reason the match isn't recorded on the match server, or the match server
+                    // is down. Just keep it around, in case it becomes available later.
                 }
             }
             theState.getRunningMatches().removeAll(doneMatches);
@@ -125,7 +124,7 @@ public class Scheduling {
                     p.save();
                 }
             }
-            
+
             // Remove all of the players that aren't actually available, either because
             // we know they're in a match, or because they say they're busy, or because
             // they're disabled.
@@ -164,9 +163,13 @@ public class Scheduling {
         // inject arbitrary javascript into the visualizations).
         //String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/" + theGameVersion + "/";
         String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/v0/";
-        Game theGame = Game.loadGame(theGameURL);
-        if (theGame == null) {
+        {
+          // TODO(schreib): Do we need to do this?
+          Game theGame = Game.loadGame(theGameURL);
+          if (theGame == null) {
             theGame = new Game(theGameURL);
+          }
+          theGame.save();
         }
 
         // Assign available players to roles in the game.
@@ -212,22 +215,6 @@ public class Scheduling {
             return;
         }        
 
-        // Store the known match in the datastore for lookup later.
-        CondensedMatch c = new CondensedMatch(theSpectatorURL, playerNamesForMatch);
-        try {
-            // Attempt to populate the condensed match information immediately,
-            // if we can pull that out from the spectator server.
-            c.condenseFullJSON(RemoteResourceLoader.loadJSON(theSpectatorURL));
-            c.save();
-        } catch (Exception e) {
-            ;
-        }
-        for (Player p : playersForMatch) {
-            p.addRecentMatchURL(theSpectatorURL);
-            p.save();
-        }
-        theGame.addRecentMatchURL(theSpectatorURL);
-        theGame.save();
         theState.addRecentMatchURL(theSpectatorURL);
         theState.getRunningMatches().add(theSpectatorURL);
         theState.clearBackendErrors();

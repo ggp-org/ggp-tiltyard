@@ -1,9 +1,7 @@
 package ggp.apollo;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -23,9 +21,6 @@ public class Player {
     @Persistent private String pingStatus;
     @Persistent private String pingError;
     
-    @Persistent private List<String> recentMatchURLs;
-    private static final int kRecentMatchURLsToRecord = 40;
-    
     // Optional fields.
     @Persistent private String visibleEmail;
 
@@ -39,7 +34,6 @@ public class Player {
         this.theOwners.add(anOwner);        
         
         this.setVisibleEmail("");
-        this.recentMatchURLs = new ArrayList<String>();
         
         this.nStrikes = 0;
         
@@ -88,17 +82,6 @@ public class Player {
 
     public String getGdlVersion() {
         return gdlVersion;
-    }
-    
-    public List<String> getRecentMatchURLs() {
-        return recentMatchURLs;
-    }    
-    
-    public void addRecentMatchURL(String theURL) {
-        recentMatchURLs.add(theURL);
-        if (recentMatchURLs.size() > kRecentMatchURLsToRecord) {
-            recentMatchURLs.remove(0);
-        }
     }
     
     public boolean isOwner(String userId) {

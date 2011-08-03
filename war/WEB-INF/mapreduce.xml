@@ -1,8 +1,8 @@
 <configurations>
-  <configuration name="CryptoKeyMapper">
+  <configuration name="SimpleMapper">
     <property>
       <name>mapreduce.map.class</name>
-      <value>ggp.apollo.mapreduce.CryptoKeyMapper</value>
+      <value>ggp.apollo.mapreduce.SimpleMapper</value>
     </property>
     <property>
       <name>mapreduce.inputformat.class</name>

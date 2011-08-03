@@ -31,7 +31,11 @@
     <div id="temp"></div>
 
     <script type='text/javascript'>
-      function renderSidePanel() {
+      function renderSidePanel(matchURL) {
+        if ("playerNamesFromHost" in apolloMatch) {
+         apolloMatch.apolloPlayers = apolloMatch.playerNamesFromHost;
+        }  
+      
         var sidePanelHTML = '<br>';
         var spectatorMatch = spectatorView.matchData;
         var theDate = new Date(spectatorMatch.startTime);
@@ -41,7 +45,7 @@
         sidePanelHTML += '<b>Play clock:</b> ' + spectatorMatch.playClock + '<br><br>';
         sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.VISUAL_VIEW);">Visual View</a><br>';
         sidePanelHTML += '<a href="javascript: spectatorView.switchView(spectatorView.LISTING_VIEW);">Listing View</a><br><br>';
-        sidePanelHTML += '(<a href="' + apolloMatch.apolloSpectatorURL + 'viz.html">Spectator Page</a>)<br><br>';
+        sidePanelHTML += '(<a href="' + matchURL + 'viz.html">Spectator Page</a>)<br><br>';
         sidePanelHTML += '<b>Players involved:</b> <br> <table>';
         for (var i = 0; i < apolloMatch.apolloPlayers.length; i++) {
           sidePanelHTML += '<tr><td width=10px></td><td style="text-align: right;"><a href="/players/' + apolloMatch.apolloPlayers[i] + '">' + apolloMatch.apolloPlayers[i] + '</a></td>';
@@ -64,16 +68,19 @@
       generateHeader(document.getElementById('header'));
       document.getElementById('navBuffer').innerHTML = '<td colspan=2 style="padding: 0; width: 20%"><table style="border: 0; margin: 0; border-spacing: 0px 0px; width: 100%"><tr><td class="navbarBottomAbrupt" height=10px></td></tr></table></td>' + document.getElementById('navBuffer').innerHTML;
 
-      var apolloMatch = ResourceLoader.load_json('/data/matches/http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", ""));
+      var matchURL = 'http://matches.ggp.org/matches/' + window.location.pathname.replace("/matches/", "");
+      var apolloMatch = ResourceLoader.load_json(matchURL);
 
-      spectatorView = SpectatorView.construct(apolloMatch.apolloSpectatorURL, document.getElementById('spectator_div'), {"update": renderSidePanel});
-      // TODO: Fix the width/height calculation properly.
-      spectatorView.getHeight = function () { return document.getElementById("spectator_div").clientHeight * 0.95; };
-      spectatorView.getWidth = function () { return document.getElementById("spectator_div").clientWidth * 0.95; };
-      //spectatorView.getHeight = function () { return window.innerHeight - 70; };
-      //spectatorView.getWidth = function () { return window.innerWidth * 0.79; };      
-      spectatorView.render();
-      renderSidePanel();
+      if (apolloMatch) {
+        spectatorView = SpectatorView.construct(matchURL, document.getElementById('spectator_div'), {"update": renderSidePanel});
+        // TODO: Fix the width/height calculation properly.
+        spectatorView.getHeight = function () { return document.getElementById("spectator_div").clientHeight * 0.95; };
+        spectatorView.getWidth = function () { return document.getElementById("spectator_div").clientWidth * 0.95; };
+        //spectatorView.getHeight = function () { return window.innerHeight - 70; };
+        //spectatorView.getWidth = function () { return window.innerWidth * 0.79; };      
+        spectatorView.render();
+        renderSidePanel(matchURL);
+      }
     </script>
   </body>  
 </html>

@@ -74,7 +74,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             theGame.refreshFromRepository();
             reqURI = "/games/index.html";
-        }        
+        }
         if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
             String gameName = translateRepositoryCodename(reqURI.replaceFirst("/games/", "").replaceFirst("index.html", ""));
             if(Game.loadGame(gameName) == null) {
@@ -84,11 +84,6 @@ public class GGP_ApolloServlet extends HttpServlet {
             reqURI = "/games/gamePage.html";
         }
         if (reqURI.startsWith("/matches/") && !reqURI.equals("/matches/index.html")) {            
-            String matchName = reqURI.replaceFirst("/matches/", "").replace("index.html", "");
-            if(CondensedMatch.loadCondensedMatch("http://matches.ggp.org/matches/" + matchName) == null) {
-                resp.setStatus(404);
-                return;
-            }
             reqURI = "/matches/matchPage.html";
         }
 
@@ -191,14 +186,6 @@ public class GGP_ApolloServlet extends HttpServlet {
                 resp.getWriter().println(g.asJSON());
             } else if (theRPC.equals("matches/")) {
                 resp.setStatus(404);
-            } else if (theRPC.startsWith("matches/")) {
-                String theMatchURL = theRPC.replaceFirst("matches/", "");
-                CondensedMatch c = CondensedMatch.loadCondensedMatch(theMatchURL);
-                if (c == null || !c.isReady()) {
-                    resp.setStatus(404);
-                    return;
-                }
-                resp.getWriter().println(c.getCondensedJSON());
             } else if (theRPC.equals("serverState")) {
                 ServerState serverState = ServerState.loadState();
                 JSONObject theResponse = new JSONObject();
