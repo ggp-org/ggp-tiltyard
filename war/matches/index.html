@@ -3,12 +3,14 @@
     <title>GGP Apollo Server</title>
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
     <link rel="stylesheet" type="text/css" href="/apollo.css" />
+    <script type='text/javascript' src='/_ah/channel/jsapi'></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
   </head>
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>
+    <script type='text/javascript' src='//database.ggp.org/subscribe/channel.js'></script>
     <script type="text/javascript" src="/apolloHeader.js"></script>
     
     <div id='header'></div>
@@ -30,11 +32,39 @@
         document.getElementById('stateInfo').innerHTML = serverStateHTML;
       }    
 
-      var ongoingMatches = ResourceLoader.load_json('//database.ggp.org/query/filterActiveSet,recent,'+hashedApolloPK).queryMatches;
-      var recentMatches = ResourceLoader.load_json('//database.ggp.org/query/filter,recent,'+hashedApolloPK).queryMatches;      
-      var matchListCaption = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
-      var recentMatchesHTML = renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, null);
-      document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
+      function updateMatchList() {
+        var ongoingMatches = ResourceLoader.load_json('//database.ggp.org/query/filterActiveSet,recent,'+hashedApolloPK).queryMatches;
+        var recentMatches = ResourceLoader.load_json('//database.ggp.org/query/filter,recent,'+hashedApolloPK).queryMatches;      
+        var matchListCaption = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
+        var recentMatchesHTML = renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, null);
+        document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
+      }
+      updateMatchList();
+      
+      function update_query_via_channel(channelMessage) {
+        if (channelMessage.data != '//database.ggp.org/query/filter,recent,'+hashedApolloPK) {
+          // Channel update notification was about a different match.
+          // Ignore it -- it was meant for a different SpectatorView.
+          return;
+        }
+        updateMatchList();
+      }
+
+      // Open a Browser Channel to the Database Server.
+      // We will receive updates to the recent matches query over this channel.
+      // We share a global channel with anybody else interested in using
+      // a channel to communicate with the spectator server.
+      if (window.theGlobalChannel == undefined) {
+        window.theGlobalChannel = new goog.appengine.Channel(theChannelToken);
+        window.theGlobalChannelCallbacks = [];
+        window.theGlobalChannel.open().onmessage = function (x) {
+          for (var i = 0; i < window.theGlobalChannelCallbacks.length; i++) {
+            window.theGlobalChannelCallbacks[i](x);
+          }
+        }
+      }
+      window.theGlobalChannelCallbacks.push(update_query_via_channel);
+      ResourceLoader.load_raw('//database.ggp.org/subscribe/query/filter,recent,'+hashedApolloPK+'/clientId=' + theChannelID);      
     </script>
   </body>  
 </html>

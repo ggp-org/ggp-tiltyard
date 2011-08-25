@@ -265,6 +265,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   // TODO(schreib): Find the right place for this.
   updateLiveDuration = function (objName, startTime) {
     var theSpan = document.getElementById(objName);
+    if (theSpan == null) return;
     theSpan.innerHTML = renderDuration(new Date() - new Date(startTime));
     setTimeout("updateLiveDuration('" + objName + "'," + startTime + ")", 1000);
   }
