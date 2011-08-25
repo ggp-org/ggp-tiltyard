@@ -124,8 +124,8 @@
       document.getElementById('playerDiv').innerHTML = playerHTML;
       
       var playerMatchesHTML = '';
-      var ongoingMatches = ResourceLoader.load_json('//filter.ggp.org/data/filterActiveSet,recent,'+hashedApolloPK).queryMatches;      
-      var recentMatches = ResourceLoader.load_json('//filter.ggp.org/data/filterPlayer,recent,'+hashedApolloPK+',' + playerName).queryMatches;
+      var ongoingMatches = ResourceLoader.load_json('//database.ggp.org/query/filterActiveSet,recent,'+hashedApolloPK).queryMatches;      
+      var recentMatches = ResourceLoader.load_json('//database.ggp.org/query/filterPlayer,recent,'+hashedApolloPK+',' + playerName).queryMatches;
       if (recentMatches.length == 0) {
         playerMatchesHTML += '<b>This player has not played in any matches recently.</b>';
       } else {
