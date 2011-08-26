@@ -277,8 +277,9 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
     theMatchHTML = "<tr bgcolor=#F5F5F5>";
   }
   
-  // Match game profile.
-  theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';
+  // Match page URL.
+  var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
+  theMatchHTML += '<td class="padded"><a href="/matches/' + matchURL + '">View Match</a></td>';  
   
   // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
@@ -313,11 +314,10 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
     theMatchHTML += '<td width="5px"></td></tr>';
   }
   theMatchHTML += '</table></td>';
-  
-  // Match page URL.  
-  var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
-  theMatchHTML += '<td class="padded"><a href="/matches/' + matchURL + '">View Match</a></td>';  
 
+  // Match game profile.
+  theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';  
+  
   // Signature badge.
   if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {
     theMatchHTML += '<td class="padded"><img src="/static/images/GreenLock.png" title="Match has a valid digital signature." height=20px></img></td>';
