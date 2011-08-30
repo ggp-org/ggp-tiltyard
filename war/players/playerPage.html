@@ -106,7 +106,7 @@
       }
 
       var playerName = window.location.pathname.replace("/players/", "");      
-      var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/' + hashedApolloPK + '/players/' + playerName);
+      var statsJSON = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/players/' + playerName);
       
       if ("winsVersusPlayerOnGame" in statsJSON) {
         document.getElementById('playerStatsPuzzleDiv').innerHTML = renderPuzzleTable(statsJSON.winsVersusPlayerOnGame, statsJSON.averageScoreOn);

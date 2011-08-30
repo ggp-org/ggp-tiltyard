@@ -57,7 +57,7 @@ td.name {
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
       
-      var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/' + hashedApolloPK + '/overall');
+      var statsJSON = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/overall');
 
       function getOptionalMapValue(playerName, statsData, mapName) {
         if (mapName in statsData && playerName in statsData[mapName]) {

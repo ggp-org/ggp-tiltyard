@@ -91,7 +91,7 @@
       var gameName = translateRepositoryCodename(window.location.pathname.replace("/games/", ""));      
       var gameRawName = window.location.pathname.replace("/games/", "").split('/')[1];
       
-      var statsJSON = ResourceLoader.load_json('//stats.ggp.org/data/statistics/' + hashedApolloPK + '/games/' + gameName);
+      var statsJSON = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/games/' + gameName);
       if ("agonScaledDifficulty" in statsJSON) {
         var difficultyHTML = "";
         for (var i = 0; i < statsJSON.agonScaledDifficulty.length; i++) {
