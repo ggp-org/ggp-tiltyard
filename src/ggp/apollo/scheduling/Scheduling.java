@@ -1,6 +1,5 @@
 package ggp.apollo.scheduling;
 
-import ggp.apollo.Game;
 import ggp.apollo.Player;
 import ggp.apollo.ServerState;
 
@@ -163,14 +162,6 @@ public class Scheduling {
         // inject arbitrary javascript into the visualizations).
         //String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/" + theGameVersion + "/";
         String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/v0/";
-        {
-          // TODO(schreib): Do we need to do this?
-          Game theGame = Game.loadGame(theGameURL);
-          if (theGame == null) {
-            theGame = new Game(theGameURL);
-          }
-          theGame.save();
-        }
 
         // Assign available players to roles in the game.
         Collections.shuffle(theAvailablePlayers);

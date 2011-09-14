@@ -106,17 +106,17 @@
       } 
       document.getElementById('gameStatsDiv').innerHTML = renderJSON(statsJSON);
 
-      var theGame = ResourceLoader.load_json('/data/games/' + gameName);
+      var theGame = ResourceLoader.load_json(gameName);
       
-      if ("gameName" in theGame.metadata) {
-        document.getElementById('game_gameName').innerHTML = theGame.metadata.gameName;
+      if ("gameName" in theGame) {
+        document.getElementById('game_gameName').innerHTML = theGame.gameName;
       } else {
         document.getElementById('game_gameName').innerHTML = gameRawName;
       }
-      document.getElementById('game_gameVersion').innerHTML = "<b>Version " + theGame.metadata.version + "</b>";
-      document.getElementById('game_gameNumRoles').innerHTML = "<b>" + toProperString(theGame.metadata.numRoles) + " players</b>";
-      if ("description" in theGame.metadata) {
-        document.getElementById('game_gameDescription').innerHTML = "<b>Game description:</b> " + ResourceLoader.load_raw(theGame.gameMetaURL + theGame.metadata.description);
+      document.getElementById('game_gameVersion').innerHTML = "<b>Version " + theGame.version + "</b>";
+      document.getElementById('game_gameNumRoles').innerHTML = "<b>" + toProperString(theGame.numRoles) + " players</b>";
+      if ("description" in theGame) {
+        document.getElementById('game_gameDescription').innerHTML = "<b>Game description:</b> " + ResourceLoader.load_raw(gameName + theGame.description);
       } else {
         document.getElementById('game_gameDescription').innerHTML = "<b>Game description:</b> <i>Not yet available.</i>";
       }

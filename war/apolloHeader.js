@@ -159,18 +159,20 @@ function renderJSON(x) {
 }
 
 function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, playerToHighlight) {
-    var theGames = ResourceLoader.load_json('/data/games/');
+    var gameMetadata = ResourceLoader.load_json('//games.ggp.org/games/metadata');    
     
     var theHTML = '<center><table class="matchlist">';
     theHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=7>' + topCaption + '</th></tr>';
     for (var i = 0; i < theMatchEntries.length; i++) {
-      theHTML += renderMatchEntry(theMatchEntries[i], theOngoingMatches, playerToHighlight, theGames, i%2);
+      theHTML += renderMatchEntry(theMatchEntries[i], theOngoingMatches, playerToHighlight, gameMetadata, i%2);
     }
     theHTML += "</table></center>";
     return theHTML;
 }
 
-function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, theGames, showShadow) {
+function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, gameMetadata, showShadow) {
+  getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/games/", "").split("/")[0]].gameName; }
+    
   if ("matchURL" in theMatchJSON) {
     theMatchJSON.apolloSpectatorURL = theMatchJSON.matchURL;
   }
@@ -181,7 +183,6 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
     theMatchJSON.apolloPlayers = theMatchJSON.playerNamesFromHost;
   }    
     
-  var theGame = theGames[theMatchJSON.gameMetaURL];
   if ("errors" in theMatchJSON) {
       var noErrorCandidates = true;
       var hasErrors = false;
@@ -316,7 +317,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, th
   theMatchHTML += '</table></td>';
 
   // Match game profile.
-  theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theGame.gameMetaURL) + '">' + theGame.metadata.gameName + '</a></td>';  
+  theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + getGameName(theMatchJSON.gameMetaURL) + '</a></td>';  
   
   // Signature badge.
   if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {

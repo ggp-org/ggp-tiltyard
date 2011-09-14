@@ -35,14 +35,19 @@
       }
 
       function drawGameList() {
-        var theGames = ResourceLoader.load_json('/data/games/');
+        var observedGames = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/overall').observedGames;
+        var gameMetadata = ResourceLoader.load_json('//games.ggp.org/games/metadata');
+        
         var gameListHTML = '<table class="matchlist" cellpadding=5px border=1px>';
         gameListHTML += '<tr><th>Game Name</th><th>Players</th><th>Version</th><th>Has Description?</th></tr>';
-        for (var i in theGames) {
-          gameListHTML += '<tr><td><a href="/games/' + translateRepositoryIntoCodename(theGames[i].gameMetaURL) + '">' + theGames[i].metadata.gameName + '</a></td>';
-          gameListHTML += '<td>' + toProperString(theGames[i].metadata.numRoles) + '</td>';
-          gameListHTML += '<td>' + toProperString(theGames[i].metadata.version) + '</td>';
-          gameListHTML += '<td>' + ("description" in theGames[i].metadata ? "Yes" : "No") + '</td></tr>';
+        for (var i = 0; i < observedGames.length; i++) {
+          var gameKey = observedGames[i];
+          var theGame = gameMetadata[gameKey.replace("http://games.ggp.org/games/", "").split("/")[0]];
+          var theVersion = 1*(gameKey.replace("http://games.ggp.org/games/", "").split("/")[1].replace("v",""));
+          gameListHTML += '<tr><td><a href="/games/' + translateRepositoryIntoCodename(gameKey) + '">' + theGame.gameName + '</a></td>';
+          gameListHTML += '<td>' + toProperString(theGame.numRoles) + '</td>';
+          gameListHTML += '<td>' + toProperString(theVersion) + '</td>';
+          gameListHTML += '<td>' + ("description" in theGame ? "Yes" : "No") + '</td></tr>';
         }
         gameListHTML += "</table>"
         document.getElementById('gameList').innerHTML = gameListHTML;

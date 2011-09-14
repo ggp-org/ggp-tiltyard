@@ -65,22 +65,7 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             reqURI = "/players/playerPage.html";
         }
-        if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html") && reqURI.endsWith("/refresh")) {
-            String gameName = translateRepositoryCodename(reqURI.replaceFirst("/games/", "").replaceFirst("/refresh","/").replaceFirst("index.html", ""));
-            Game theGame = Game.loadGame(gameName);
-            if (theGame == null) {
-                resp.setStatus(404);
-                return;
-            }
-            theGame.refreshFromRepository();
-            reqURI = "/games/index.html";
-        }
         if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
-            String gameName = translateRepositoryCodename(reqURI.replaceFirst("/games/", "").replaceFirst("index.html", ""));
-            if(Game.loadGame(gameName) == null) {
-                resp.setStatus(404);
-                return;
-            }
             reqURI = "/games/gamePage.html";
         }
         if (reqURI.startsWith("/matches/") && !reqURI.equals("/matches/index.html")) {            
@@ -170,20 +155,6 @@ public class GGP_ApolloServlet extends HttpServlet {
                     return;
                 }
                 resp.getWriter().println(p.asJSON(p.isOwner(userId)));
-            } else if (theRPC.equals("games/")) {
-                JSONObject theResponse = new JSONObject();
-                for (Game g : Game.loadGames()) {
-                    theResponse.put(g.getMetaURL(), g.asJSON());
-                }
-                resp.getWriter().println(theResponse.toString());                
-            } else if (theRPC.startsWith("games/")) {
-                String theGame = theRPC.replaceFirst("games/", "");
-                Game g = Game.loadGame(theGame);
-                if (g == null) {
-                    resp.setStatus(404);
-                    return;
-                }
-                resp.getWriter().println(g.asJSON());
             } else if (theRPC.equals("matches/")) {
                 resp.setStatus(404);
             } else if (theRPC.equals("serverState")) {
