@@ -82,11 +82,9 @@ table.gdlVersion {
     text-align: center;
 }
 table.player {
-    display: table;
     border-width: 5px;
     border-style: ridge;
     width: 450px;
-    float: left;
     margin: 5px;
 }
 table.matchlist {

@@ -77,18 +77,6 @@
         if (x == 9) return "Nine";
         return "10+";
       }
-      
-      var cleanFloat = function (x) { return Math.round(x*100)/100; };
-      var generateEaseGradient = function (x) {
-        if (x <= 0.5) {
-          var r = 2*x;
-          var g = 1.0;
-        } else {
-          var r = 1.0;
-          var g = 1.0 - 2*(x-0.5);
-        }
-        return [r,g];
-      }
 
       var gameName = translateRepositoryCodename(window.location.pathname.replace("/games/", ""));      
       var gameRawName = window.location.pathname.replace("/games/", "").split('/')[1];
@@ -97,16 +85,19 @@
       if ("agonScaledDifficulty" in statsJSON) {
         var difficultyHTML = "";
         for (var i = 0; i < statsJSON.agonScaledDifficulty.length; i++) {
-          var easeColors = generateEaseGradient(statsJSON.agonScaledDifficulty[i]);
-          difficultyHTML += "<td width=10px></td><td style='background-color: rgb(" + Math.round(255*easeColors[0]) + ", " + Math.round(255*easeColors[1]) + ", 0);'>";
-          difficultyHTML += "for Player " + toProperString(i+1) + ": " + cleanFloat(statsJSON.agonDifficulty[i]);
-          difficultyHTML += "</td>";
+          difficultyHTML += "<td width=10px></td>";
+          difficultyHTML += generateAgonView(statsJSON.agonScaledDifficulty[i], statsJSON.agonDifficulty[i], "for Player " + toProperString(i+1));
         }
         document.getElementById('difficulty_tr').innerHTML += difficultyHTML;
         delete statsJSON.agonScaledDifficulty;
         delete statsJSON.agonDifficulty;        
-      } 
-      document.getElementById('gameStatsDiv').innerHTML = renderJSON(statsJSON);
+      }
+      if ("averageMoves" in statsJSON) {
+        statsJSON.averageMoves = JSON.parse(statsJSON.averageMoves);
+        document.getElementById('gameStatsDiv').innerHTML = "On average this game takes " + cleanFloat(statsJSON.averageMoves[0]) + " moves, based on " + statsJSON.averageMoves[1] + " matches.<br>";
+        delete statsJSON.averageMoves;
+      }
+      document.getElementById('gameStatsDiv').innerHTML += renderJSON(statsJSON);
 
       var theGame = ResourceLoader.load_json(gameName);
       

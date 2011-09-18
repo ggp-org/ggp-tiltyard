@@ -26,7 +26,6 @@
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
-      cleanFloat = function (x) { return Math.round(x*100)/100; };
       function clip(s, n) {
         if (s.length <= n) return s;
         return s.substring(0,n-3) + "...";
@@ -36,56 +35,119 @@
         return '<table width=100% padding=0px cellspacing=0px><tr><td width=100%><b>' + cleanFloat(y[0]) + '</b></td><td><i>' + y[1] + '</i></td></tr></table>';
       }
       
+      // Expects an HSV value w/ H in degrees and s,v in [0,1]      
+      function convertRGB (h,s,v) {
+        if (s == 0) return [255*v,255*v,255*v];
+        if (s < 0) s = 0.0; if (s > 1) s = 1.0;
+        if (v < 0) v = 0.0; if (v > 1) v = 1.0;        
+        if (h < 0) h = 0.0; if (h > 360) h = 360.0;
+        var dh = (h/60.0)-Math.floor(h/60.0);      
+        var z1 = v*(1-s);
+        var z2 = v*(1-s*dh);
+        var z3 = v*(1-s*(1-dh));	    
+        switch(Math.floor(h/60.0)) {
+          case 0: r=v;g=z3;b=z1; break;
+          case 1: r=z2;g=v;b=z1; break;
+          case 2: r=z1;g=v;b=z3; break;
+          case 3: r=z1;g=z2;b=v; break;
+          case 4: r=z3;g=z1;b=v; break;
+          case 5: r=v;g=z1;b=z2; break;
+          default: r=0;g=0;b=0; break;
+        }
+        return [255*r,255*g,255*b];
+      }      
+      function renderColoredAvg(x) {
+        var y = JSON.parse(x);
+        var theText = 'Average score ' + cleanFloat(y[0]) + ' over ' + y[1] + ' matches.';
+        
+        nHue = 120.0 * (y[0]/100.0);
+        nValue = y[1]/200.0 + 0.4;
+        var RGB = convertRGB(nHue, 1.0, nValue);
+        
+        return "<td title='" + theText + "' style='width: 10px; height: 10px; background-color: rgb(" + Math.round(RGB[0]) + ", " + Math.round(RGB[1]) + ", " + Math.round(RGB[2]) + ");'></td>";
+      }
+      function renderColoredWinLoss(x) {
+        if (x == "") {
+          return "<td style='width: 10px; height: 10px; background-color: rgb(0,0,0);'></td>";
+        }
+
+        var WTL = x.split("-");
+        var nWins = 1.0*WTL[0];
+        var nTies = 1.0*WTL[1];
+        var nLoss = 1.0*WTL[2];
+	    
+	    nHue = 120.0 * ((nWins + nTies) / (nWins + nTies + nLoss));
+	    nValue = (nWins + nTies + nLoss)/200.0 + 0.4;	    
+	    var RGB = convertRGB(nHue, 1.0, nValue);
+	    
+	    return "<td title='" + x + "' style='width: 10px; height: 10px; background-color: rgb(" + Math.round(RGB[0]) + ", " + Math.round(RGB[1]) + ", " + Math.round(RGB[2]) + ");'></td>";
+      }
+      
       // Load in the game metadata used to render various tables
       var gameMetadata = ResourceLoader.load_json('//games.ggp.org/games/metadata');
       getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/games/", "").split("/")[0]].gameName; }
 
       // special code for rendering Alex's win/tie/loss table
+      function sortPlayersByMatches(theTable) {
+        var thePlayers = [];
+        for (var aPlayer in theTable) {
+          thePlayers.push(aPlayer);
+        }
+        var getMatchesForPlayer = function (aPlayer) {
+          var nMatches = 0;
+          for (var aGame in theTable[aPlayer]) {
+            var WTL = theTable[aPlayer][aGame].split("-");
+            nMatches += (1*WTL[0]) + (1*WTL[1]) + (1*WTL[2]);
+          }
+          return nMatches;
+        }
+        var sortFunc = function (aPlayer, bPlayer) {
+          return getMatchesForPlayer(bPlayer)-getMatchesForPlayer(aPlayer);
+        }
+        thePlayers.sort(sortFunc);
+        return thePlayers;
+      }
       function renderWinLossTable(theTable, perPlayer, perGame, avgScore) {
-        var theCols = [];
+        var sortedPlayers = sortPlayersByMatches(theTable);
+        var theGames = [];
         for (var aPlayer in theTable) {
           for (var aGame in theTable[aPlayer]) {
-            if (theCols.indexOf(aGame) == -1) {
-              theCols.push(aGame);
+            if (theGames.indexOf(aGame) == -1) {
+              theGames.push(aGame);
             }
           }
         }
         var theTableHTML = "<table border=1px>";
-        theTableHTML += "<tr><th colspan=" + (theCols.length+2) + ">Aggregate Win-Tie-Loss Table</th></tr>";
-        theTableHTML += "<tr><th></th><th>Avg Score</th>";
-        for (var i = 0; i < theCols.length; i++) {          
-          theTableHTML += '<th><a href="/games/' + translateRepositoryIntoCodename(theCols[i]) + '">' + clip(getGameName(theCols[i]),12) + '</a></th>';
+        theTableHTML += "<tr><th colspan=" + (sortedPlayers.length+2) + ">Aggregate Win-Tie-Loss Table</th></tr>";
+        theTableHTML += "<tr><th></th><th>Avg</th>";
+        for (var j = 0; j < sortedPlayers.length; j++) {
+          var aPlayer = sortedPlayers[j];
+          theTableHTML += '<th><b><a href="/players/' + aPlayer + '"><img src="http://www.placekitten.com/25/25" title="' + aPlayer + '"></img></a></b></th>';
         }
         theTableHTML += "</tr>";
         // avg score row
         theTableHTML += "<tr><td><b>Average Score</b></td><td></td>";
-        for (var i = 0; i < theCols.length; i++) {
-          theTableHTML += '<td>';
-          if (theCols[i] in perGame) {
-            theTableHTML += renderAvg(perGame[theCols[i]]);
-          }
-          theTableHTML += '</td>';
-        }                
-        theTableHTML += "</tr>";        
+        for (var j = 0; j < sortedPlayers.length; j++) {
+          var aPlayer = sortedPlayers[j];
+          theTableHTML += renderColoredAvg(perPlayer[aPlayer]);
+        }
+        theTableHTML += "</tr>";
         // real rows
-        for (var aPlayer in theTable) {
-          theTableHTML += '<tr>';          
-          theTableHTML += '<td><b><a href="/players/' + aPlayer + '">' + aPlayer + '</a></b></td>';
+        for (var i = 0; i < theGames.length; i++) {        
+          theTableHTML += '<tr>';
+          theTableHTML += '<td><b><a href="/games/' + translateRepositoryIntoCodename(theGames[i]) + '">' + getGameName(theGames[i]) + '</a></b></td>';
           // avg score column
-          theTableHTML += '<td>';
-          if (aPlayer in perPlayer) {
-            theTableHTML += renderAvg(perPlayer[aPlayer]);
-          }
-          theTableHTML += '</td>';
-          // real columns          
-          for (var i = 0; i < theCols.length; i++) {
-            theTableHTML += '<td>';
-            if (theCols[i] in theTable[aPlayer]) {
-              theTableHTML += '<center>' + theTable[aPlayer][theCols[i]] + '</center>';
+          theTableHTML += renderColoredAvg(perGame[theGames[i]]);
+          // real columns
+          for (var j = 0; j < sortedPlayers.length; j++) {
+            var aPlayer = sortedPlayers[j];
+            if (theGames[i] in theTable[aPlayer]) {
+              theTableHTML += renderColoredWinLoss(theTable[aPlayer][theGames[i]]);
+            } else {
+              theTableHTML += renderColoredWinLoss("");
             }
-            theTableHTML += '</td>';
           }
-          theTableHTML += '</tr>'; 
+          theTableHTML += '</tr>';
         }
         theTableHTML += "</table>";
         return theTableHTML;

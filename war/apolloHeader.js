@@ -146,16 +146,22 @@ function clickedEditDoneForPlayer (playerName) {
 
 function renderJSON(x) {
   var s = "";
+  var hasEntries = false;
   if (typeof(x) == "object" && !x[0]) {    
     s += "<table border=\"1px\">";
     for (y in x) {
       s += "<tr><td><b>" + y + "</b></td><td>" + renderJSON(x[y]) + "</td></tr>";
+      hasEntries = true;
     }
     s += "</table>";    
   } else {
     s += x;
   }
-  return s;
+  if (hasEntries) {
+    return s;
+  } else {
+    return "";
+  }
 }
 
 function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, playerToHighlight) {
@@ -339,6 +345,25 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, ga
 
   theMatchHTML += '<td width="5px"></td>';
   return theMatchHTML + "</tr>";
+}
+
+var cleanFloat = function (x) { return Math.round(x*100)/100; };
+var generateAgonView = function (scaledRank, realRank, theText) {  
+  var generateEaseGradient = function (x) {
+    if (x <= 0.5) {
+      var r = 2*x;
+      var g = 1.0;
+    } else {
+      var r = 1.0;
+      var g = 1.0 - 2*(x-0.5);
+    }
+    return [r,g];
+  }
+  var easeColors = generateEaseGradient(scaledRank);
+  var theHTML = "<td style='background-color: rgb(" + Math.round(255*easeColors[0]) + ", " + Math.round(255*easeColors[1]) + ", 0);'>";
+  theHTML += theText + ": " + cleanFloat(realRank);
+  theHTML += "</td>";
+  return theHTML;
 }
 
 function translateRepositoryCodename(x) {
