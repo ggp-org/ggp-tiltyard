@@ -26,51 +26,26 @@
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
 
-      function clip(s, n) {
-        if (s.length <= n) return s;
-        return s.substring(0,n-3) + "...";
-      }
       function renderAvg(x) {
         var y = JSON.parse(x);
         return '<table width=100% padding=0px cellspacing=0px><tr><td width=100%><b>' + cleanFloat(y[0]) + '</b></td><td><i>' + y[1] + '</i></td></tr></table>';
       }
       
-      // Expects an HSV value w/ H in degrees and s,v in [0,1]      
-      function convertRGB (h,s,v) {
-        if (s == 0) return [255*v,255*v,255*v];
-        if (s < 0) s = 0.0; if (s > 1) s = 1.0;
-        if (v < 0) v = 0.0; if (v > 1) v = 1.0;        
-        if (h < 0) h = 0.0; if (h > 360) h = 360.0;
-        var dh = (h/60.0)-Math.floor(h/60.0);      
-        var z1 = v*(1-s);
-        var z2 = v*(1-s*dh);
-        var z3 = v*(1-s*(1-dh));	    
-        switch(Math.floor(h/60.0)) {
-          case 0: r=v;g=z3;b=z1; break;
-          case 1: r=z2;g=v;b=z1; break;
-          case 2: r=z1;g=v;b=z3; break;
-          case 3: r=z1;g=z2;b=v; break;
-          case 4: r=z3;g=z1;b=v; break;
-          case 5: r=v;g=z1;b=z2; break;
-          default: r=0;g=0;b=0; break;
-        }
-        return [255*r,255*g,255*b];
-      }      
       function renderColoredAvg(x) {
         var y = JSON.parse(x);
         var theText = 'Average score ' + cleanFloat(y[0]) + ' over ' + y[1] + ' matches.';
         
         nHue = 120.0 * (y[0]/100.0);
         nValue = y[1]/200.0 + 0.4;
-        var RGB = convertRGB(nHue, 1.0, nValue);
+        var rgb = convertRGB(nHue, 1.0, nValue);
         
-        return "<td title='" + theText + "' style='width: 10px; height: 10px; background-color: rgb(" + Math.round(RGB[0]) + ", " + Math.round(RGB[1]) + ", " + Math.round(RGB[2]) + ");'></td>";
+        return "<td title='" + theText + "' style='width: 10px; height: 10px; background-color: rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ");'></td>";
       }
       function renderColoredWinLoss(x) {
         if (x == "") {
           return "<td style='width: 10px; height: 10px; background-color: rgb(0,0,0);'></td>";
         }
-
+        
         var WTL = x.split("-");
         var nWins = 1.0*WTL[0];
         var nTies = 1.0*WTL[1];
@@ -78,9 +53,9 @@
 	    
 	    nHue = 120.0 * ((nWins + nTies) / (nWins + nTies + nLoss));
 	    nValue = (nWins + nTies + nLoss)/200.0 + 0.4;	    
-	    var RGB = convertRGB(nHue, 1.0, nValue);
+	    var rgb = convertRGB(nHue, 1.0, nValue);
 	    
-	    return "<td title='" + x + "' style='width: 10px; height: 10px; background-color: rgb(" + Math.round(RGB[0]) + ", " + Math.round(RGB[1]) + ", " + Math.round(RGB[2]) + ");'></td>";
+	    return "<td title='" + x + "' style='width: 10px; height: 10px; background-color: rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ");'></td>"
       }
       
       // Load in the game metadata used to render various tables
@@ -170,6 +145,33 @@
         theTableHTML += "</table>";
         return theTableHTML;
       }
+      
+      function renderPlayerStats(statsJSON) {
+        var theHTML = "";
+              
+        delete statsJSON.computedEdgeOn;
+        if ("eloRank" in statsJSON) {
+          theHTML += "<b>Elo Rank:</b> " + cleanFloat(statsJSON.eloRank) + "<br>";
+          delete statsJSON.eloRank;
+        }        
+        if ("agonScaledSkill" in statsJSON) {
+          theHTML += "<b>Agon Skill:</b> " + generateAgonView(statsJSON.agonScaledSkill, statsJSON.agonSkill, "") + " <br>";
+          delete statsJSON.agonScaledSkill;
+          delete statsJSON.agonSkill;  
+        }
+        if ("averageScore" in statsJSON) {
+          statsJSON.averageScore = JSON.parse(statsJSON.averageScore);
+          theHTML += "<b>Average Score:</b> " + cleanFloat(statsJSON.averageScore[0]) + " over " + statsJSON.averageScore[1] + " matches.<br>";
+          delete statsJSON.averageScore;
+        }
+        if ("decayedAverageScore" in statsJSON) {
+          statsJSON.decayedAverageScore = JSON.parse(statsJSON.decayedAverageScore);
+          theHTML += "<b>(Decayed) Average Score:</b> " + cleanFloat(statsJSON.decayedAverageScore[0]) + " over " + statsJSON.decayedAverageScore[1] + " matches.<br>";
+          delete statsJSON.decayedAverageScore;
+        }
+        theHTML += renderJSON(statsJSON);
+        return theHTML;
+      }
 
       var playerName = window.location.pathname.replace("/players/", "");      
       var statsJSON = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/players/' + playerName);
@@ -181,7 +183,7 @@
         delete statsJSON.averageScoreVersus;
         delete statsJSON.averageScoreOn;
       }
-      document.getElementById('playerStatsDiv').innerHTML = renderJSON(statsJSON);
+      document.getElementById('playerStatsDiv').innerHTML = renderPlayerStats(statsJSON);
 
       var thePlayer = ResourceLoader.load_json('/data/players/' + playerName);
       var playerHTML = '<center style="display: table; width: 100%">';

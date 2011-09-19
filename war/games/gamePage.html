@@ -86,7 +86,7 @@
         var difficultyHTML = "";
         for (var i = 0; i < statsJSON.agonScaledDifficulty.length; i++) {
           difficultyHTML += "<td width=10px></td>";
-          difficultyHTML += generateAgonView(statsJSON.agonScaledDifficulty[i], statsJSON.agonDifficulty[i], "for Player " + toProperString(i+1));
+          difficultyHTML += "<td>" + generateAgonView(statsJSON.agonScaledDifficulty[i], statsJSON.agonDifficulty[i], "for Player " + toProperString(i+1) + ": ") + "</td>";
         }
         document.getElementById('difficulty_tr').innerHTML += difficultyHTML;
         delete statsJSON.agonScaledDifficulty;
