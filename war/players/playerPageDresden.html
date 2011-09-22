@@ -23,12 +23,14 @@
     </center>
     <div id='playerMatchesDiv'></div>
 
-    <script type='text/javascript'>    
+    <script type='text/javascript'>
       generateHeader(document.getElementById('header'));
       
-      // Load in the game metadata used to render various tables
-      var gameMetadata = ResourceLoader.load_json('//games.ggp.org/games/metadata');
-      getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/games/", "").split("/")[0]].gameName; }
+      // Override the Apollo public key to look up for the Dresden public key
+      hashedApolloPK = 'f69721b2f73839e513eed991e96824f1af218ac1';
+      // Load in the game metadata used to render various tables      
+      var gameMetadata = ResourceLoader.load_json('//dresden.ggp.org/games/metadata');
+      getGameName = function (gameKey) { return gameKey.replace("http://dresden.ggp.org/games/", "").split("/")[0]; }      
 
       function renderAvg(x) {
         var y = JSON.parse(x);
@@ -61,7 +63,7 @@
 	    
 	    return "<td title='" + x + "' style='width: 10px; height: 10px; background-color: rgb(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ");'></td>"
       }
-
+      
       // special code for rendering Alex's win/tie/loss table
       function sortPlayersByMatches(theTable) {
         var thePlayers = [];
@@ -173,7 +175,7 @@
         return theHTML;
       }
 
-      var playerName = window.location.pathname.replace("/players/", "");      
+      var playerName = window.location.pathname.replace("/playersDresden/", "");      
       var statsJSON = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/players/' + playerName);
       
       if ("winsVersusPlayerOnGame" in statsJSON) {
@@ -185,9 +187,8 @@
       }
       document.getElementById('playerStatsDiv').innerHTML = renderPlayerStats(statsJSON);
 
-      var thePlayer = ResourceLoader.load_json('/data/players/' + playerName);
       var playerHTML = '<center style="display: table; width: 100%">';
-      playerHTML += generatePlayerHTML(thePlayer);
+      playerHTML += '<h2>WARNING: Experimental, fragile, do not rely on this</h2>Dresden Player: ' + playerName;
       playerHTML += '</center>';
       document.getElementById('playerDiv').innerHTML = playerHTML;
       

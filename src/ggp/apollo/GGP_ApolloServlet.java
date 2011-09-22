@@ -65,6 +65,9 @@ public class GGP_ApolloServlet extends HttpServlet {
             }
             reqURI = "/players/playerPage.html";
         }
+        if (reqURI.startsWith("/playersDresden/")) {
+            reqURI = "/players/playerPageDresden.html";
+        }                
         if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
             reqURI = "/games/gamePage.html";
         }
