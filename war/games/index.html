@@ -40,16 +40,22 @@
         var observedGames = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/overall').observedGames;
         var gameMetadata = ResourceLoader.load_json('//games.ggp.org/games/metadata');
         
-        var gameListHTML = '<table class="matchlist" cellpadding=5px border=1px>';
-        gameListHTML += '<tr><th>Game Name</th><th>Players</th><th>Version</th><th>Has Description?</th></tr>';
+        var gameListHTML = '<table class="matchlist" cellpadding="5px">';
+        gameListHTML += '<tr bgcolor=#E0E0E0><th class="padded">Game Name</th><th class="padded">Players</th><th class="padded">Version</th><th class="padded">Has Description?</th></tr>';
         for (var i = 0; i < observedGames.length; i++) {
+          if (i % 2 == 0) {
+            gameListHTML += "<tr bgcolor=#F5F5F5>";
+          } else {          
+            gameListHTML += "<tr bgcolor=#E0E0E0>";
+          }        
+        
           var gameKey = observedGames[i];
           var theGame = gameMetadata[gameKey.replace("http://games.ggp.org/games/", "").split("/")[0]];
           var theVersion = 1*(gameKey.replace("http://games.ggp.org/games/", "").split("/")[1].replace("v",""));
-          gameListHTML += '<tr><td><a href="/games/' + translateRepositoryIntoCodename(gameKey) + '">' + theGame.gameName + '</a></td>';
-          gameListHTML += '<td>' + toProperString(theGame.numRoles) + '</td>';
-          gameListHTML += '<td>' + toProperString(theVersion) + '</td>';
-          gameListHTML += '<td>' + ("description" in theGame ? "Yes" : "No") + '</td></tr>';
+          gameListHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(gameKey) + '">' + theGame.gameName + '</a></td>';
+          gameListHTML += '<td class="padded">' + toProperString(theGame.numRoles) + '</td>';
+          gameListHTML += '<td class="padded">' + toProperString(theVersion) + '</td>';
+          gameListHTML += '<td class="padded">' + ("description" in theGame ? "Yes" : "No") + '</td></tr>';
         }
         gameListHTML += "</table>"
         document.getElementById('gameList').innerHTML = gameListHTML;
