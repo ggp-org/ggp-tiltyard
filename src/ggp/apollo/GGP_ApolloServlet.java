@@ -1,6 +1,5 @@
 package ggp.apollo;
 
-import ggp.apollo.players.Player;
 import ggp.apollo.players.Registration;
 import ggp.apollo.scheduling.Scheduling;
 
@@ -46,12 +45,12 @@ public class GGP_ApolloServlet extends HttpServlet {
             resp.setStatus(200);
             return;
         }
-        
+
         if (req.getRequestURI().startsWith("/data/")) {
             Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), resp);
             return;
         }
-        
+
         String reqURI = req.getRequestURI();
         if (reqURI.equals("/games")) reqURI += "/";
         if (reqURI.equals("/stats")) reqURI += "/";
@@ -61,13 +60,8 @@ public class GGP_ApolloServlet extends HttpServlet {
         if (reqURI.endsWith("/")) {
             reqURI += "index.html";
         }
-        
+
         if (reqURI.startsWith("/players/") && !reqURI.equals("/players/index.html")) {
-            String playerName = reqURI.replaceFirst("/players/", "");
-            if(Player.loadPlayer(playerName) == null) {
-                resp.setStatus(404);
-                return;
-            }
             reqURI = "/players/playerPage.html";
         }             
         if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
