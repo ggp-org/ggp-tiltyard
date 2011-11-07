@@ -1,4 +1,6 @@
-package ggp.apollo;
+package ggp.apollo.scheduling;
+
+import ggp.apollo.Persistence;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -15,7 +17,7 @@ public class ServerState {
     @Persistent private String theBackendAddress;
     @Persistent private Integer theBackendErrors;
     @Persistent private Integer theSchedulingRound;    
-    
+
     private ServerState() {
         thePrimaryKey = "ServerState";
         theRunningMatches = new HashSet<String>();
@@ -23,11 +25,11 @@ public class ServerState {
         theBackendErrors = 0;
         theSchedulingRound = 0;    
     }
-    
+
     public Set<String> getRunningMatches() {
         return theRunningMatches;
     }
-    
+
     public void setBackendAddress(String theBackendAddress) {
         this.theBackendAddress = theBackendAddress;
     }
@@ -55,13 +57,13 @@ public class ServerState {
     public Integer getBackendErrors() {
         return theBackendErrors;
     }
-    
+
     public void save() {
         PersistenceManager pm = Persistence.getPersistenceManager();
         pm.makePersistent(this);
         pm.close();        
     }
-    
+
     /* Static accessor methods */
     public static ServerState loadState() throws IOException {
         Set<ServerState> theStates = Persistence.loadAll(ServerState.class);

@@ -24,16 +24,6 @@
     <script type='text/javascript'>
       generateHeader(document.getElementById('header'));    
 
-      var loginState = ResourceLoader.load_json('/data/login');
-      if (loginState.loggedIn && loginState.isAdmin) {
-        // This isn't sensitive data, but it just clutters up the UI if we show it to everyone,
-        // and only the admin really needs to see it.
-        var serverState = ResourceLoader.load_json('/data/serverState');
-        var serverStateHTML = 'Currently on scheduling round ' + serverState.schedulingRound + '.<br>';
-        serverStateHTML += 'Consecutive backend errors so far: ' + serverState.backendErrors + '.<br>';
-        document.getElementById('stateInfo').innerHTML = serverStateHTML;
-      }    
-
       function updateMatchList() {
         var ongoingMatches = ResourceLoader.load_json('//database.ggp.org/query/filterActiveSet,recent,'+hashedApolloPK).queryMatches;
         var recentMatches = ResourceLoader.load_json('//database.ggp.org/query/filter,recent,'+hashedApolloPK).queryMatches;      

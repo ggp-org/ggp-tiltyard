@@ -1,7 +1,6 @@
 package ggp.apollo.scheduling;
 
-import ggp.apollo.Player;
-import ggp.apollo.ServerState;
+import ggp.apollo.players.Player;
 
 import java.io.BufferedReader;
 import java.io.IOException;

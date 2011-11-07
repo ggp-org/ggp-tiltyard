@@ -1,4 +1,6 @@
-package ggp.apollo;
+package ggp.apollo.players;
+
+import ggp.apollo.Persistence;
 
 import java.io.IOException;
 import java.util.HashSet;
