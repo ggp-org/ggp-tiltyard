@@ -206,7 +206,6 @@ public class Scheduling {
             return;
         }        
 
-        theState.addRecentMatchURL(theSpectatorURL);
         theState.getRunningMatches().add(theSpectatorURL);
         theState.clearBackendErrors();
     }

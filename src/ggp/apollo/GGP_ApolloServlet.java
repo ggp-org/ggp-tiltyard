@@ -64,10 +64,7 @@ public class GGP_ApolloServlet extends HttpServlet {
                 return;
             }
             reqURI = "/players/playerPage.html";
-        }
-        if (reqURI.startsWith("/playersDresden/")) {
-            reqURI = "/players/playerPageDresden.html";
-        }                
+        }             
         if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
             reqURI = "/games/gamePage.html";
         }
@@ -158,8 +155,6 @@ public class GGP_ApolloServlet extends HttpServlet {
                     return;
                 }
                 resp.getWriter().println(p.asJSON(p.isOwner(userId)));
-            } else if (theRPC.equals("matches/")) {
-                resp.setStatus(404);
             } else if (theRPC.equals("serverState")) {
                 ServerState serverState = ServerState.loadState();
                 JSONObject theResponse = new JSONObject();
@@ -290,9 +285,5 @@ public class GGP_ApolloServlet extends HttpServlet {
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "*");
         resp.setHeader("Access-Control-Allow-Age", "86400");    
-    }
-
-    public static String translateRepositoryCodename(String theURL) {
-        return theURL.replaceFirst("base/", "http://games.ggp.org/games/");
     }
 }
