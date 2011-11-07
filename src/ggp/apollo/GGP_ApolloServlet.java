@@ -110,8 +110,6 @@ public class GGP_ApolloServlet extends HttpServlet {
         if (!isDatastoreWriteable()) return;
         setAccessControlHeader(resp);
 
-        String theURI = req.getRequestURI();
-        
         BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
         int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
         StringBuilder theInput = new StringBuilder();
@@ -120,7 +118,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         }
         String in = theInput.toString().trim();
         
-        Registration.doPost(theURI, in, resp);
+        Registration.doPost(req.getRequestURI(), in, resp);
     }
 
     public void doOptions(HttpServletRequest req, HttpServletResponse resp) throws IOException {  
