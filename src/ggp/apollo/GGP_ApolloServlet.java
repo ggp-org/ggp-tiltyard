@@ -26,7 +26,7 @@ public class GGP_ApolloServlet extends HttpServlet {
     }
     
     public static void setAccessControlHeader(HttpServletResponse resp) {
-        resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
+        resp.setHeader("Access-Control-Allow-Origin", "*");
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
         resp.setHeader("Access-Control-Allow-Headers", "Content-Type");
         resp.setHeader("Access-Control-Allow-Age", "86400");
@@ -109,6 +109,7 @@ public class GGP_ApolloServlet extends HttpServlet {
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (!isDatastoreWriteable()) return;
         setAccessControlHeader(resp);
+        resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
 
         BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
         int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
