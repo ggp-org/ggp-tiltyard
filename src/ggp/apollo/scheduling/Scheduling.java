@@ -160,7 +160,7 @@ public class Scheduling {
         // to do this in a safe, secure fashion (since the repository server can
         // inject arbitrary javascript into the visualizations).
         //String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/" + theGameVersion + "/";
-        String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/v0/";
+        String theGameURL = "http://games.ggp.org/base/games/" + theGameKey + "/v0/";
 
         // Assign available players to roles in the game.
         Collections.shuffle(theAvailablePlayers);
