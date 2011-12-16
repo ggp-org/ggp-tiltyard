@@ -3,10 +3,13 @@ package ggp.apollo.players;
 import ggp.apollo.Persistence;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 import javax.jdo.annotations.*;
 
 import com.google.appengine.repackaged.org.json.JSONException;
@@ -149,6 +152,13 @@ public class Player {
     }
 
     /* Static accessor methods */
+    @SuppressWarnings("unchecked")
+    public static List<Player> loadEnabledPlayers() throws IOException {
+        Query q = Persistence.getPersistenceManager().newQuery(Player.class);
+        q.setFilter("isEnabled == false");
+        return new ArrayList<Player>((List<Player>) q.execute());
+    }
+    
     public static Set<Player> loadPlayers() throws IOException {
         return Persistence.loadAll(Player.class);
     }

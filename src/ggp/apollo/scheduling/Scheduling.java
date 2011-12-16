@@ -63,7 +63,7 @@ public class Scheduling {
     }
 
     public static void runSchedulingRound(ServerState theState) throws IOException {
-        List<Player> theAvailablePlayers = new ArrayList<Player>(Player.loadPlayers());
+        List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
 
         {
             // Find and clear all of the completed or wedged matches. For matches
