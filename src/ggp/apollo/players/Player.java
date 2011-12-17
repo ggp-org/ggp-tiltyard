@@ -155,7 +155,7 @@ public class Player {
     @SuppressWarnings("unchecked")
     public static List<Player> loadEnabledPlayers() throws IOException {
         Query q = Persistence.getPersistenceManager().newQuery(Player.class);
-        q.setFilter("isEnabled == false");
+        q.setFilter("isEnabled == true");
         return new ArrayList<Player>((List<Player>) q.execute());
     }
     
