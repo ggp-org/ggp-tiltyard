@@ -154,9 +154,13 @@ public class Player {
     /* Static accessor methods */
     @SuppressWarnings("unchecked")
     public static List<Player> loadEnabledPlayers() throws IOException {
-        Query q = Persistence.getPersistenceManager().newQuery(Player.class);
+        PersistenceManager pm = Persistence.getPersistenceManager();
+        Query q = pm.newQuery(Player.class);
         q.setFilter("isEnabled == true");
-        return new ArrayList<Player>((List<Player>) q.execute());
+        List<Player> toReturn = new ArrayList<Player> ((List<Player>) q.execute());
+        q.closeAll();
+        pm.close();
+        return toReturn;
     }
     
     public static Set<Player> loadPlayers() throws IOException {
