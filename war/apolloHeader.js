@@ -7,10 +7,10 @@ function generateHeader(theDiv) {
     theHTML += '    <td width=2% align="left"></td>';
     theHTML += '    <td width=18% align="left" valign="bottom"><a class=apollogo href="/">Apollo</a><span class=apollogo2>beta</span></td>';
     theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/about/">About</a></td>';
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/games/">Games</a></td>';
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="//ggp.org/view/apollo/games/">[Games]</a></td>';
     theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/players/">Players</a></td>';    
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/matches/">Matches</a></td>';
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/stats/">Stats</a></td>';
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="//ggp.org/view/apollo/matches/">[Matches]</a></td>';
+    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="//ggp.org/view/apollo/stats/">[Stats]</a></td>';
     theHTML += '    <td width=30% align="right" valign="bottom"><div class="login" id="login_div"> </div></td>';
     theHTML += '  </tr>';
     theHTML += '  <tr id="navBuffer" class="navbarBottom">'; 
@@ -164,7 +164,7 @@ function renderJSON(x) {
 }
 
 function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, playerToHighlight) {
-    var gameMetadata = ResourceLoader.load_json('//games.ggp.org/games/metadata');    
+    var gameMetadata = ResourceLoader.load_json('//games.ggp.org/base/games/metadata');    
     
     var theHTML = '<center><table class="matchlist">';
     theHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=7>' + topCaption + '</th></tr>';
@@ -176,7 +176,7 @@ function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, play
 }
 
 function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, gameMetadata, showShadow) {
-  getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/games/", "").split("/")[0]].gameName; }
+  getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/base/games/", "").split("/")[0]].gameName; }
     
   if ("matchURL" in theMatchJSON) {
     theMatchJSON.apolloSpectatorURL = theMatchJSON.matchURL;
@@ -285,7 +285,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, ga
   
   // Match page URL.
   var matchURL = theMatchJSON.apolloSpectatorURL.replace("http://matches.ggp.org/matches/", "");
-  theMatchHTML += '<td class="padded"><a href="/matches/' + matchURL + '">View Match</a></td>';  
+  theMatchHTML += '<td class="padded"><a href="//ggp.org/view/apollo/matches/' + matchURL + '">View Match</a></td>';  
   
   // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
@@ -322,7 +322,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, ga
   theMatchHTML += '</table></td>';
 
   // Match game profile.
-  theMatchHTML += '<td class="padded"><a href="/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + getGameName(theMatchJSON.gameMetaURL) + '</a></td>';  
+  theMatchHTML += '<td class="padded"><a href="//ggp.org/view/apollo/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + getGameName(theMatchJSON.gameMetaURL) + '</a></td>';  
   
   // Signature badge.
   if ("apolloSigned" in theMatchJSON && theMatchJSON.apolloSigned) {
@@ -378,10 +378,10 @@ var generateAgonView = function (scaledRank, realRank, theText) {
 }
 
 function translateRepositoryCodename(x) {
-  return x.replace("base/", "http://games.ggp.org/games/");
+  return x.replace("base/", "http://games.ggp.org/base/games/");
 }
 function translateRepositoryIntoCodename(x) {
-  return x.replace("http://games.ggp.org/games/", "base/");
+  return x.replace("http://games.ggp.org/base/games/", "base/");
 }
 
 // The value "90bd08a7df7b8113a45f1e537c1853c3974006b2" is the hashed public key for the Apollo server.

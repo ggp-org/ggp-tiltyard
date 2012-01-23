@@ -27,8 +27,8 @@
       generateHeader(document.getElementById('header'));
       
       // Load in the game metadata used to render various tables
-      var gameMetadata = ResourceLoader.load_json('//games.ggp.org/games/metadata');
-      getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/games/", "").split("/")[0]].gameName; }
+      var gameMetadata = ResourceLoader.load_json('//games.ggp.org/base/games/metadata');
+      getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/base/games/", "").split("/")[0]].gameName; }
 
       function renderAvg(x) {
         var y = JSON.parse(x);
