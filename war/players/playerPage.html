@@ -31,12 +31,12 @@
       getGameName = function (gameKey) { return gameMetadata[gameKey.replace("http://games.ggp.org/base/games/", "").split("/")[0]].gameName; }
 
       function renderAvg(x) {
-        var y = JSON.parse(x);
+        var y = x;
         return '<table width=100% padding=0px cellspacing=0px><tr><td width=100%><b>' + cleanFloat(y[0]) + '</b></td><td><i>' + y[1] + '</i></td></tr></table>';
       }
       
       function renderColoredAvg(x) {
-        var y = JSON.parse(x);
+        var y = x;
         var theText = 'Average score ' + cleanFloat(y[0]) + ' over ' + y[1] + ' matches.';
         
         nHue = 120.0 * (y[0]/100.0);
@@ -160,12 +160,12 @@
           delete statsJSON.agonSkill;  
         }
         if ("averageScore" in statsJSON) {
-          statsJSON.averageScore = JSON.parse(statsJSON.averageScore);
+          statsJSON.averageScore = statsJSON.averageScore;
           theHTML += "<b>Average Score:</b> " + cleanFloat(statsJSON.averageScore[0]) + " over " + statsJSON.averageScore[1] + " matches.<br>";
           delete statsJSON.averageScore;
         }
         if ("decayedAverageScore" in statsJSON) {
-          statsJSON.decayedAverageScore = JSON.parse(statsJSON.decayedAverageScore);
+          statsJSON.decayedAverageScore = statsJSON.decayedAverageScore;
           theHTML += "<b>(Decayed) Average Score:</b> " + cleanFloat(statsJSON.decayedAverageScore[0]) + " over " + statsJSON.decayedAverageScore[1] + " matches.<br>";
           delete statsJSON.decayedAverageScore;
         }
