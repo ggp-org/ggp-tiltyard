@@ -173,8 +173,12 @@
         return theHTML;
       }
 
-      var playerName = window.location.pathname.replace("/players/", "");      
-      var statsJSON = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/players/' + playerName);
+      var playerName = window.location.pathname.replace("/players/", "");
+      try {
+        var statsJSON = ResourceLoader.load_json('//database.ggp.org/statistics/' + hashedApolloPK + '/players/' + playerName);
+      } catch(err) {
+        var statsJSON = {};
+      }      
       
       if ("winsVersusPlayerOnGame" in statsJSON) {
         document.getElementById('playerStatsPuzzleDiv').innerHTML = renderPuzzleTable(statsJSON.winsVersusPlayerOnGame, statsJSON.averageScoreOn);
