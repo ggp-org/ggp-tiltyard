@@ -13,14 +13,15 @@
     <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>
     <script type="text/javascript" src="/apolloHeader.js"></script>
   
-    <div id='header'></div>
+    <div id='login'></div>
     <br>
     <center><div id="add_player_promo">You can <a rel="nofollow" href="javascript:add_new_player()">add your player</a> to this list!</div></center>
     <br>
     <div id='playerList'></div>
 
     <script type='text/javascript'>
-      generateHeader(document.getElementById('header'));
+      //generateHeader(document.getElementById('header'));
+      generateLoginPanel(document.getElementById('login'));
       
       var loginState = ResourceLoader.load_json('/data/login');
       if (!loginState.loggedIn) { document.getElementById("add_player_promo").innerHTML = ""; }
@@ -97,12 +98,14 @@
         var thePlayers = ResourceLoader.load_json('/data/players/');
         var thePlayersList = [];
         for (var theName in thePlayers) {
-          thePlayersList.push(thePlayers[theName]);
+          if ("theURL" in thePlayers[theName]) {
+            thePlayersList.push(thePlayers[theName]);
+          }
         }
         thePlayersList.sort(playerComesAfter);
         
         var playerListHTML = '<center><table class="matchlist" cellpadding="5px">';
-        playerListHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=5>Player List</th></tr>';
+        playerListHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=5>Your Players</th></tr>';
         for (var i = 0; i < thePlayersList.length; i++) {
           playerListHTML += renderPlayerListEntry(thePlayersList[i], i);
         }
