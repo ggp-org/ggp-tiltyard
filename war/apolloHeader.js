@@ -1,46 +1,3 @@
-var loginNascarHTML;
-function generateHeader(theDiv) {
-    var theHTML = "";
-    theHTML += '<center>';
-    theHTML += '<table style="width: 100%; border: 0; margin: 0; border-spacing: 0px 0px; bgcolor: rgb(160,160,160);">';
-    theHTML += '  <tr class="navbarTop">';
-    theHTML += '    <td width=2% align="left"></td>';
-    theHTML += '    <td width=18% align="left" valign="bottom"><a class=apollogo href="/">Apollo</a><span class=apollogo2>beta</span></td>';
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/about/">About</a></td>';
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="//ggp.org/view/apollo/games/">[Games]</a></td>';
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="/players/">Players</a></td>';    
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="//ggp.org/view/apollo/matches/">[Matches]</a></td>';
-    theHTML += '    <td width=10% align="center" valign="bottom"><a class=biglink href="//ggp.org/view/apollo/stats/">[Stats]</a></td>';
-    theHTML += '    <td width=30% align="right" valign="bottom"><div class="login" id="login_div"> </div></td>';
-    theHTML += '  </tr>';
-    theHTML += '  <tr id="navBuffer" class="navbarBottom">'; 
-    theHTML += '    <td colspan=10 height=10px></td>';
-    theHTML += '  </tr>';
-    theHTML += '</table>';
-    theHTML += '</center>';
-    theDiv.innerHTML = theHTML;
-    
-    var loginState = ResourceLoader.load_json('/data/login');
-    var loginHTML = "";
-    if (loginState.loggedIn) {
-      if (loginState.nickname.length > 0) {
-        loginHTML += "<b>" + loginState.nickname + "</b>";
-      } else {
-        loginHTML += "<b>Signed in.</b> ";
-      }
-      loginHTML += " <a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">(sign out)</a>.";
-    } else {
-      loginHTML += " <a class=\"darklink\" href=\"javascript: document.getElementById('login_div').innerHTML = loginNascarHTML;\">Sign in</a> using OpenID.";
-      loginNascarHTML = "Sign in using OpenID via <br>";
-      for (var i in loginState.preferredOrder) {
-        var providerName = loginState.preferredOrder[i];
-        loginNascarHTML += "<a rel=\"nofollow\" href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
-      }
-    }      
-    document.getElementById('login_div').innerHTML = loginHTML;
-}
-
-var loginNascarHTML;
 function generateLoginPanel(theDiv) {
     var theHTML = "";
     theHTML += '<center>';
@@ -65,11 +22,10 @@ function generateLoginPanel(theDiv) {
       }
       loginHTML += " <a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">(sign out)</a>.";
     } else {
-      loginHTML += " <a class=\"darklink\" href=\"javascript: document.getElementById('login_div').innerHTML = loginNascarHTML;\">Sign in</a> using OpenID.";
-      loginNascarHTML = "Sign in using OpenID via <br>";
+      loginHTML = "Sign in using OpenID via ";
       for (var i in loginState.preferredOrder) {
         var providerName = loginState.preferredOrder[i];
-        loginNascarHTML += "<a rel=\"nofollow\" href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
+        loginHTML += "<a rel=\"nofollow\" href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
       }
     }      
     document.getElementById('login_div').innerHTML = loginHTML;
