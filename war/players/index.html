@@ -104,13 +104,19 @@
           }
         }
         thePlayersList.sort(playerComesAfter);
-        
-        var playerListHTML = '<center><table class="matchlist" cellpadding="5px">';
-        playerListHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=5>Your Players</th></tr>';
-        for (var i = 0; i < thePlayersList.length; i++) {
-          playerListHTML += renderPlayerListEntry(thePlayersList[i], i);
+
+        var playerListHTML = '<center>';        
+        if (loginState.loggedIn) {        
+          playerListHTML += '<table class="matchlist" cellpadding="5px">';
+          playerListHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=5>Your Players</th></tr>';
+          for (var i = 0; i < thePlayersList.length; i++) {
+            playerListHTML += renderPlayerListEntry(thePlayersList[i], i);
+          }
+          playerListHTML += '</table>';
+        } else {
+          playerListHTML += '<i>Sign in to register and configure your players!</i>';
         }
-        playerListHTML += '</table></center>';
+        playerListHTML += '</center>';
         document.getElementById('playerList').innerHTML = playerListHTML;
       }
       
