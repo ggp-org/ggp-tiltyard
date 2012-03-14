@@ -145,7 +145,7 @@ public class Scheduling {
         // we have enough players available to play it. Repeat until we have a game.
         int nPlayersForGame;
         String theGameKey = null;
-        @SuppressWarnings("unused") String theGameVersion = null;
+        String theGameVersion = null;
         List<String> theProperGames = Arrays.asList(someProperGames);
         do {
             Collections.shuffle(theProperGames);            
@@ -159,8 +159,7 @@ public class Scheduling {
         // Eventually we should support other repository servers. Figure out how
         // to do this in a safe, secure fashion (since the repository server can
         // inject arbitrary javascript into the visualizations).
-        //String theGameURL = "http://games.ggp.org/games/" + theGameKey + "/" + theGameVersion + "/";
-        String theGameURL = "http://games.ggp.org/base/games/" + theGameKey + "/v0/";
+        String theGameURL = "http://games.ggp.org/base/games/" + theGameKey + "/" + theGameVersion + "/";
 
         // Assign available players to roles in the game.
         Collections.shuffle(theAvailablePlayers);
