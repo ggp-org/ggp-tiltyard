@@ -98,11 +98,13 @@ public class Registration {
                 if (!gdlVersion.equals("GDLv1") && !gdlVersion.equals("GDLv2")) {
                     gdlVersion = "GDLv1";
                 }
+                p.setGdlVersion(gdlVersion);
                 
                 p.setEnabled(playerInfo.getBoolean("isEnabled"));
-                p.setGdlVersion(gdlVersion);
+                p.setPingable(playerInfo.getBoolean("isPingable"));
                 p.setURL(sanitize(playerInfo.getString("theURL")));
                 p.setVisibleEmail(sanitize(playerInfo.getString("visibleEmail")));
+                p.setVisibleWebsite(sanitize(playerInfo.getString("visibleWebsite")));
                 p.save();
 
                 resp.getWriter().println(p.asJSON(true));

@@ -1,27 +1,3 @@
-body {
-  margin:0;
-  padding:0;
-}
-
-a {
-  text-decoration:none;
-}
-a.apollogo {
-	color: #222222;
-	font-family: 'Droid Sans', bold;
-	font-size: 20px;
-	text-shadow: #AAAAAA 0px 0px 10px;
-	margin: 5px;
-	text-decoration:none;
-}
-span.apollogo2 {
-	color: #222222;
-	font-family: 'Droid Sans', bold;
-	font-size: 16px;
-	text-shadow: #AAAAAA 0px 0px 10px;
-	font-variant: small-caps;
-}
-
 a.darklink {
 	color: #222222;
 }
@@ -50,7 +26,6 @@ div.login {
 	text-shadow: #AAAAAA 0px 0px 5px;
 	margin: 5px;
 }
-
 table.active {
     display: inline;
     border-width: 5px;
@@ -97,7 +72,6 @@ th.padded {
 td.padded {
   padding-left: 10px;
 }
-
 tr.navbarTop {
   background-image: -webkit-gradient(
     linear,

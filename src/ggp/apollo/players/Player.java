@@ -28,17 +28,21 @@ public class Player {
     
     // Optional fields.
     @Persistent private String visibleEmail;
+    @Persistent private String visibleWebsite;
+    @Persistent private Boolean isPingable;
 
     public Player(String theName, String theURL, String anOwner) {
         this.theName = theName;
         this.setURL(theURL);
         
         this.setEnabled(false);
+        this.setPingable(true);
         this.setGdlVersion("GDLv1");
         this.theOwners = new HashSet<String>();
         this.theOwners.add(anOwner);        
         
         this.setVisibleEmail("");
+        this.setVisibleWebsite("");
         
         this.nStrikes = 0;
         
@@ -55,6 +59,14 @@ public class Player {
 
     public String getVisibleEmail() {
         return visibleEmail;
+    }
+    
+    public void setVisibleWebsite(String visibleWebsite) {
+        this.visibleWebsite = visibleWebsite;
+    }
+
+    public String getVisibleWebsite() {
+        return visibleWebsite;
     }
 
     public void setURL(String theURL) {
@@ -79,6 +91,14 @@ public class Player {
 
     public boolean isEnabled() {
         return isEnabled;
+    }
+    
+    public void setPingable(boolean isPingable) {
+        this.isPingable = isPingable;
+    }
+    
+    public boolean isPingable() {
+        return isPingable;
     }
     
     public void setGdlVersion(String gdlVersion) {
@@ -129,8 +149,10 @@ public class Player {
             JSONObject theJSON = new JSONObject();
             theJSON.put("name", theName);
             theJSON.put("isEnabled", isEnabled);
+            theJSON.put("isPingable", isPingable);
             theJSON.put("gdlVersion", gdlVersion);
             theJSON.put("visibleEmail", visibleEmail);
+            theJSON.put("visibleWebsite", visibleWebsite);
             theJSON.put("pingStatus", pingStatus);
             if (includePrivate) {
                 // Not sure if we want to expose the userID information,

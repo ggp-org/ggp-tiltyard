@@ -1,39 +1,105 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <title>GGP.org - Tiltyard Gaming Server</title>
     <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />  
     <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
     <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
     <link rel="stylesheet" type="text/css" href="/apollo.css" />
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
-    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+    <link rel="stylesheet" type="text/css" href="//www.ggp.org/scripts/external/bootstrap/bootstrap.min.css" />
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/external/bootstrap/bootstrap.min.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>    
   </head>
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>
-    <script type="text/javascript" src="/apolloHeader.js"></script>
+    <script type="text/javascript" src="/apolloHeader.js"></script>    
 
-    <!-- <div id='header'></div> -->
     <div id='login'></div>
     <br>
-    <center>    
-      <div id='playerDiv'></div><br>
-      <div id='playerStatsDiv'></div><br>
-      <div id='playerStatsPuzzleDiv'></div><br>
-      <div id='playerStatsTableDiv'></div><br>
-    </center>
-    <div id='playerMatchesDiv'></div>
-
+    <div id='playerDiv'></div>
+    
+    <br>
+    
+    <div class="container">
+      <div class="row">
+        <div class="span8 offset2">
+          <form class="well form-horizontal">
+            <fieldset>
+              <legend id="form_player_name">Player Configuration</legend>
+              <div class="control-group">
+                <label class="control-label" for="input_player_url">Player URL</label>
+                <div class="controls"><input type="text" id="input_player_url"></div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="input_gdl_version">GDL Version</label>
+                <div class="controls"><input type="text" id="input_gdl_version" disabled="true"></div>
+              </div>              
+              <div class="control-group">
+                <label class="control-label" for="input_contact_email">Contact Email</label>
+                <div class="controls"><input type="text" id="input_contact_email"></div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="input_contact_website">Contact Website</label>
+                <div class="controls"><input type="text" id="input_contact_website"></div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="input_player_active">Player active?</label>
+                <div class="controls"><input type="checkbox" id="input_player_active"></div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="input_player_pingable">Player pingable?</label>
+                <div class="controls"><input type="checkbox" id="input_player_pingable"></div>                
+              </div>
+            </fieldset>
+            <button class="btn btn-primary" type="button" onclick="submitPlayerData();">Submit</button>
+          </form>          
+        </div>
+      </div>
+    </div>
+    
     <script type='text/javascript'>    
-      //generateHeader(document.getElementById('header'));
       generateLoginPanel(document.getElementById('login'));
       
+      $('#input_player_url').popover({'title':'Player URL', 'content':'What is the URL for communicating with your player? This is usually your IP address with port 9147.'});
+      $('#input_gdl_version').popover({'title':'GDL Version', 'content':'GDL version that this player can handle.'});
+      $('#input_contact_email').popover({'title':'Contact Email', 'content':'Optional email address shown with your player, so fans can contact you.'});
+      $('#input_contact_website').popover({'title':'Contact Website', 'content':'Optional website address shown with your player, so fans can learn more about your research.'});
+      $('#input_player_active').popover({'title':'Player Active', 'content':'Automatically assign this player matches in the GGP Tiltyard?'});
+      $('#input_player_pingable').popover({'title':'Player Pingable', 'content':'Only assign this player matches after pinging to make sure it\'s available?'});
+
+      withDefaultValue = function (x,y) { if (x) { return x; } else { return y; } }; 
+      
+      function showPlayerData(aPlayer) {
+        // TODO: Show aPlayer.pingStatus
+
+        $('#form_player_name')[0].innerHTML = 'Player Configuration for ' + aPlayer.name;
+        $('#input_player_url')[0].value        = withDefaultValue(aPlayer.theURL, "");
+        $('#input_gdl_version')[0].value       = withDefaultValue(aPlayer.gdlVersion, "GDLv1");
+        $('#input_contact_email')[0].value     = withDefaultValue(aPlayer.visibleEmail, "");
+        $('#input_contact_website')[0].value   = withDefaultValue(aPlayer.visibleWebsite, "");
+        $('#input_player_active')[0].checked   = withDefaultValue(aPlayer.isEnabled, false);
+        $('#input_player_pingable')[0].checked = withDefaultValue(aPlayer.isPingable, true);        
+      }
+      
+      function submitPlayerData() {
+        var aPlayer = {};
+        aPlayer.name = window.location.pathname.replace("/players/", "");
+        aPlayer.theURL = $('#input_player_url')[0].value;
+        aPlayer.visibleEmail = $('#input_contact_email')[0].value;
+        aPlayer.visibleWebsite = $('#input_contact_website')[0].value;
+        aPlayer.isPingable = $('#input_player_pingable')[0].checked;
+        aPlayer.isEnabled = $('#input_player_active')[0].checked;
+        aPlayer.gdlVersion = $('#input_gdl_version')[0].value;
+        aPlayer = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(aPlayer)));
+        showPlayerData(aPlayer);
+        alert('Saved!');
+      }
+
       var playerName = window.location.pathname.replace("/players/", "");
       var thePlayer = ResourceLoader.load_json('/data/players/' + playerName);
-      var playerHTML = '<center style="display: table; width: 100%">';
-      playerHTML += generatePlayerHTML(thePlayer);
-      playerHTML += '</center>';
-      document.getElementById('playerDiv').innerHTML = playerHTML;      
+      showPlayerData(thePlayer);
     </script>
   </body>  
 </html>
