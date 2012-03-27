@@ -98,6 +98,7 @@ public class Player {
     }
     
     public boolean isPingable() {
+        if (isPingable == null) return true;
         return isPingable;
     }
     

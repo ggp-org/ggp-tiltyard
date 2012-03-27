@@ -104,7 +104,7 @@ public class Scheduling {
             // except surface it in the UI.
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                 Player p = theAvailablePlayers.get(i);
-                if (p.isEnabled()) {
+                if (p.isEnabled() && p.isPingable()) {
                     String thePingError = null;
                     String thePingStatus = null;                    
                     try {
@@ -127,8 +127,8 @@ public class Scheduling {
             // we know they're in a match, or because they say they're busy, or because
             // they're disabled.
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
-                Player p = theAvailablePlayers.get(i);
-                if (!p.isEnabled() || !("available".equals(p.getPingStatus())) || busyPlayerNames.contains(p.getName())) {
+                Player p = theAvailablePlayers.get(i);                
+                if (!p.isEnabled() || (p.isPingable() && !("available".equals(p.getPingStatus()))) || busyPlayerNames.contains(p.getName())) {
                     theAvailablePlayers.remove(i);
                 }
             }
