@@ -2,6 +2,7 @@ package ggp.apollo;
 
 import ggp.apollo.players.Registration;
 import ggp.apollo.scheduling.Scheduling;
+import ggp.apollo.scheduling.backends.BackendRegistration;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -24,7 +25,7 @@ public class GGP_ApolloServlet extends HttpServlet {
         CapabilityStatus status = service.getStatus(Capability.DATASTORE_WRITE).getStatus();
         return (status != CapabilityStatus.DISABLED);
     }
-    
+
     public static void setAccessControlHeader(HttpServletResponse resp) {
         resp.setHeader("Access-Control-Allow-Origin", "*");
         resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -35,7 +36,7 @@ public class GGP_ApolloServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         setAccessControlHeader(resp);
-        
+
         if (req.getRequestURI().equals("/cron/scheduling_round")) {
             if (isDatastoreWriteable()) {
                 Scheduling.runSchedulingRound();            
@@ -111,28 +112,33 @@ public class GGP_ApolloServlet extends HttpServlet {
         setAccessControlHeader(resp);
         resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
 
+        String theURI = req.getRequestURI();
         BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
         int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
         StringBuilder theInput = new StringBuilder();
         for (int i = 0; i < contentLength; i++) {
             theInput.append((char)br.read());
         }
-        String in = theInput.toString().trim();
-        
-        Registration.doPost(req.getRequestURI(), in, resp);
+        String in = theInput.toString().trim();        
+
+        if (theURI.startsWith("/backends/")) {
+            BackendRegistration.doPost(theURI, in, req.getRemoteAddr(), resp);
+        } else {
+            Registration.doPost(theURI, in, resp);
+        }
     }
 
     public void doOptions(HttpServletRequest req, HttpServletResponse resp) throws IOException {  
         setAccessControlHeader(resp);
     }
-    
+
     /* --- */
-    
+
     public static void writeStaticTextPage(HttpServletResponse resp, String theURI) throws IOException {
         FileReader fr = new FileReader(theURI);
         BufferedReader br = new BufferedReader(fr);
         StringBuffer response = new StringBuffer();
-        
+
         String line;
         while( (line = br.readLine()) != null ) {
             response.append(line + "\n");
@@ -140,7 +146,7 @@ public class GGP_ApolloServlet extends HttpServlet {
 
         resp.getWriter().println(response.toString());
     }
-    
+
     public static void writeStaticBinaryPage(HttpServletResponse resp, String theURI) throws IOException {
         InputStream in = new FileInputStream(theURI);
         byte[] buf = new byte[1024];

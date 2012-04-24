@@ -1,6 +1,9 @@
 package ggp.apollo.scheduling;
 
+import ggp.apollo.TiltyardPublicKey;
 import ggp.apollo.players.Player;
+import ggp.apollo.scheduling.backends.BackendRegistration;
+import ggp.apollo.scheduling.backends.Backends;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import com.google.appengine.repackaged.org.json.JSONArray;
@@ -57,7 +61,6 @@ public class Scheduling {
 
     public static void runSchedulingRound() throws IOException {
         ServerState theState = ServerState.loadState();
-        theState.incrementSchedulingRound();
         runSchedulingRound(theState);
         theState.save();
     }
@@ -190,22 +193,43 @@ public class Scheduling {
             e.printStackTrace();
             return;
         }
+        
+        Backends theBackends = Backends.loadBackends();
+        List<String> validBackends = new ArrayList<String>();
+        for (String theBackendAddress : theBackends.getBackendAddresses()) {
+            try {
+                URL url = new URL("http://" + theBackendAddress + ":9124/" + URLEncoder.encode("ping", "UTF-8"));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                if(!BackendRegistration.verifyBackendPing(reader.readLine())) {
+                    continue;
+                }
+                reader.close();
+            } catch (Exception e) {
+                continue;
+            }
+            validBackends.add(theBackendAddress);
+        }
+        if (validBackends.size() == 0) {
+            theBackends.getBackendAddresses().clear();
+            theBackends.addBackendError();            
+            theBackends.save();
+            return;
+        }
+        String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
+        theBackends.getBackendAddresses().retainAll(validBackends);
 
         // Send the match request to the Apollo backend, and get back the URL
         // for the match on the spectator server.
         String theSpectatorURL = null;
         try {
-            URL url = new URL(theState.getBackendAddress() + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
+            URL url = new URL("http://" + theBackendAddress + ":9124/" + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
             BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
             theSpectatorURL = reader.readLine();
             reader.close();
         } catch (Exception e) {
-            theState.incrementBackendErrors();
-            return;
-        }        
-
+            throw new RuntimeException(e);
+        }
         theState.getRunningMatches().add(theSpectatorURL);
-        theState.clearBackendErrors();
     }
 
     private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {
@@ -241,13 +265,12 @@ public class Scheduling {
             }
         }
     }
-    
-    public static final String apolloPublicKey = "0MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAgjPUn3Zkr1u+BQb2fMOUcypSsJY4c/IRFDaA5Gjg022gZCY+a5yC61nSIwYnfTdWcnDEadUvbLWvD3IXmhxKZY69k6GpfgGZBp90bS918vuFiRQ16UcEzSloeVQs0jt7Nq+9EKvBBlULGxZcwXH30G+wIyoo/9qGJOwN+XmhFj9PC/WbPGvzB8ABKo08XIGyqDbv+xF0xVw0Pdfd2sYKUuSQawIFHxQBztbySTydl5r5qUwETxw5JuZkuK0c3cNer7M24/fokGuyukmnBI3k6V9lkguAOzVXjnknKaEAh4KassLwQK9Byc84hEyFFZk4USTneS2Kz3ZcjxRGOYjWKMHEVJVsbR2rHA7nN1PZbk14bNdemwwAbwYB2ONWe3Bhmg9JY2USdChqlR+dD0NfWPzEWV1hgt2o7X9OhB2B5sOrnsaJrkBDkbwa7yC4Y3E8AEV8KekQrNLOynoKbh7cZHs4bPKBKULnhAKzy22XoHYMw9G5vsXlMx+jLpyUhwrzAgMBAAE=";
+
     public static boolean verifyApolloCryptography(JSONObject theMatchInfo) {
         try {
             if (!SignableJSON.isSignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
             if (!SignableJSON.verifySignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
-            if (!theMatchInfo.getString("matchHostPK").equals(apolloPublicKey)) return false;
+            if (!theMatchInfo.getString("matchHostPK").equals(TiltyardPublicKey.theKey)) return false;
             return true;
         } catch (Exception e) {
             return false;
