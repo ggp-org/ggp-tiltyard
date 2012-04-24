@@ -109,7 +109,7 @@ public class GGP_ApolloServlet extends HttpServlet {
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (!isDatastoreWriteable()) return;
         setAccessControlHeader(resp);
-        resp.setHeader("Access-Control-Allow-Origin", "apollo.ggp.org");
+        resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
 
         BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
         int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
