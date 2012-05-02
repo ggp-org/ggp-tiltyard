@@ -30,11 +30,14 @@
         thePlayer.name = theName;
         thePlayer.theURL = "";
         thePlayer.isEnabled = false;
+        thePlayer.isPingable = true;
         thePlayer.gdlVersion = "GDLv1";
         thePlayer.visibleEmail = "";
+        thePlayer.visibleWebsite = "";
         if (theName.length > 0) {
           var theResponse = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(thePlayer)));
           if (theResponse) {
+            //window.location.href = '/players/' + theName;
             drawPlayerList();
           } else {
             alert("Failed to create player named: " + theName);
