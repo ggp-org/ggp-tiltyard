@@ -14,8 +14,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
-import com.google.appengine.repackaged.org.json.JSONException;
-import com.google.appengine.repackaged.org.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import external.Base64Coder.Base64Coder;
 

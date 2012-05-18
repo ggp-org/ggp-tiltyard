@@ -5,10 +5,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
 
-import com.google.appengine.repackaged.org.json.JSONArray;
-import com.google.appengine.repackaged.org.json.JSONException;
-import com.google.appengine.repackaged.org.json.JSONObject;
-import com.google.appengine.repackaged.org.json.JSONString;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONString;
 
 public class CanonicalJSON {
     /* Right now we only support one canonicalization strategy, which is

@@ -5,8 +5,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 
-import com.google.appengine.repackaged.org.json.JSONException;
-import com.google.appengine.repackaged.org.json.JSONObject;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import util.crypto.CanonicalJSON.CanonicalizationStrategy;
 

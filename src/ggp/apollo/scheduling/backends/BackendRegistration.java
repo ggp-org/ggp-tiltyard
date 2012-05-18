@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import util.crypto.SignableJSON;
 
-import com.google.appengine.repackaged.org.json.JSONObject;
+import org.json.JSONObject;
 
 public class BackendRegistration {
     public static long getTimeBlock() {

@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/hadoop-0.20.2-core.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/json.jar"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER/App Engine (6)"/>
+	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
