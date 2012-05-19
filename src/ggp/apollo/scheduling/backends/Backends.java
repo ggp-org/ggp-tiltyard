@@ -50,6 +50,10 @@ public class Backends {
             }
         }
     }
+    
+    public void clearBackendErrors() {
+        theBackendErrors = 0;
+    }
 
     public void save() {
         PersistenceManager pm = Persistence.getPersistenceManager();

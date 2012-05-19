@@ -217,6 +217,8 @@ public class Scheduling {
         }
         String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
         theBackends.getBackendAddresses().retainAll(validBackends);
+        theBackends.clearBackendErrors();
+        theBackends.save();
 
         // Send the match request to the Apollo backend, and get back the URL
         // for the match on the spectator server.
