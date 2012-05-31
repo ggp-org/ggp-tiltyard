@@ -183,8 +183,8 @@ public class Scheduling {
         // needed to run a match of the selected game w/ the selected players.
         JSONObject theMatchRequest = new JSONObject();
         try {
-            theMatchRequest.put("startClock", 45);
-            theMatchRequest.put("playClock", 15);
+            theMatchRequest.put("startClock", 120);
+            theMatchRequest.put("playClock", 20);
             theMatchRequest.put("gameURL", theGameURL);
             theMatchRequest.put("matchId", "apollo." + theGameKey + "." + System.currentTimeMillis());
             theMatchRequest.put("players", playerURLsForMatch);
