@@ -42,7 +42,7 @@ public class Scheduling {
             "cittaceot:2:v0",
             "connectFour:2:v0",
             "connectFourSuicide:2:v0",
-            "dualConnect4:2:v0",
+            //"dualConnect4:2:v0",
             //"eightPuzzle:1:v0",
             //"escortLatch:2:v0",
             "knightThrough:2:v0",
