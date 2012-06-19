@@ -29,9 +29,9 @@ public class Scheduling {
     // Comment out games that are expensive for AppEngine-based players.
     private static final String[] someProperGames = {
             //"2pttc:2:v1",
-            "3pttc:3:v1",
+//            "3pttc:3:v1",
             "3pConnectFour:3:v0",
-            "4pttc:4:v1",
+//            "4pttc:4:v1",
             "blocker:2:v0",
             //"breakthrough:2:v0",
             "breakthroughSmall:2:v0",
@@ -56,10 +56,10 @@ public class Scheduling {
             //"qyshinsu:2:v0",
             //"sheepAndWolf:2:v0",
             "nineBoardTicTacToe:2:v0",
-            "snakeAssemblit:2:v0",
+//            "snakeAssemblit:2:v0",
             //"ttcc4_2player:2:v0",
-            "ticTacToe:2:v0",
-            "withConviction:2:v0"
+            "ticTacToe:2:v0"
+//            "withConviction:2:v0"
     };    
 
     public static void runSchedulingRound() throws IOException {
@@ -234,7 +234,9 @@ public class Scheduling {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        theState.getRunningMatches().add(theSpectatorURL);
+        if (!theSpectatorURL.equals("http://matches.ggp.org/matches/null/")) {
+            theState.getRunningMatches().add(theSpectatorURL);
+        }        
     }
 
     private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {
