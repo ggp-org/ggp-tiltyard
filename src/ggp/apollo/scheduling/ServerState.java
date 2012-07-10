@@ -14,10 +14,12 @@ public class ServerState {
     @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
     @Persistent private Set<String> theRunningMatches;
+    @Persistent public boolean isDrained;
 
     private ServerState() {
         thePrimaryKey = "ServerState";
         theRunningMatches = new HashSet<String>();
+        isDrained = false;
     }
 
     public Set<String> getRunningMatches() {

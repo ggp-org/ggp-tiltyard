@@ -77,7 +77,7 @@ public class Scheduling {
         theState.save();
     }
 
-    public static void runSchedulingRound(ServerState theState) throws IOException {
+    public static void runSchedulingRound(ServerState theState) throws IOException {        
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
 
         {
@@ -148,6 +148,11 @@ public class Scheduling {
                 }
             }
         }
+        
+        // At this point we've gotten everything up to date, and the only thing
+        // left to do is schedule new matches. If the backends are being drained,
+        // we don't schedule any new matches.
+        if (theState.isDrained) return;
 
         // Figure out how many players are available. If no players are available,
         // don't bother attempting to schedule a match.
