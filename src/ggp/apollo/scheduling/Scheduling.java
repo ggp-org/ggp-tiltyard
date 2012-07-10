@@ -115,8 +115,8 @@ public class Scheduling {
             theState.getRunningMatches().removeAll(doneMatches);
 
             // For all of the players listed as enabled, record whether or not they're actually
-            // identifying themselves as available. Right now we do nothing with this information
-            // except surface it in the UI.
+            // identifying themselves as available. For players that are marked as pingable, we
+            // only assign them matches if they don't identify themselves as busy.
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                 Player p = theAvailablePlayers.get(i);
                 if (p.isEnabled() && p.isPingable()) {
