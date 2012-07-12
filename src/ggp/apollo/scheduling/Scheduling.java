@@ -48,19 +48,19 @@ public class Scheduling {
             "connectFour:2:v0",
             "connectFourSuicide:2:v0",
             "dotsAndBoxes:2:v0",
-            //"dualConnect4:2:v0",
-            //"eightPuzzle:1:v0",
+            "dualConnect4:2:v1",
+            "eightPuzzle:1:v0",
             //"escortLatch:2:v0",
             "golden_rectangle:2:v1",
             "knightThrough:2:v0",
-            //"knightsTour:1:v0",
+            "knightsTour:1:v0",
             //"pawnToQueen:2:v0",
-            "pawnWhopping:2:v0",
-            //"peg:1:v0",
-            //"pegEuro:1:v0",
+            "pawnWhopping:2:v1",
+            "peg:1:v0",
+            "pegEuro:1:v0",
             //"pentago:2:v1",
             //"pentagoSuicide:2:v1",
-//            //"lightsOut:1",
+            "lightsOut:1:v0",
             //"2pffa_zerosum:2:v0",
             //"qyshinsu:2:v0",
             "sheepAndWolf:2:v0",
@@ -157,9 +157,7 @@ public class Scheduling {
         // Figure out how many players are available. If no players are available,
         // don't bother attempting to schedule a match.
         int readyPlayers = theAvailablePlayers.size();
-        if (readyPlayers < 2) {
-            return;
-        }
+        if (readyPlayers == 0) return;
         
         // Shuffle the list of known proper games, draw a game, and check whether
         // we have enough players available to play it. Repeat until we have a game.
@@ -170,7 +168,7 @@ public class Scheduling {
         do {
             Collections.shuffle(theProperGames);            
             nPlayersForGame = Integer.parseInt(theProperGames.get(0).split(":")[1]);
-            if (readyPlayers >= nPlayersForGame){
+            if (readyPlayers >= nPlayersForGame && (readyPlayers == 1 || nPlayersForGame > 1)){
                 theGameKey = theProperGames.get(0).split(":")[0];
                 theGameVersion = theProperGames.get(0).split(":")[2];
             }
