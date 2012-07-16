@@ -42,7 +42,7 @@ public class Scheduling {
             "breakthroughWalls:2:v0",
 //            //"chess:2",
             "cephalopodMicro:2:v0",
-            "checkers:2:v1",
+            //"checkers:2:v1",
             "chineseCheckers3:3:v0",
             "cittaceot:2:v0",
             "connectFour:2:v0",
@@ -80,6 +80,19 @@ public class Scheduling {
     public static void runSchedulingRound(ServerState theState) throws IOException {        
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
 
+        try {
+            // Load the ongoing matches list from the database.
+            JSONObject activeSet = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterActiveSet,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2");
+            JSONArray activeMatchArray = activeSet.getJSONArray("queryMatches");
+            Set<String> activeMatches = new HashSet<String>();
+            for (int i = 0; i < activeMatchArray.length(); i++) {
+                activeMatches.add(activeMatchArray.getString(i));
+            }
+            theState.getRunningMatches().addAll(activeMatches);
+        } catch (JSONException je) {
+            throw new RuntimeException(je);
+        }
+        
         {
             // Find and clear all of the completed or wedged matches. For matches
             // which are still ongoing, mark the players in those matches as busy.
