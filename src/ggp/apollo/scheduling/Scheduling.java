@@ -38,36 +38,47 @@ public class Scheduling {
             "biddingTicTacToe_10coins:2:v0",            
             "blocker:2:v0",
             "breakthrough:2:v0",
+            "breakthroughHoles:2:v0",
             "breakthroughSmall:2:v0",
+            "breakthroughSmallHoles:2:v0",            
+            "breakthroughSuicide:2:v0",
             "breakthroughWalls:2:v0",
 //            //"chess:2",
             "cephalopodMicro:2:v0",
-            //"checkers:2:v1",
+            "checkers:2:v1",
+            "checkersSmall:2:v1",
+            "checkersTiny:2:v1",
             "chineseCheckers3:3:v0",
             "cittaceot:2:v0",
             "connectFour:2:v0",
             "connectFourSuicide:2:v0",
             "dotsAndBoxes:2:v0",
+            "dotsAndBoxesSuicide:2:v0",
             "dualConnect4:2:v1",
             "eightPuzzle:1:v0",
             //"escortLatch:2:v0",
+            "god:1:v0",
             "golden_rectangle:2:v1",
             "knightThrough:2:v0",
             "knightsTour:1:v0",
-            //"pawnToQueen:2:v0",
+            "pawnToQueen:2:v0",
             "pawnWhopping:2:v1",
             "peg:1:v0",
             "pegEuro:1:v0",
-            //"pentago:2:v1",
-            //"pentagoSuicide:2:v1",
+            "pentago:2:v1",
+            "pentagoSuicide:2:v1",
             "lightsOut:1:v0",
+            "max_knights:1:v0",
             //"2pffa_zerosum:2:v0",
-            //"qyshinsu:2:v0",
+            "qyshinsu:2:v0",
             "sheepAndWolf:2:v0",
             "nineBoardTicTacToe:2:v0",
 //            "snakeAssemblit:2:v0",
             //"ttcc4_2player:2:v0",
-            "ticTacToe:2:v0"
+            "tictactoe_3player:3:v0",
+            "ticTacToeLarge:2:v0",
+            "ticTacToe:2:v0",
+            "ticTicToe:2:v0"
 //            "withConviction:2:v0"
     };    
 
@@ -156,7 +167,7 @@ public class Scheduling {
             // they're disabled.
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                 Player p = theAvailablePlayers.get(i);                
-                if (!p.isEnabled() || (p.isPingable() && !("available".equals(p.getPingStatus()))) || busyPlayerNames.contains(p.getName())) {
+                if (!p.isEnabled() || (p.isPingable() && !("available".equals(p.getPingStatus().toLowerCase()))) || busyPlayerNames.contains(p.getName())) {
                     theAvailablePlayers.remove(i);
                 }
             }
