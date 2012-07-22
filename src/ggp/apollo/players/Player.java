@@ -133,6 +133,11 @@ public class Player {
     }
     
     public void setPingStatus(String theNewStatus, String theError) {
+    	if (theNewStatus.length() > 100) {
+    		// Ping status should be either "busy" or "available", so we should feel free
+    		// to trim any status that's longer than 100 characters.
+    		theNewStatus = theNewStatus.substring(0, 100);
+    	}
         pingStatus = theNewStatus;
         pingError = theError;
     }
