@@ -51,6 +51,7 @@ public class Scheduling {
             "chineseCheckers3:3:v0",
             "cittaceot:2:v0",
             "connectFour:2:v0",
+            "connectFourLarge:2:v0",
             "connectFourSuicide:2:v0",
             "dotsAndBoxes:2:v0",
             "dotsAndBoxesSuicide:2:v0",
