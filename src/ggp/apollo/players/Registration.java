@@ -42,13 +42,13 @@ public class Registration {
                     theResponse.put("federatedIdentity", user.getFederatedIdentity());
                     theResponse.put("emailAddress", user.getEmail());
                     theResponse.put("userId", user.getUserId());
-                    theResponse.put("logoutURL", userService.createLogoutURL("http://apollo.ggp.org/REPLACEME"));
+                    theResponse.put("logoutURL", userService.createLogoutURL("http://tiltyard.ggp.org/REPLACEME"));
                     theResponse.put("loggedIn", true);
                     theResponse.put("isAdmin", userService.isUserAdmin());
                 } else {
                     Map<String, String> openIdProviders = new HashMap<String, String>();
                     openIdProviders = new HashMap<String, String>();
-                    openIdProviders.put("google", "google.com/accounts/o8/id");
+                    openIdProviders.put("google", "https://www.google.com/accounts/o8/id");
                     openIdProviders.put("yahoo", "yahoo.com");
                     openIdProviders.put("myspace", "myspace.com");
                     openIdProviders.put("aol", "aol.com");
@@ -57,7 +57,7 @@ public class Registration {
                     JSONObject theProviders = new JSONObject();
                     for (String providerName : openIdProviders.keySet()) {
                         String providerUrl = openIdProviders.get(providerName);
-                        theProviders.put(providerName, userService.createLoginURL("http://apollo.ggp.org/REPLACEME", null, providerUrl, new HashSet<String>()));
+                        theProviders.put(providerName, userService.createLoginURL("http://tiltyard.ggp.org/REPLACEME", null, providerUrl, new HashSet<String>()));
                     }
                     theResponse.put("providers", theProviders);
                     theResponse.put("preferredOrder", new String[] {"google", "yahoo", "aol", "myspace", "myopenid"} );
