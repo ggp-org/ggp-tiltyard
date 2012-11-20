@@ -263,14 +263,21 @@ public class Scheduling {
 
         // Send the match request to the Apollo backend, and get back the URL
         // for the match on the spectator server.
+        int nAttempt = 0;
         String theSpectatorURL = null;
-        try {
-            URL url = new URL("http://" + theBackendAddress + ":9124/" + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-            theSpectatorURL = reader.readLine();
-            reader.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        while (true) {        	
+	        try {
+	            URL url = new URL("http://" + theBackendAddress + ":9124/" + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
+	          	BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+	           	theSpectatorURL = reader.readLine();
+	            reader.close();
+	            break;
+	        } catch (Exception e) {
+	        	if (nAttempt > 9) {
+	        		throw new RuntimeException(e);
+	        	}
+	        }
+	        nAttempt++;
         }
         if (!theSpectatorURL.equals("http://matches.ggp.org/matches/null/")) {
             theState.getRunningMatches().add(theSpectatorURL);
