@@ -93,9 +93,23 @@ public class Scheduling {
     public static void runSchedulingRound(ServerState theState) throws IOException {        
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
 
+        // Load the ongoing matches list from the database. When this query fails,
+        // retry a few times to suss out transient errors.
+        JSONObject activeSet = null;
+        int nQueryAttempt = 0;
+        while (true) {        	
+	        try {
+	            activeSet = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterActiveSet,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2");
+	            break;
+	        } catch (Exception e) {
+	        	if (nQueryAttempt > 9) {
+	        		throw new RuntimeException(e);
+	        	}
+	        }
+	        nQueryAttempt++;
+        }
+
         try {
-            // Load the ongoing matches list from the database.
-            JSONObject activeSet = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterActiveSet,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2");
             JSONArray activeMatchArray = activeSet.getJSONArray("queryMatches");
             Set<String> activeMatches = new HashSet<String>();
             for (int i = 0; i < activeMatchArray.length(); i++) {
@@ -263,7 +277,7 @@ public class Scheduling {
 
         // Send the match request to the Apollo backend, and get back the URL
         // for the match on the spectator server.
-        int nAttempt = 0;
+        int nStartMatchAttempt = 0;
         String theSpectatorURL = null;
         while (true) {        	
 	        try {
@@ -273,11 +287,11 @@ public class Scheduling {
 	            reader.close();
 	            break;
 	        } catch (Exception e) {
-	        	if (nAttempt > 9) {
+	        	if (nStartMatchAttempt > 9) {
 	        		throw new RuntimeException(e);
 	        	}
 	        }
-	        nAttempt++;
+	        nStartMatchAttempt++;
         }
         if (!theSpectatorURL.equals("http://matches.ggp.org/matches/null/")) {
             theState.getRunningMatches().add(theSpectatorURL);
