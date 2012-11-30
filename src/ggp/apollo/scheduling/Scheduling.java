@@ -22,6 +22,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.prodeagle.java.counters.Counter;
+
 import util.configuration.RemoteResourceLoader;
 import util.crypto.SignableJSON;
 
@@ -92,6 +94,8 @@ public class Scheduling {
 
     public static void runSchedulingRound(ServerState theState) throws IOException {        
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
+        
+        Counter.increment("Tiltyard.Scheduling.Round.Started");
 
         // Load the ongoing matches list from the database. When this query fails,
         // retry a few times to suss out transient errors.
@@ -199,6 +203,8 @@ public class Scheduling {
         int readyPlayers = theAvailablePlayers.size();
         if (readyPlayers == 0) return;
         
+        Counter.increment("Tiltyard.Scheduling.Round.AvailablePlayers");
+        
         // Shuffle the list of known proper games, draw a game, and check whether
         // we have enough players available to play it. Repeat until we have a game.
         int nPlayersForGame;
@@ -266,7 +272,8 @@ public class Scheduling {
         }
         if (validBackends.size() == 0) {
             theBackends.getBackendAddresses().clear();
-            theBackends.addBackendError();            
+            theBackends.addBackendError();
+            Counter.increment("Tiltyard.Scheduling.Backend.Errors");
             theBackends.save();
             return;
         }
@@ -274,7 +281,7 @@ public class Scheduling {
         theBackends.getBackendAddresses().retainAll(validBackends);
         theBackends.clearBackendErrors();
         theBackends.save();
-
+        
         // Send the match request to the Apollo backend, and get back the URL
         // for the match on the spectator server.
         int nStartMatchAttempt = 0;
@@ -295,7 +302,9 @@ public class Scheduling {
         }
         if (!theSpectatorURL.equals("http://matches.ggp.org/matches/null/")) {
             theState.getRunningMatches().add(theSpectatorURL);
-        }        
+        }
+        
+        Counter.increment("Tiltyard.Scheduling.Round.Success");
     }
 
     private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {
