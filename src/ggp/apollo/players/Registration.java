@@ -85,6 +85,10 @@ public class Registration {
                     resp.setStatus(404);
                     return;                    
                 }
+                if (theName.toLowerCase().equals("random")) {
+                	resp.setStatus(404);
+                	return;
+                }
                 
                 Player p = Player.loadPlayer(theName);
                 if (p == null) {
