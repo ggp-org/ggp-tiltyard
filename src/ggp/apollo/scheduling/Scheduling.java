@@ -247,7 +247,7 @@ public class Scheduling {
             theMatchRequest.put("startClock", 120);
             theMatchRequest.put("playClock", 20);
             theMatchRequest.put("gameURL", theGameURL);
-            theMatchRequest.put("matchId", "apollo." + theGameKey + "." + System.currentTimeMillis());
+            theMatchRequest.put("matchId", "tiltyard." + theGameKey + "." + System.currentTimeMillis());
             theMatchRequest.put("players", playerURLsForMatch);
             theMatchRequest.put("playerNames", playerNamesForMatch);
         } catch (JSONException e) {
