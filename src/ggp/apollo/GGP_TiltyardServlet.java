@@ -19,7 +19,7 @@ import com.google.appengine.api.capabilities.Capability;
 import com.google.appengine.api.capabilities.CapabilityStatus;
 
 @SuppressWarnings("serial")
-public class GGP_ApolloServlet extends HttpServlet {
+public class GGP_TiltyardServlet extends HttpServlet {
     public static boolean isDatastoreWriteable() {
         CapabilitiesService service = CapabilitiesServiceFactory.getCapabilitiesService();
         CapabilityStatus status = service.getStatus(Capability.DATASTORE_WRITE).getStatus();
