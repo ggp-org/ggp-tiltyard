@@ -132,7 +132,7 @@ public class Scheduling {
             for (String matchURL : theState.getRunningMatches()) {
                 try {
                     JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(matchURL);
-                    if (verifyApolloCryptography(theMatchInfo)) {
+                    if (verifyTiltyardCryptography(theMatchInfo)) {
                         List<String> matchPlayers = new ArrayList<String>();
                         {
                           JSONArray thePlayers = theMatchInfo.getJSONArray("playerNamesFromHost");
@@ -240,7 +240,7 @@ public class Scheduling {
                 break;
         }
 
-        // Construct a JSON request to the Apollo backend with the information
+        // Construct a JSON request to the Tiltyard backend with the information
         // needed to run a match of the selected game w/ the selected players.
         JSONObject theMatchRequest = new JSONObject();
         try {
@@ -282,7 +282,7 @@ public class Scheduling {
         theBackends.clearBackendErrors();
         theBackends.save();
         
-        // Send the match request to the Apollo backend, and get back the URL
+        // Send the match request to the Tiltyard backend, and get back the URL
         // for the match on the spectator server.
         int nStartMatchAttempt = 0;
         String theSpectatorURL = null;
@@ -341,7 +341,7 @@ public class Scheduling {
         }
     }
 
-    public static boolean verifyApolloCryptography(JSONObject theMatchInfo) {
+    public static boolean verifyTiltyardCryptography(JSONObject theMatchInfo) {
         try {
             if (!SignableJSON.isSignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
             if (!SignableJSON.verifySignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
