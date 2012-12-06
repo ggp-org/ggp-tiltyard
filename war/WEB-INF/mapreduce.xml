@@ -2,7 +2,7 @@
   <configuration name="SimpleMapper">
     <property>
       <name>mapreduce.map.class</name>
-      <value>ggp.apollo.mapreduce.SimpleMapper</value>
+      <value>ggp.tiltyard.mapreduce.SimpleMapper</value>
     </property>
     <property>
       <name>mapreduce.inputformat.class</name>

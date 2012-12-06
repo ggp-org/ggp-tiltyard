@@ -1,6 +1,6 @@
-package ggp.apollo.scheduling.backends;
+package ggp.tiltyard.scheduling.backends;
 
-import ggp.apollo.TiltyardPublicKey;
+import ggp.tiltyard.TiltyardPublicKey;
 
 import java.io.IOException;
 

@@ -1,9 +1,9 @@
-package ggp.apollo.scheduling;
+package ggp.tiltyard.scheduling;
 
-import ggp.apollo.TiltyardPublicKey;
-import ggp.apollo.players.Player;
-import ggp.apollo.scheduling.backends.BackendRegistration;
-import ggp.apollo.scheduling.backends.Backends;
+import ggp.tiltyard.TiltyardPublicKey;
+import ggp.tiltyard.players.Player;
+import ggp.tiltyard.scheduling.backends.BackendRegistration;
+import ggp.tiltyard.scheduling.backends.Backends;
 
 import java.io.BufferedReader;
 import java.io.IOException;

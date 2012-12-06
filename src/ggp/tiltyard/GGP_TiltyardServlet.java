@@ -1,8 +1,8 @@
-package ggp.apollo;
+package ggp.tiltyard;
 
-import ggp.apollo.players.Registration;
-import ggp.apollo.scheduling.Scheduling;
-import ggp.apollo.scheduling.backends.BackendRegistration;
+import ggp.tiltyard.players.Registration;
+import ggp.tiltyard.scheduling.Scheduling;
+import ggp.tiltyard.scheduling.backends.BackendRegistration;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

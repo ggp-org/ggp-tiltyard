@@ -6,7 +6,7 @@ xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
 http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 	<servlet>
 		<servlet-name>GGP_Apollo</servlet-name>
-		<servlet-class>ggp.apollo.GGP_TiltyardServlet</servlet-class>
+		<servlet-class>ggp.tiltyard.GGP_TiltyardServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>GGP_Apollo</servlet-name>

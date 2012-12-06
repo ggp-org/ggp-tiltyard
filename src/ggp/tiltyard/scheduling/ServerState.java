@@ -1,6 +1,6 @@
-package ggp.apollo.scheduling;
+package ggp.tiltyard.scheduling;
 
-import ggp.apollo.Persistence;
+import ggp.tiltyard.Persistence;
 
 import java.io.IOException;
 import java.util.HashSet;

@@ -1,4 +1,4 @@
-package ggp.apollo.players;
+package ggp.tiltyard.players;
 
 import java.io.IOException;
 import java.util.HashMap;
