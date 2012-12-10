@@ -235,13 +235,20 @@ public class Scheduling {
         	}
         	i++;
         }
+        
+        // Choose randomized start clocks and play clocks for the match.
+        // Start clocks vary between 90 seconds and 180 seconds.
+        // Play clocks vary between 15 seconds and 45 seconds.
+        Random theRandom = new Random();
+        int startClock = 90 + 10*theRandom.nextInt(10);
+        int playClock = 15 + 5*theRandom.nextInt(7);
         	
         // Construct a JSON request to the Tiltyard backend with the information
         // needed to run a match of the selected game w/ the selected players.
         JSONObject theMatchRequest = new JSONObject();
         try {
-            theMatchRequest.put("startClock", 120);
-            theMatchRequest.put("playClock", 20);
+            theMatchRequest.put("startClock", startClock);
+            theMatchRequest.put("playClock", playClock);
             theMatchRequest.put("gameURL", theGameURL);
             theMatchRequest.put("matchId", "tiltyard." + gameKey + "." + System.currentTimeMillis());
             theMatchRequest.put("players", playerURLsForMatch);
