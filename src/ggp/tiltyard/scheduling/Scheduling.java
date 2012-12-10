@@ -280,7 +280,8 @@ public class Scheduling {
         // TODO(schreib): Eventually this might be a good place for load balancing
         // logic, to ensure the matches-per-backend load is distributed roughly evenly
         // rather than clobbering one unlucky backend. This may also be a good place
-        // for rate-limiting logic to avoid overloading backends.
+        // for rate-limiting logic to avoid overloading backends: we can always just
+        // not start new matches if all of the backends are overloaded.
         String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
         theBackends.getBackendAddresses().retainAll(validBackends);
         theBackends.clearBackendErrors();
