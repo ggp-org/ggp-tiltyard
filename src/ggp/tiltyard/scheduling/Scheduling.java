@@ -205,41 +205,55 @@ public class Scheduling {
         
         Counter.increment("Tiltyard.Scheduling.Round.AvailablePlayers");
         
-        // Shuffle the list of known proper games, draw a game, and check whether
-        // we have enough players available to play it. Repeat until we have a game.
-        int nPlayersForGame;
-        String theGameKey = null;
-        String theGameVersion = null;
+        // Shuffle the list of known proper games, draw a game, and get ready to play.
         List<String> theProperGames = Arrays.asList(someProperGames);
-        do {
-            Collections.shuffle(theProperGames);            
-            nPlayersForGame = Integer.parseInt(theProperGames.get(0).split(":")[1]);
-            if (readyPlayers >= nPlayersForGame && (readyPlayers == 1 || nPlayersForGame > 1)){
-                theGameKey = theProperGames.get(0).split(":")[0];
-                theGameVersion = theProperGames.get(0).split(":")[2];
-            }
-        } while (theGameKey == null);
-
+        Collections.shuffle(theProperGames);
+        int nPlayersForGame = Integer.parseInt(theProperGames.get(0).split(":")[1]);
+        String theGameKey = theProperGames.get(0).split(":")[0];
+        String theGameVersion = theProperGames.get(0).split(":")[2];
+        
         // Eventually we should support other repository servers. Figure out how
         // to do this in a safe, secure fashion (since the repository server can
         // inject arbitrary javascript into the visualizations).
         String theGameURL = "http://games.ggp.org/base/games/" + theGameKey + "/" + theGameVersion + "/";
 
-        // Assign available players to roles in the game.
+        // Shuffle the set of available players and then assign them to roles
+        // in the game until we run out of players or roles. If we run out of
+        // players, assign random players to fill the remaining roles. Lastly
+        // shuffle the mapping of players to roles so that the random players
+        // aren't always playing the last roles in the game.
+        List<Player> theChosenPlayers = new ArrayList<Player>();
         Collections.shuffle(theAvailablePlayers);
-        String[] playerURLsForMatch = new String[nPlayersForGame];
-        List<String> playerNamesForMatch = new ArrayList<String>();
-        Set<Player> playersForMatch = new HashSet<Player>();
         for (Player p : theAvailablePlayers) {
-            nPlayersForGame--;
-            playerURLsForMatch[nPlayersForGame] = p.getURL();
-            playerNamesForMatch.add(0,p.getName());
-            playersForMatch.add(p);
-                        
-            if (nPlayersForGame == 0)
-                break;
+        	nPlayersForGame--;
+        	theChosenPlayers.add(p);
+        	if (nPlayersForGame == 0)
+        		break;
         }
-
+        while (nPlayersForGame > 0) {
+        	nPlayersForGame--;
+        	// null stands in for a random player.
+        	theChosenPlayers.add(null);
+        }
+        Collections.shuffle(theChosenPlayers);
+        
+        // Once the final mapping of players to roles has been chosen,
+        // extract the names and URLs from the players into a form that
+        // will appear in the match creation request.
+        int i = 0;
+        String[] playerURLsForMatch = new String[theChosenPlayers.size()];
+        String[] playerNamesForMatch = new String[theChosenPlayers.size()];
+        for (Player p : theChosenPlayers) {        	
+        	if (p == null) {
+        		playerURLsForMatch[i] = "127.0.0.1:12345";
+        		playerNamesForMatch[i] = "Random";
+        	} else {
+        		playerURLsForMatch[i] = p.getURL();
+        		playerNamesForMatch[i] = p.getName();
+        	}
+        	i++;
+        }
+        	
         // Construct a JSON request to the Tiltyard backend with the information
         // needed to run a match of the selected game w/ the selected players.
         JSONObject theMatchRequest = new JSONObject();
@@ -255,6 +269,10 @@ public class Scheduling {
             return;
         }
         
+        // Find a backend server to run the match. As part of this process,
+        // ping all of the registered backend servers to verify that they're
+        // still available, and deregister those that aren't. Lastly choose
+        // randomly from the remaining ones.
         Backends theBackends = Backends.loadBackends();
         List<String> validBackends = new ArrayList<String>();
         for (String theBackendAddress : theBackends.getBackendAddresses()) {
@@ -277,6 +295,10 @@ public class Scheduling {
             theBackends.save();
             return;
         }
+        // TODO(schreib): Eventually this might be a good place for load balancing
+        // logic, to ensure the matches-per-backend load is distributed roughly evenly
+        // rather than clobbering one unlucky backend. This may also be a good place
+        // for rate-limiting logic to avoid overloading backends.
         String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
         theBackends.getBackendAddresses().retainAll(validBackends);
         theBackends.clearBackendErrors();
