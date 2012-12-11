@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +34,29 @@ public class Scheduling {
     // Eventually we should support other repository servers. Figure out how
     // to do this in a safe, secure fashion (since the repository server can
     // inject arbitrary javascript into the visualizations).	
-	private static final String GAME_REPO_URL = "http://games.ggp.org/base/"; 
+	private static final String GAME_REPO_URL = "http://games.ggp.org/base/";
+	
+	// This is a whitelist of games that the backend server can handle. Ideally we'll be able
+	// to get rid of this at some point. This eliminates chess-like games and other large games
+	// (e.g. Amazons, Knight Fight) and some games which aren't fully debugged, and probably a
+	// few legit games that should be in the rotation (since whitelisting is a bad approach).
+	private static final String[] safeGames = {
+		"2pffa", "2pffa_zerosum", "2pttc", "3pffa", "3pttc", "3pConnectFour", "4pttc", "4pffa", "beatMania",
+		"biddingTicTacToe", "biddingTicTacToe_10coins",  "blocker", "bomberman2p", "breakthrough",
+		"breakthroughHoles", "breakthroughSmall", "breakthroughSmallHoles",
+		"breakthroughSuicide", "breakthroughWalls", "cephalopodMicro", "checkers", "checkersSmall",
+		"checkersTiny", "chickentictactoe", "chineseCheckers1", "chineseCheckers2",
+		"chineseCheckers3", "chineseCheckers4", "chineseCheckers6", "cittaceot", "connect5",
+		"connectFour", "connectFourLarge", "connectFourLarger", "connectFourSimultaneous",
+		"connectFourSuicide", "dotsAndBoxes", "dotsAndBoxesSuicide", "dualConnect4",
+		"eightPuzzle", "escortLatch", "ghostMaze2p", "god", "golden_rectangle", "knightThrough", "knightsTour",
+		"lightsOn", "lightsOnParallel", "lightsOnSimul4", "lightsOnSimultaneous", "lightsOut", "max_knights",
+		"maze", "nineBoardTicTacToe", "numberTicTacToe", "pacman2p", "pacman3p",
+		"pawnToQueen", "pawnWhopping", "peg", "pegEuro", "pentago", "pentagoSuicide",
+		"qyshinsu", "sheepAndWolf", "simultaneousWin2", "snake2p", "snakeAssemblit", "snakeParallel",
+		"ttcc4_2player", "tictactoe_3player", "ticTacToe", "ticTacToeLarge", "ticTacToeLargeSuicide",
+		"ticTacToeParallel", "ticTacToeSerial", "ticTicToe",
+	};
 
     public static void runSchedulingRound() throws IOException {
         ServerState theState = ServerState.loadState();
@@ -170,12 +193,16 @@ public class Scheduling {
         }        
 
         // Collect all of the games which have visualizations, which we'll call the
-        // set of "proper" games that will be played on Tiltyard.
+        // set of "proper" games that will be played on Tiltyard. Also only allow games
+        // on a whitelist of "safe" games that the backend can handle.
+        Set<String> theSafeGames = new HashSet<String>(Arrays.asList(safeGames));
         List<String> properGameKeys = new ArrayList<String>();
         Map<String, JSONObject> properGames = new HashMap<String, JSONObject>();        
         Iterator<?> itr = metadataForGames.keys();
         while (itr.hasNext()) {
         	String key = itr.next().toString();
+        	if (!theSafeGames.contains(key))
+        		continue;
         	try {
 	        	JSONObject gameMetadata = metadataForGames.getJSONObject(key);
 	        	if (gameMetadata.has("stylesheet")) {        		
