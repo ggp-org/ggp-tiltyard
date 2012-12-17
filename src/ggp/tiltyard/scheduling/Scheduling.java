@@ -50,8 +50,7 @@ public class Scheduling {
 		"connectFour", "connectFourLarge", "connectFourLarger", "connectFourSimultaneous",
 		"connectFourSuicide", "dotsAndBoxes", "dotsAndBoxesSuicide", "dualConnect4",
 		"eightPuzzle", "escortLatch", "ghostMaze2p", "god", "golden_rectangle", "knightThrough", "knightsTour",
-		"lightsOn", "lightsOnParallel", "lightsOnSimul4", "lightsOnSimultaneous", "lightsOut", "max_knights",
-		"maze", "nineBoardTicTacToe", "numberTicTacToe", "pacman2p", "pacman3p",
+		"lightsOut", "max_knights", "maze", "nineBoardTicTacToe", "numberTicTacToe", "pacman2p", "pacman3p",
 		"pawnToQueen", "pawnWhopping", "peg", "pegEuro", "pentago", "pentagoSuicide",
 		"qyshinsu", "sheepAndWolf", "simultaneousWin2", "snake2p", "snakeAssemblit", "snakeParallel",
 		"ttcc4_2player", "tictactoe_3player", "ticTacToe", "ticTacToeLarge", "ticTacToeLargeSuicide",
@@ -304,10 +303,9 @@ public class Scheduling {
             }
             validBackends.add(theBackendAddress);
         }
-        if (validBackends.size() == 0) {
-            theBackends.getBackendAddresses().clear();
-            theBackends.addBackendError();
+        if (validBackends.size() == 0) {            
             Counter.increment("Tiltyard.Scheduling.Backend.Errors");
+            theBackends.getBackendAddresses().clear();
             theBackends.save();
             return;
         }
@@ -318,7 +316,6 @@ public class Scheduling {
         // not start new matches if all of the backends are overloaded.
         String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
         theBackends.getBackendAddresses().retainAll(validBackends);
-        theBackends.clearBackendErrors();
         theBackends.save();
         
         // Send the match request to the Tiltyard backend, and get back the URL
