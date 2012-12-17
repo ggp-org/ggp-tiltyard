@@ -30,6 +30,7 @@ public class Player {
     @Persistent private String visibleEmail;
     @Persistent private String visibleWebsite;
     @Persistent private Boolean isPingable;
+    @Persistent private String imageBlobKey;
 
     public Player(String theName, String theURL, String anOwner) {
         this.theName = theName;
@@ -43,6 +44,7 @@ public class Player {
         
         this.setVisibleEmail("");
         this.setVisibleWebsite("");
+        this.setImageBlobKey("");
         
         this.nStrikes = 0;
         
@@ -67,6 +69,14 @@ public class Player {
 
     public String getVisibleWebsite() {
         return visibleWebsite;
+    }
+    
+    public void setImageBlobKey(String imageBlobKey) {
+    	this.imageBlobKey = imageBlobKey;
+    }
+    
+    public String getImageBlobKey() {
+    	return imageBlobKey;
     }
 
     public void setURL(String theURL) {

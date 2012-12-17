@@ -3,13 +3,20 @@ package ggp.tiltyard.players;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.appengine.api.blobstore.BlobKey;
+import com.google.appengine.api.blobstore.BlobstoreService;
+import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,13 +34,30 @@ public class Registration {
                 }
                 resp.getWriter().println(theResponse.toString());
             } else if (theRPC.startsWith("players/")) {
-                String thePlayer = theRPC.replaceFirst("players/", "");
+                String[] thePlayerURL = theRPC.replaceFirst("players/", "").split("/");
+                String thePlayer = thePlayerURL[0];
                 Player p = Player.loadPlayer(thePlayer);
-                if (p == null) {
-                    resp.setStatus(404);
-                    return;
+                if (thePlayerURL.length == 1) {
+                    if (p == null) {
+                        resp.setStatus(404);
+                        return;
+                    }                	
+                	JSONObject thePlayerJSON = p.asJSON(p.isOwner(userId));
+                	if (p.isOwner(userId)) {
+                		BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+                		thePlayerJSON.put("imageUploadURL", blobstoreService.createUploadUrl("/data/uploadPlayerImage/" + thePlayerURL[0]));
+                	}
+                	resp.getWriter().println(thePlayerJSON);
+                } else if (thePlayerURL.length == 2 && thePlayerURL[1].equals("image")) {
+                    if (p == null || p.getImageBlobKey() == null || p.getImageBlobKey().isEmpty()) {
+                        resp.sendRedirect("http://placekitten.com/25/25");
+                        return;
+                    }
+                	BlobKey blobKey = new BlobKey(p.getImageBlobKey());
+                	BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+                	blobstoreService.serve(blobKey, resp);
+                	return;
                 }
-                resp.getWriter().println(p.asJSON(p.isOwner(userId)));
             } else if (theRPC.equals("login")) {
                 JSONObject theResponse = new JSONObject();
                 if (user != null) {
@@ -72,7 +96,7 @@ public class Registration {
         }        
     }
     
-    public static void doPost(String theURI, String in, HttpServletResponse resp) throws IOException {
+    public static void doPost(String theURI, String in, HttpServletRequest req, HttpServletResponse resp) throws IOException {
         UserService userService = UserServiceFactory.getUserService();
         User user = userService.getCurrentUser();
         String userId = (user != null) ? user.getUserId() : "";
@@ -85,7 +109,7 @@ public class Registration {
                     resp.setStatus(404);
                     return;                    
                 }
-                if (theName.toLowerCase().equals("random")) {
+                if (theName.toLowerCase().equals("random") && !theName.equals("Random")) {
                 	resp.setStatus(404);
                 	return;
                 }
@@ -112,6 +136,46 @@ public class Registration {
                 p.save();
 
                 resp.getWriter().println(p.asJSON(true));
+            } else if (theURI.startsWith("/data/uploadPlayerImage/") && userId.length() > 0) {
+            	String playerName = theURI.replaceFirst("/data/uploadPlayerImage/", "");
+                Player p = Player.loadPlayer(playerName);
+                
+            	BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+            	Map<String, List<BlobKey>> blobs = blobstoreService.getUploads(req);
+            	
+            	BlobKey theBlob = null;
+            	Set<BlobKey> blobsToDelete = new HashSet<BlobKey>();
+            	for (List<BlobKey> list : blobs.values()) {
+            		for (BlobKey b : list) {
+            			if (p != null && (theBlob == null || theBlob.equals(b))) {
+            				theBlob = b;
+            			} else {
+            				blobsToDelete.add(b);
+            			}
+            		}
+            	}
+            	if (p != null) {
+            		String oldBlobKey = p.getImageBlobKey();
+            		if (oldBlobKey != null && !oldBlobKey.isEmpty() && !oldBlobKey.equals(theBlob.getKeyString())) {
+            			blobsToDelete.add(new BlobKey(p.getImageBlobKey()));
+            		}
+            	}
+            	int i = 0;
+            	BlobKey[] blobsToDeleteArr = new BlobKey[blobsToDelete.size()];
+            	for (BlobKey blobToDelete : blobsToDelete) {
+            		blobsToDeleteArr[i++] = blobToDelete;
+            	}
+				blobstoreService.delete(blobsToDeleteArr);
+            	
+                if (p == null) {
+                    resp.setStatus(404);
+                    return;
+                } else {
+                	p.setImageBlobKey(theBlob.getKeyString());
+                	p.save();
+                	resp.sendRedirect("/players/" + playerName);
+                	return;
+                }
             } else {
                 resp.setStatus(404);
             }

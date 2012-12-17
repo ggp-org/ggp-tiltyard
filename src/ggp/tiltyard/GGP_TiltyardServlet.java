@@ -113,18 +113,21 @@ public class GGP_TiltyardServlet extends HttpServlet {
         resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
 
         String theURI = req.getRequestURI();
-        BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
-        int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
-        StringBuilder theInput = new StringBuilder();
-        for (int i = 0; i < contentLength; i++) {
-            theInput.append((char)br.read());
+        String in = null;
+        if (!theURI.contains("/data/uploadPlayerImage/")) {
+	        BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
+	        int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
+	        StringBuilder theInput = new StringBuilder();
+	        for (int i = 0; i < contentLength; i++) {
+	            theInput.append((char)br.read());
+	        }
+	        in = theInput.toString().trim();
         }
-        String in = theInput.toString().trim();        
 
         if (theURI.startsWith("/backends/")) {
             BackendRegistration.doPost(theURI, in, req.getRemoteAddr(), resp);
         } else {
-            Registration.doPost(theURI, in, resp);
+            Registration.doPost(theURI, in, req, resp);
         }
     }
 
