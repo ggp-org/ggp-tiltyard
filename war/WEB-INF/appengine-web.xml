@@ -10,11 +10,11 @@
 	</system-properties>
 
 	<resource-files>
-        <include path="**" />
+        <include path="/**" />
     </resource-files>
     
     <static-files>
-        <include path="favicon.ico" />
-        <include path="static/**" />
+        <include path="/favicon.ico" expiration="7d" />
+        <include path="/static/**" expiration="7d" />
     </static-files>  		
 </appengine-web-app>

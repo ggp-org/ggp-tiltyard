@@ -15,6 +15,10 @@ import javax.jdo.annotations.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.appengine.api.blobstore.BlobKey;
+import com.google.appengine.api.images.ImagesServiceFactory;
+import com.google.appengine.api.images.ServingUrlOptions;
+
 @PersistenceCapable
 public class Player {
     @PrimaryKey @Persistent private String theName;    
@@ -30,7 +34,11 @@ public class Player {
     @Persistent private String visibleEmail;
     @Persistent private String visibleWebsite;
     @Persistent private Boolean isPingable;
+    
+    // Optional image-related fields.
     @Persistent private String imageBlobKey;
+    @Persistent private String imageLargeURL;
+    @Persistent private String imageThumbURL;
 
     public Player(String theName, String theURL, String anOwner) {
         this.theName = theName;
@@ -65,6 +73,8 @@ public class Player {
     
     public void setImageBlobKey(String imageBlobKey) {
     	this.imageBlobKey = imageBlobKey;
+    	this.imageLargeURL = ImagesServiceFactory.getImagesService().getServingUrl(ServingUrlOptions.Builder.withBlobKey(new BlobKey(imageBlobKey)).imageSize(150));
+    	this.imageThumbURL = ImagesServiceFactory.getImagesService().getServingUrl(ServingUrlOptions.Builder.withBlobKey(new BlobKey(imageBlobKey)).imageSize(25));
     }
     
     public String getImageBlobKey() {
@@ -162,10 +172,9 @@ public class Player {
             theJSON.put("visibleEmail", visibleEmail);
             theJSON.put("visibleWebsite", visibleWebsite);
             theJSON.put("pingStatus", pingStatus);
-            if (imageBlobKey == null || imageBlobKey.isEmpty()) {
-            	theJSON.put("imageURL", "http://placekitten.com/200/200");
-            } else {
-            	theJSON.put("imageURL", "//tiltyard.ggp.org/static/blob/" + imageBlobKey);
+            if (imageBlobKey != null && !imageBlobKey.isEmpty()) {
+            	theJSON.put("imageURL", imageLargeURL);
+            	theJSON.put("thumbURL", imageThumbURL);
             }
             if (includePrivate) {
                 // Not sure if we want to expose the userID information,

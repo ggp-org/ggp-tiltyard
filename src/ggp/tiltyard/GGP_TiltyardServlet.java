@@ -13,9 +13,6 @@ import java.io.InputStreamReader;
 
 import javax.servlet.http.*;
 
-import com.google.appengine.api.blobstore.BlobKey;
-import com.google.appengine.api.blobstore.BlobstoreService;
-import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
 import com.google.appengine.api.capabilities.CapabilitiesService;
 import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
 import com.google.appengine.api.capabilities.Capability;
@@ -55,12 +52,6 @@ public class GGP_TiltyardServlet extends HttpServlet {
             return;
         }
         
-        if (req.getRequestURI().startsWith("/static/blob/")) {
-        	BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
-        	blobstoreService.serve(new BlobKey(req.getRequestURI().replaceFirst("/static/blob/", "")), resp);
-        	return;
-        }
-
         String reqURI = req.getRequestURI();
         if (reqURI.equals("/games")) reqURI += "/";
         if (reqURI.equals("/stats")) reqURI += "/";
