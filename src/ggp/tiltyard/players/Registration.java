@@ -34,30 +34,18 @@ public class Registration {
                 }
                 resp.getWriter().println(theResponse.toString());
             } else if (theRPC.startsWith("players/")) {
-                String[] thePlayerURL = theRPC.replaceFirst("players/", "").split("/");
-                String thePlayer = thePlayerURL[0];
+                String thePlayer = theRPC.replaceFirst("players/", "");
                 Player p = Player.loadPlayer(thePlayer);
-                if (thePlayerURL.length == 1) {
-                    if (p == null) {
-                        resp.setStatus(404);
-                        return;
-                    }                	
-                	JSONObject thePlayerJSON = p.asJSON(p.isOwner(userId));
-                	if (p.isOwner(userId)) {
-                		BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
-                		thePlayerJSON.put("imageUploadURL", blobstoreService.createUploadUrl("/data/uploadPlayerImage/" + thePlayerURL[0]));
-                	}
-                	resp.getWriter().println(thePlayerJSON);
-                } else if (thePlayerURL.length == 2 && thePlayerURL[1].equals("image")) {
-                    if (p == null || p.getImageBlobKey() == null || p.getImageBlobKey().isEmpty()) {
-                        resp.sendRedirect("http://placekitten.com/25/25");
-                        return;
-                    }
-                	BlobKey blobKey = new BlobKey(p.getImageBlobKey());
-                	BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
-                	blobstoreService.serve(blobKey, resp);
-                	return;
+                if (p == null) {
+                    resp.setStatus(404);
+                    return;
                 }
+            	JSONObject thePlayerJSON = p.asJSON(p.isOwner(userId));
+            	if (p.isOwner(userId)) {
+            		BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+            		thePlayerJSON.put("imageUploadURL", blobstoreService.createUploadUrl("/data/uploadPlayerImage/" + thePlayer));
+            	}
+            	resp.getWriter().println(thePlayerJSON);
             } else if (theRPC.equals("login")) {
                 JSONObject theResponse = new JSONObject();
                 if (user != null) {

@@ -59,16 +59,8 @@ public class Player {
         this.visibleEmail = visibleEmail;
     }
 
-    public String getVisibleEmail() {
-        return visibleEmail;
-    }
-    
     public void setVisibleWebsite(String visibleWebsite) {
         this.visibleWebsite = visibleWebsite;
-    }
-
-    public String getVisibleWebsite() {
-        return visibleWebsite;
     }
     
     public void setImageBlobKey(String imageBlobKey) {
@@ -170,6 +162,11 @@ public class Player {
             theJSON.put("visibleEmail", visibleEmail);
             theJSON.put("visibleWebsite", visibleWebsite);
             theJSON.put("pingStatus", pingStatus);
+            if (imageBlobKey == null || imageBlobKey.isEmpty()) {
+            	theJSON.put("imageURL", "http://placekitten.com/200/200");
+            } else {
+            	theJSON.put("imageURL", "//tiltyard.ggp.org/static/blob/" + imageBlobKey);
+            }
             if (includePrivate) {
                 // Not sure if we want to expose the userID information,
                 // even to the owners themselves.
