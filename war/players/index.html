@@ -37,8 +37,7 @@
         if (theName.length > 0) {
           var theResponse = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(thePlayer)));
           if (theResponse) {
-            //window.location.href = '/players/' + theName;
-            drawPlayerList();
+            window.location.href = '/players/' + theName;
           } else {
             alert("Failed to create player named: " + theName);
           }
@@ -49,7 +48,7 @@
         var theHTML = '';
         if (nPlayer % 2 == 0) {
           theHTML += "<tr bgcolor=#F5F5F5>";
-        } else {          
+        } else {
           theHTML += "<tr bgcolor=#E0E0E0>";
         }
         
@@ -76,7 +75,6 @@
         theHTML += renderCell(pingStatusIcon(aPlayer));
         theHTML += renderCell('<a href="/players/' + aPlayer.name + '">' + aPlayer.name + '</a>');
         theHTML += renderCell(aPlayer.visibleEmail);
-        theHTML += renderCell(("theURL" in aPlayer) ? "Yours!" : null);
         theHTML += "<td width=10px></td>";
         
         theHTML += "</tr>";

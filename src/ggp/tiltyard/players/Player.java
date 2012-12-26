@@ -73,8 +73,10 @@ public class Player {
     
     public void setImageBlobKey(String imageBlobKey) {
     	this.imageBlobKey = imageBlobKey;
-    	this.imageLargeURL = ImagesServiceFactory.getImagesService().getServingUrl(ServingUrlOptions.Builder.withBlobKey(new BlobKey(imageBlobKey)).imageSize(150));
-    	this.imageThumbURL = ImagesServiceFactory.getImagesService().getServingUrl(ServingUrlOptions.Builder.withBlobKey(new BlobKey(imageBlobKey)).imageSize(25));
+    	if (imageBlobKey != null && !imageBlobKey.isEmpty()) {
+    		this.imageLargeURL = ImagesServiceFactory.getImagesService().getServingUrl(ServingUrlOptions.Builder.withBlobKey(new BlobKey(imageBlobKey)).imageSize(150));
+    		this.imageThumbURL = ImagesServiceFactory.getImagesService().getServingUrl(ServingUrlOptions.Builder.withBlobKey(new BlobKey(imageBlobKey)).imageSize(25));
+    	}
     }
     
     public String getImageBlobKey() {
