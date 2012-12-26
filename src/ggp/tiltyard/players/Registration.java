@@ -24,13 +24,12 @@ public class Registration {
     public static void doGet(String theRPC, HttpServletResponse resp) throws IOException {
         UserService userService = UserServiceFactory.getUserService();
         User user = userService.getCurrentUser();
-        String userId = (user != null) ? user.getUserId() : "";
 
         try {
             if (theRPC.equals("players/")) {
                 JSONObject theResponse = new JSONObject();
                 for (Player p : Player.loadPlayers()) {
-                    theResponse.put(p.getName(), p.asJSON(p.isOwner(userId)));
+                    theResponse.put(p.getName(), p.asJSON(p.isOwner(user)));
                 }
                 resp.getWriter().println(theResponse.toString());
             } else if (theRPC.startsWith("players/")) {
@@ -40,8 +39,8 @@ public class Registration {
                     resp.setStatus(404);
                     return;
                 }
-            	JSONObject thePlayerJSON = p.asJSON(p.isOwner(userId));
-            	if (p.isOwner(userId)) {
+            	JSONObject thePlayerJSON = p.asJSON(p.isOwner(user));
+            	if (p.isOwner(user)) {
             		BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
             		thePlayerJSON.put("imageUploadURL", blobstoreService.createUploadUrl("/data/uploadPlayerImage/" + thePlayer));
             	}
@@ -87,15 +86,14 @@ public class Registration {
     public static void doPost(String theURI, String in, HttpServletRequest req, HttpServletResponse resp) throws IOException {
         UserService userService = UserServiceFactory.getUserService();
         User user = userService.getCurrentUser();
-        String userId = (user != null) ? user.getUserId() : "";
 
         try {
-            if (theURI.equals("/data/updatePlayer") && userId.length() > 0) {
+            if (theURI.equals("/data/updatePlayer")) {
                 JSONObject playerInfo = new JSONObject(in);
                 String theName = sanitizeHarder(playerInfo.getString("name"));
                 if (!theName.equals(playerInfo.getString("name"))) {
                     resp.setStatus(404);
-                    return;                    
+                    return;
                 }
                 if (theName.toLowerCase().equals("random") && !theName.equals("Random")) {
                 	resp.setStatus(404);
@@ -104,11 +102,14 @@ public class Registration {
                 
                 Player p = Player.loadPlayer(theName);
                 if (p == null) {
-                    p = new Player(theName, sanitize(playerInfo.getString("theURL")), userId);
-                } else if (!p.isOwner(userId)) {
+                    p = new Player(theName, sanitize(playerInfo.getString("theURL")), user);
+                } else if (!p.isOwner(user)) {
                     resp.setStatus(404);
                     return;
                 }
+                
+                // TODO: Remove this once all of the players have up-to-date ownership info.
+                p.addOwner(user);
 
                 String gdlVersion = playerInfo.getString("gdlVersion");                
                 if (!gdlVersion.equals("GDLv1") && !gdlVersion.equals("GDLv2")) {
@@ -120,13 +121,21 @@ public class Registration {
                 p.setPingable(playerInfo.getBoolean("isPingable"));
                 p.setURL(sanitize(playerInfo.getString("theURL")));
                 p.setVisibleEmail(sanitize(playerInfo.getString("visibleEmail")));
-                p.setVisibleWebsite(sanitize(playerInfo.getString("visibleWebsite")));
+                p.setVisibleWebsite(sanitize(playerInfo.getString("visibleWebsite")));                
                 p.save();
 
                 resp.getWriter().println(p.asJSON(true));
-            } else if (theURI.startsWith("/data/uploadPlayerImage/") && userId.length() > 0) {
+            } else if (theURI.startsWith("/data/uploadPlayerImage/")) {
             	String playerName = theURI.replaceFirst("/data/uploadPlayerImage/", "");
                 Player p = Player.loadPlayer(playerName);
+                
+                if (p == null) {
+                    resp.setStatus(404);
+                    return;
+                } else if (!p.isOwner(user)) {
+                    resp.setStatus(404);
+                    return;
+                }
                 
             	BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
             	Map<String, List<BlobKey>> blobs = blobstoreService.getUploads(req);
@@ -155,15 +164,12 @@ public class Registration {
             	}
 				blobstoreService.delete(blobsToDeleteArr);
             	
-                if (p == null) {
-                    resp.setStatus(404);
-                    return;
-                } else {
-                	p.setImageBlobKey(theBlob.getKeyString());
-                	p.save();
-                	resp.sendRedirect("/players/" + playerName);
-                	return;
-                }
+                // TODO: Remove this once all of the players have up-to-date ownership info.
+                p.addOwner(user);
+                
+            	p.setImageBlobKey(theBlob.getKeyString());
+            	p.save();
+            	resp.sendRedirect("/players/" + playerName);
             } else {
                 resp.setStatus(404);
             }

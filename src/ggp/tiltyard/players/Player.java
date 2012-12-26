@@ -18,18 +18,25 @@ import org.json.JSONObject;
 import com.google.appengine.api.blobstore.BlobKey;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.ServingUrlOptions;
+import com.google.appengine.api.users.User;
 
 @PersistenceCapable
 public class Player {
-    @PrimaryKey @Persistent private String theName;    
-    @Persistent private Set<String> theOwners;    
+    @PrimaryKey @Persistent private String theName;
+
+    // Ownership information.
+    @Persistent private Set<String> theOwners;
+    @Persistent private Set<String> theOwnerEmails;
+    @Persistent private Set<User> theOwnerUsers;
+    
+    // Standard properties.
     @Persistent private boolean isEnabled;
     @Persistent private String gdlVersion;    
     @Persistent private String theURL;
     @Persistent private Integer nStrikes;
     @Persistent private String pingStatus;
-    @Persistent private String pingError;
-    
+    @Persistent private String pingError;    
+
     // Optional fields.
     @Persistent private String visibleEmail;
     @Persistent private String visibleWebsite;
@@ -40,15 +47,21 @@ public class Player {
     @Persistent private String imageLargeURL;
     @Persistent private String imageThumbURL;
 
-    public Player(String theName, String theURL, String anOwner) {
+    public Player(String theName, String theURL, User anOwner) {
         this.theName = theName;
         this.setURL(theURL);
+
+        // Store the ownership information.
+        this.theOwners = new HashSet<String>();
+        this.theOwnerEmails = new HashSet<String>();
+        this.theOwnerUsers = new HashSet<User>();
+        this.theOwners.add(anOwner.getUserId());
+        this.theOwnerEmails.add(anOwner.getEmail());
+        this.theOwnerUsers.add(anOwner);
         
         this.setEnabled(false);
         this.setPingable(true);
         this.setGdlVersion("GDLv1");
-        this.theOwners = new HashSet<String>();
-        this.theOwners.add(anOwner);        
         
         this.setVisibleEmail("");
         this.setVisibleWebsite("");
@@ -124,8 +137,20 @@ public class Player {
         return gdlVersion;
     }
     
-    public boolean isOwner(String userId) {
-        return theOwners.contains(userId);
+    public void addOwner(User anOwner) {
+    	if (theOwnerEmails == null) {
+    		theOwnerEmails = new HashSet<String>();
+    	}
+    	if (theOwnerUsers == null) {
+    		theOwnerUsers = new HashSet<User>();
+    	}
+    	theOwners.add(anOwner.getUserId());
+        theOwnerEmails.add(anOwner.getEmail());
+        theOwnerUsers.add(anOwner);
+    }
+    
+    public boolean isOwner(User user) {
+        return theOwners.contains(user.getUserId());
     }
     
     public void addStrike() {
