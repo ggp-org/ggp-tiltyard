@@ -150,7 +150,7 @@ public class Player {
     }
     
     public boolean isOwner(User user) {
-        return theOwners.contains(user.getUserId());
+        return user != null && theOwners.contains(user.getUserId());
     }
     
     public void addStrike() {
