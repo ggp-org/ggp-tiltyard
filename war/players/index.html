@@ -8,21 +8,94 @@
     <link rel="canonical" href="http://tiltyard.ggp.org/players/"/>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+    <style>
+      /* Huge hack to center things. This is surprisingly hard to do.
+       * Credit to: http://brunildo.org/test/shrink_center_4.html
+       */
+      html, body {
+	    margin: 0;
+        padding: 0;
+      }
+      html, body, .swc0, .swc1 {
+	    height: 100%;
+      }
+      .swc0 {
+        margin: 0 auto;
+        display: table;
+      }
+      .swc1 {
+        display: table-cell;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+      .swc2:after {
+        position: absolute;
+        height: 0%;
+        content: "";
+      }
+      html {
+        position: relative;
+      }
+      a {
+        text-decoration:none;
+      }      
+    </style>
   </head>
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>
-    <script type="text/javascript" src="/tiltyardHeader.js"></script>
-    <style>
-      a {text-decoration:none;}
-    </style>
-  
-    <div id='login'></div>
-    <br>
-    <div id='playerList'></div>
+    
+    <div class="swc0"><div class="swc1"><div class="swc2">
+      <div id='loginView'>
+        <table width=614px>
+          <tr>
+            <td>
+	          <img width=362 height=512 src="/static/images/TiltyardLarge.jpg"></img>
+	        </td>
+	        <td width=20px></td>
+	        <td valign="middle">
+	          <center>
+	            <a class="hugelink">Register</a>
+	            <div style="height: 15px"></div>
+	            Register your players to participate in the Tiltyard tournament! Sign in using OpenID.
+	            <div style="height: 25px"></div>
+	            <div id='loginLogos'></div>
+	          </center>
+	        </td>
+          </tr>
+        </table>      
+      </div>
+      <div id='loggedInView' hidden=true>
+        <center>Welcome, <span id='loginStatus'></span>.</center>
+        <div id='playerList'></div>
+      </div>
+    </div><span class="swc3"></span></div></div> 
 
-    <script type='text/javascript'>
-      generateLoginPanel(document.getElementById('login'));
+    <script type='text/javascript'>    
+      var loginState = ResourceLoader.load_json('/data/login');
+      if (!loginState.loggedIn) {
+        var loginLogosDiv = document.getElementById('loginLogos');
+        var loginLogosHTML = "";
+        for (var i in loginState.preferredOrder) {
+          var providerName = loginState.preferredOrder[i];
+          loginLogosHTML += "<a rel=\"nofollow\" href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
+        }
+        loginLogosDiv.innerHTML = loginLogosHTML;
+        return;
+      } else {
+        document.getElementById('loginView').hidden=true;
+        document.getElementById('loggedInView').hidden=false;
+
+        var loginStatusDiv = document.getElementById('loginStatus');
+        var loginStatusHTML = "";
+        if (loginState.nickname.length > 0) {
+          loginStatusHTML += "<b>" + loginState.nickname + "</b>";
+        } else {
+          loginStatusHTML += "Tiltyard user";
+        }
+        loginStatusHTML += " <sup><a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">(sign out)</a></sup>";
+        loginStatusDiv.innerHTML = loginStatusHTML;
+      }
       
       function add_new_player() {
         var theName = window.prompt("What should the player's name be? It can only contain letters, digits, dashes, and underscores. Once chosen, it cannot be changed.", "");
@@ -106,11 +179,16 @@
         var loginState = ResourceLoader.load_json('/data/login');
         var playerListHTML = '<center>';
         if (loginState.loggedIn) {
-          playerListHTML += '<div id="add_player_promo">You can <a rel="nofollow" href="javascript:add_new_player()">add your player</a> to this list!</div><br>';
           playerListHTML += '<table class="matchlist" cellpadding="5px">';
           playerListHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=5>Your Players</th></tr>';
           for (var i = 0; i < thePlayersList.length; i++) {
             playerListHTML += renderPlayerListEntry(thePlayersList[i], i);
+          }
+          playerListHTML += '<tr bgcolor=#F5F5F5><td height=30px colspan=5>';
+          if (thePlayersList.length == 0) {
+          	playerListHTML += 'Get started by <a rel="nofollow" href="javascript:add_new_player()">adding a player</a>.</td></tr>';
+          } else {
+          	playerListHTML += 'Or <a rel="nofollow" href="javascript:add_new_player()">add a new player</a>.</td></tr>';
           }
           playerListHTML += '</table>';
         } else {
