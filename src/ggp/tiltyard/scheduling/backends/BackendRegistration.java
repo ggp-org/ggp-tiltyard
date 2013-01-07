@@ -6,8 +6,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import util.crypto.SignableJSON;
-
+import org.ggp.shared.crypto.SignableJSON;
 import org.json.JSONObject;
 
 public class BackendRegistration {

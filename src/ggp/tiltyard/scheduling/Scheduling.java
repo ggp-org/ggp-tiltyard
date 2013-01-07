@@ -21,14 +21,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.ggp.shared.crypto.SignableJSON;
+import org.ggp.shared.loader.RemoteResourceLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.prodeagle.java.counters.Counter;
-
-import util.configuration.RemoteResourceLoader;
-import util.crypto.SignableJSON;
 
 public class Scheduling {
     // Eventually we should support other repository servers. Figure out how
