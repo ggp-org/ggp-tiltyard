@@ -51,7 +51,7 @@ public class Scheduling {
 		"eightPuzzle", "escortLatch", "ghostMaze2p", "god", "golden_rectangle", "knightThrough", "knightsTour",
 		"lightsOut", "max_knights", "maze", "nineBoardTicTacToe", "numberTicTacToe", "pacman2p", "pacman3p",
 		"pawnToQueen", "pawnWhopping", "peg", "pegEuro", "pentago", "pentagoSuicide",
-		"qyshinsu", "sheepAndWolf", "snake2p", "snakeAssemblit", "snakeParallel",
+		"qyshinsu", "sheepAndWolf", "snake2p", "snakeParallel",
 		"ttcc4_2player", "tictactoe_3player", "ticTacToe", "ticTacToeLarge", "ticTacToeLargeSuicide",
 		"ticTacToeParallel", "ticTacToeSerial", "ticTicToe",
 	};
