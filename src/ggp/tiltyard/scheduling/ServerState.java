@@ -1,13 +1,13 @@
 package ggp.tiltyard.scheduling;
 
-import ggp.tiltyard.Persistence;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
+
+import org.ggp.shared.persistence.Persistence;
 
 @PersistenceCapable
 public class ServerState {

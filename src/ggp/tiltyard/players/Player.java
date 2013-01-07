@@ -1,7 +1,5 @@
 package ggp.tiltyard.players;
 
-import ggp.tiltyard.Persistence;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,6 +10,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.annotations.*;
 
+import org.ggp.shared.persistence.Persistence;
 import org.json.JSONException;
 import org.json.JSONObject;
 
