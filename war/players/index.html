@@ -81,7 +81,6 @@
           loginLogosHTML += "<a rel=\"nofollow\" href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
         }
         loginLogosDiv.innerHTML = loginLogosHTML;
-        return;
       } else {
         document.getElementById('loginView').hidden=true;
         document.getElementById('loggedInView').hidden=false;
@@ -198,7 +197,9 @@
         document.getElementById('playerList').innerHTML = playerListHTML;
       }
       
-      drawPlayerList();
+      if (loginState.loggedIn) {
+      	drawPlayerList();
+      }
     </script>
   </body>  
 </html>
