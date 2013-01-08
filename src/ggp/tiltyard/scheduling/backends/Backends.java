@@ -13,16 +13,22 @@ import org.ggp.shared.persistence.Persistence;
 public class Backends {
     @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
-    @Persistent private Set<String> theBackendAddresses;
+    @Persistent private Set<String> theHostBackendAddresses;
+    @Persistent private Set<String> theFarmBackendAddresses;
 
     private Backends() {
         thePrimaryKey = "Backends";
-        theBackendAddresses = new HashSet<String>();
+        theHostBackendAddresses = new HashSet<String>();
+        theFarmBackendAddresses = new HashSet<String>();
     }
 
-    public Set<String> getBackendAddresses() {
-        return theBackendAddresses;
+    public Set<String> getHostBackendAddresses() {
+        return theHostBackendAddresses;
     }
+    
+    public Set<String> getFarmBackendAddresses() {
+        return theFarmBackendAddresses;
+    }    
     
     public void save() {
         PersistenceManager pm = Persistence.getPersistenceManager();

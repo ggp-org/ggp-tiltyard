@@ -289,7 +289,7 @@ public class Scheduling {
         // randomly from the remaining ones.
         Backends theBackends = Backends.loadBackends();
         List<String> validBackends = new ArrayList<String>();
-        for (String theBackendAddress : theBackends.getBackendAddresses()) {
+        for (String theBackendAddress : theBackends.getHostBackendAddresses()) {
             try {
                 URL url = new URL("http://" + theBackendAddress + ":9124/" + URLEncoder.encode("ping", "UTF-8"));
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
@@ -304,7 +304,7 @@ public class Scheduling {
         }
         if (validBackends.size() == 0) {            
             Counter.increment("Tiltyard.Scheduling.Backend.Errors");
-            theBackends.getBackendAddresses().clear();
+            theBackends.getHostBackendAddresses().clear();
             theBackends.save();
             return;
         }
@@ -314,7 +314,7 @@ public class Scheduling {
         // for rate-limiting logic to avoid overloading backends: we can always just
         // not start new matches if all of the backends are overloaded.
         String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
-        theBackends.getBackendAddresses().retainAll(validBackends);
+        theBackends.getHostBackendAddresses().retainAll(validBackends);
         theBackends.save();
         
         // Send the match request to the Tiltyard backend, and get back the URL
