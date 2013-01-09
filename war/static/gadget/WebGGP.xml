@@ -26,8 +26,8 @@
           console.log('Requesting the creation of a new match with game: ' + gameKey);
           var params = {};
           params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;  
-          var url = "http://artemis.ggp.org/startMatch/" + gameKey;  
-          gadgets.io.makeRequest(url, startMatchFromID, params);          
+          var url = "http://tiltyard.ggp.org/hosting/startMatch/" + gameKey;  
+          gadgets.io.makeRequest(url + "?nocache=" + new Date().getTime(), startMatchFromID, params);          
         }      
         renderGamesListForNumPeople = function(theGames, num_people) {
           var suitableGames = [];
@@ -60,7 +60,7 @@
         }
 
         loadView = function (theViewSuffix) {
-          var theViewURL = "http://artemis.ggp.org/matches/" + theViewSuffix;
+          var theViewURL = "http://tiltyard.ggp.org/hosting/matches/" + theViewSuffix;
           console.log('Loading View URL: ' + theViewURL);
           document.getElementById("gameSelector").hidden = 'hidden';
           document.getElementById("iframe").hidden = '';
@@ -116,8 +116,8 @@
         showGamesListing = function() {
           var params = {};  
           params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;  
-          var url = "http://games.ggp.org/games/metadata";  
-          gadgets.io.makeRequest(url, showGamesListingWithGames, params);        
+          var url = "http://games.ggp.org/base/games/metadata";  
+          gadgets.io.makeRequest(url + "?nocache=" + new Date().getTime(), showGamesListingWithGames, params);        
         }      
         startMyApp = function() {
           var theState = gapi.hangout.data.getState();

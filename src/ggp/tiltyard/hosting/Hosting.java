@@ -29,7 +29,7 @@ public class Hosting {
             writeStaticPage(resp, "artemis.css");
             return;
         }
-        if (uriParts.length < 3) {
+        if (uriParts.length < 2) {
             resp.setStatus(404);
             return;
         }
