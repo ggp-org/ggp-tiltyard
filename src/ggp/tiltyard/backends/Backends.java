@@ -1,4 +1,4 @@
-package ggp.tiltyard.scheduling.backends;
+package ggp.tiltyard.backends;
 
 import java.io.IOException;
 import java.util.HashSet;

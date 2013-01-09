@@ -2,7 +2,7 @@ package ggp.tiltyard;
 
 import ggp.tiltyard.players.Registration;
 import ggp.tiltyard.scheduling.Scheduling;
-import ggp.tiltyard.scheduling.backends.BackendRegistration;
+import ggp.tiltyard.backends.BackendRegistration;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;

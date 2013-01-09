@@ -2,8 +2,8 @@ package ggp.tiltyard.scheduling;
 
 import ggp.tiltyard.TiltyardPublicKey;
 import ggp.tiltyard.players.Player;
-import ggp.tiltyard.scheduling.backends.BackendRegistration;
-import ggp.tiltyard.scheduling.backends.Backends;
+import ggp.tiltyard.backends.BackendRegistration;
+import ggp.tiltyard.backends.Backends;
 
 import java.io.BufferedReader;
 import java.io.IOException;
