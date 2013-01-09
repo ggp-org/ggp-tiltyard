@@ -53,11 +53,8 @@ public class GGP_TiltyardServlet extends HttpServlet {
         }
         
         String reqURI = req.getRequestURI();
-        if (reqURI.equals("/games")) reqURI += "/";
-        if (reqURI.equals("/stats")) reqURI += "/";
         if (reqURI.equals("/about")) reqURI += "/";
         if (reqURI.equals("/players")) reqURI += "/";
-        if (reqURI.equals("/matches")) reqURI += "/";
         if (reqURI.endsWith("/")) {
             reqURI += "index.html";
         }
@@ -65,12 +62,6 @@ public class GGP_TiltyardServlet extends HttpServlet {
         if (reqURI.startsWith("/players/") && !reqURI.equals("/players/index.html")) {
             reqURI = "/players/playerPage.html";
         }             
-        if (reqURI.startsWith("/games/") && !reqURI.equals("/games/index.html")) {
-            reqURI = "/games/gamePage.html";
-        }
-        if (reqURI.startsWith("/matches/") && !reqURI.equals("/matches/index.html")) {            
-            reqURI = "/matches/matchPage.html";
-        }
 
         boolean writeAsBinary = false;        
         if (reqURI.endsWith(".html")) {
