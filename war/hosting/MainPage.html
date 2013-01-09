@@ -1,0 +1,92 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <meta name="description" content="Gaming with other people. Games you've never seen before." />
+  <title>GGP.org Human vs Human Matches</title>
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+  <link rel="stylesheet" type="text/css" href="/hosting/artemis.css" />
+  <script type='text/javascript' src='/_ah/channel/jsapi'></script>
+  <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+</head>
+<body>
+  <script type="text/javascript" src="//www.ggp.org/scripts/common/ResourceLoader.js"></script>
+  <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>  
+  <script type='text/javascript' src='//database.ggp.org/subscribe/channel.js'></script>
+  <script type="text/javascript" src="/static/scripts/ArtemisHeader.js"></script>
+
+  <div style="float: left; margin: 0; height: 90%; width: 20%">
+    <div id="sidePanel" style="padding: 10px; width: 100%; height: 100%">
+      <h1>GGP.org</h1>
+      <h2>Human vs Human Matches</h2>
+      <br>
+      <b>Gaming with other people.</b>
+      <br><br>
+      <b>Games you've never seen before.</b>
+      <br><br>
+      Play games with other people on the web. Use any of the games in the GGP.org game repository. Still in active development.
+    </div>
+  </div>
+  <div style="float: left; margin-left: 1%; margin-top: 1%; height: 89%; width:79%;">
+    <center style="width: 100%; height: 100%">
+      <div>
+        <b>Would you like to start a match of <select id='gameChooser' style='width:200px'></select>?</b>        
+        <button onclick="startNewGame()">Start!</button>        
+      </div>
+      <br>
+      <div id='list_div'></div>
+      <br>
+      <div id='recentMatchesInfo'></div>
+    </center>
+  </div>
+
+  <script type='text/javascript' language='javascript'>
+    var repo_prefix = 'http://games.ggp.org/base/';
+    
+    var selector = document.getElementById("gameChooser");
+    setTimeout("UserInterface.loadRepositoryGamesIntoMenu(repo_prefix, selector, true)", 1);    
+  
+    function startNewGame() {
+      var gameChooser = document.getElementById("gameChooser");
+      var gameStartURL = 'startMatch/' + repo_prefix + 'games/' + gameChooser.value + '/';
+      var matchKey = ResourceLoader.load_raw(gameStartURL);
+      // NOTE: This will automatically take you to the match page when you start a match.
+      //if (matchId) {
+      //	window.location = 'matches/' + matchKey + '/';
+      //}
+    }
+
+    function updateMatchList() {
+      var ongoingMatches = ResourceLoader.load_json('//database.ggp.org/query/filterActiveSet,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0').queryMatches;
+      var recentMatches = ResourceLoader.load_json('//database.ggp.org/query/filter,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0').queryMatches;      
+      var matchListCaption = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
+      var recentMatchesHTML = renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, null);
+      document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
+    }
+    updateMatchList();
+    
+    function update_query_via_channel(channelMessage) {
+      if (channelMessage.data != '//database.ggp.org/query/filter,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0') {
+        // Channel update notification was about a different match.
+        // Ignore it -- it was meant for a different SpectatorView.
+        return;
+      }
+      updateMatchList();
+    }
+
+    // Open a Browser Channel to the Database Server.
+    // We will receive updates to the recent matches query over this channel.
+    // We share a global channel with anybody else interested in using
+    // a channel to communicate with the spectator server.
+    if (window.theGlobalChannel == undefined) {
+      window.theGlobalChannel = new goog.appengine.Channel(theChannelToken);
+      window.theGlobalChannelCallbacks = [];
+      window.theGlobalChannel.open().onmessage = function (x) {
+        for (var i = 0; i < window.theGlobalChannelCallbacks.length; i++) {
+          window.theGlobalChannelCallbacks[i](x);
+        }
+      }
+    }
+    window.theGlobalChannelCallbacks.push(update_query_via_channel);
+    ResourceLoader.load_raw('//database.ggp.org/subscribe/query/filter,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0/clientId=' + theChannelID);  
+  </script>
+</body></html>

@@ -3,6 +3,7 @@ package ggp.tiltyard;
 import ggp.tiltyard.players.Registration;
 import ggp.tiltyard.scheduling.Scheduling;
 import ggp.tiltyard.backends.BackendRegistration;
+import ggp.tiltyard.hosting.Hosting;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -50,6 +51,11 @@ public class GGP_TiltyardServlet extends HttpServlet {
         if (req.getRequestURI().startsWith("/data/")) {
             Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), resp);
             return;
+        }
+        
+        if (req.getRequestURI().startsWith("/hosting/")) {
+        	Hosting.doGet(req.getRequestURI().replaceFirst("/hosting/", ""), resp);
+        	return;
         }
         
         String reqURI = req.getRequestURI();

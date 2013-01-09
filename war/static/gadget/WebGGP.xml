@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+  <ModulePrefs title="WebGGP">
+    <Require feature="rpc"/>
+    <Require feature="views"/>
+  </ModulePrefs>
+  <Content type="html">
+    <![CDATA[
+      <script src="//hangoutsapi.appspot.com/static/hangout.js"></script>
+      
+      <div hidden width="100%" height="100%" id="gameSelector"></div>
+      <iframe hidden width="100%" height="100%" id="iframe"><p>Your browser does not support iframes.</p></iframe>      
+      
+      <script>
+        startMatchFromID = function (matchID) {
+          matchID = matchID.text;
+          if (typeof(matchID) == typeof("")) {
+            console.log('Setting the match ID: ' + matchID);
+            gapi.hangout.data.submitDelta ( {"matchID":matchID}, [] );
+          } else {
+            console.log('Got unexpected response for startMatch.');
+          }
+        }
+        selectGame = function (shortGameKey) {
+          var gameKey = 'http://games.ggp.org/base/games/' + shortGameKey + '/';
+          console.log('Requesting the creation of a new match with game: ' + gameKey);
+          var params = {};
+          params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;  
+          var url = "http://artemis.ggp.org/startMatch/" + gameKey;  
+          gadgets.io.makeRequest(url, startMatchFromID, params);          
+        }      
+        renderGamesListForNumPeople = function(theGames, num_people) {
+          var suitableGames = [];
+          for (var gameKey in theGames) {
+            if (theGames[gameKey].numRoles != num_people) continue;
+            if (!("user_interface" in theGames[gameKey])) continue;
+            suitableGames.push(gameKey);
+          }
+
+          var theHTML = "";
+          if (suitableGames.length == 0) {
+            theHTML = "<b>Couldn't find any games for " + num_people + ". Sorry!</b>";
+          } else {
+            if (num_people == 1) {
+              theHTML += "<b>Select a single-player game, or wait for others to join!</b>";
+            } else {
+              theHTML += "<b>Select a game for " + num_people + " people, or wait for others to join!</b>";
+            }
+            theHTML += "<ul>";
+            for (var i in suitableGames) {
+              var key = suitableGames[i];
+              var name = key;
+              if ("gameName" in theGames[key]) name = theGames[key].gameName;
+              theHTML += '<li><a href="javascript: selectGame(\'' + key + '\')">' + name + '</a>';
+            }
+            theHTML += "</ul>";
+          }
+          var gamesDiv = document.getElementById("gameSelector");
+          gamesDiv.innerHTML = theHTML;
+        }
+
+        loadView = function (theViewSuffix) {
+          var theViewURL = "http://artemis.ggp.org/matches/" + theViewSuffix;
+          console.log('Loading View URL: ' + theViewURL);
+          document.getElementById("gameSelector").hidden = 'hidden';
+          document.getElementById("iframe").hidden = '';
+          document.getElementById("iframe").src = theViewURL;
+        }
+        startSpectatorView = function (matchID) {
+          loadView(matchID + "/");
+        }
+        startTheMatch = function (matchID) {
+          console.log('Starting the match: ' + matchID);          
+          getPlayerNum = function() {
+            var myIndex = -2;
+            var thePeople = gapi.hangout.getParticipants();
+            sortById = function (a,b) { return a.id > b.id; }
+            thePeople.sort(sortById);
+            for (var i = 0; i < thePeople.length; i++) {              
+              if (thePeople[i].hangoutId == gapi.hangout.getParticipantId()) {
+                myIndex = i;
+              }
+            }
+            return myIndex;
+          }
+          
+          getMeHash = function (me) {
+            return me.displayName.split(" ")[0] + "," + me.image.url;
+          }
+          
+          var playerNum = getPlayerNum()+1;
+          var matchToken = gapi.hangout.getHangoutId();
+          var meHash = getMeHash(gapi.hangout.getParticipantById(gapi.hangout.getParticipantId()));
+          loadView(matchID + "/player" + playerNum + "/#" + meHash);
+        }
+        
+        showGamesListingWithGames = function (gameResponse) {
+            var theGames = JSON.parse(gameResponse.text);
+            gapi.hangout.data.addStateChangeListener( function(adds, removes, state, metadata) {
+              // do something when the state changes
+              for (var i = 0; i < adds.length; i++) {
+                if (adds[i].key == "matchID") {
+                  console.log('Got new match event! ' + adds[i].value);
+                  startTheMatch(adds[i].value);
+                  return;
+                }
+              }       
+            } );
+            gapi.hangout.addParticipantsListener( function(participants) {
+              // do something when the number of participants changes
+              renderGamesListForNumPeople(theGames, participants.length);
+            } );
+            renderGamesListForNumPeople(theGames, gapi.hangout.getParticipants().length);
+            document.getElementById("gameSelector").hidden = '';        
+        }
+        showGamesListing = function() {
+          var params = {};  
+          params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.TEXT;  
+          var url = "http://games.ggp.org/games/metadata";  
+          gadgets.io.makeRequest(url, showGamesListingWithGames, params);        
+        }      
+        startMyApp = function() {
+          var theState = gapi.hangout.data.getState();
+          if ("matchID" in theState) {
+            // match has already started -- load a spectator view
+            startSpectatorView(theState.matchID);
+            return;
+          } else {
+            // match still being chosen -- show the games listing
+            showGamesListing();            
+          }          
+        }
+        window.onload = function() { 
+          gapi.hangout.addApiReadyListener(startMyApp);
+        }
+      </script> 
+      
+    ]]>
+  </Content>
+</Module>

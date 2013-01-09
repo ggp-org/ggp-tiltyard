@@ -1,0 +1,87 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <meta name="description" content="Gaming with other people. Games you've never seen before." />
+  <title>GGP.org Human vs Human Matches</title>
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Sans:bold">
+  <link rel="stylesheet" type="text/css" href="/hosting/artemis.css" />
+  <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+  <script type='text/javascript' src='/_ah/channel/jsapi'></script>
+</head>
+<body onresize="resize()">
+  <script type="text/javascript" src="//www.ggp.org/scripts/common/compulog.js"></script>
+  <script type="text/javascript" src="//www.ggp.org/scripts/common/AJAXSLT.js"></script>
+  <script type="text/javascript" src="//www.ggp.org/scripts/common/ResourceLoader.js"></script>
+  <script type="text/javascript" src="//www.ggp.org/scripts/common/StateRenderer.js"></script> 
+  <script type="text/javascript" src="//www.ggp.org/scripts/common/StateMachine.js"></script>
+  <script type="text/javascript" src="//www.ggp.org/scripts/common/SymbolList.js"></script>   
+  <script type='text/javascript' src='//database.ggp.org/subscribe/channel.js'></script>
+  <script type="text/javascript" src="/static/scripts/ArtemisGameHandler.js"></script>
+
+  <div style="float: left; margin: 0; height: 90%; width: 20%">
+    <div id="sidePanel" style="padding: 10px; width: 100%; height: 100%">
+      <h1>GGP.org</h1>
+      <h2>Human vs Human Matches</h2>
+      <br>
+      <div id='role_div'>You are playing as the ... player.</div>
+      <br>
+      <div id='desc_div'><i>Unfortunately, this game doesn't yet have a human-readable description of its rules written up. Good luck!</i></div>
+    </div>
+  </div>
+  <div style="float: left; margin-left: 1%; margin-top: 1%; height: 89%; width:79%;">
+    <center style="width: 100%; height: 100%">
+      <div id='game_div' style="width: 100%; height: 100%"></div>
+    </center>
+  </div>
+  
+  <script type="text/javascript" language="javascript">
+    window.onload = function() {
+      var personParams = null;
+      if ("hash" in window.location && window.location.hash.length > 0) {
+        personParams = window.location.hash.substr(1).split(",");
+        window.location.hash = "";
+      }
+
+      var z = document.location.href.replace('#','');
+      z = z.substring(z.lastIndexOf("player")+6);
+      z = (+z.substring(0,z.length-1));
+
+      var roleOrdinal = "";
+      if (z == 1) roleOrdinal = "first";
+      else if (z == 2) roleOrdinal = "second";
+      else if (z == 3) roleOrdinal = "third";
+      else if (z == 4) roleOrdinal = "fourth";
+      else if (z == 5) roleOrdinal = "fifth";
+      else if (z == 6) roleOrdinal = "sixth";
+      else roleOrdinal = "???";
+
+      if (personParams != null) {
+        document.getElementById("role_div").innerHTML = "<img style='border:3px ridge #999; vertical-align: text-top;' width=30 height=30 src='" + personParams[1] + "'></img> " + personParams[0] + ", you are playing as the " + roleOrdinal + " player.";
+      } else {
+        document.getElementById("role_div").innerHTML = "You are playing as the " + roleOrdinal + " player.";
+      }     
+
+      var dimensions = computeWidthHeight();
+      var matchURL = 'http://matches.ggp.org/matches/' + window.location.pathname.split("/")[3] + '/';      
+      var gameHandler = load_artemis_player(z-1, document.getElementById("game_div"), matchURL, dimensions[0], dimensions[1]);
+    
+      setTimeout("resize()", 50);
+    }
+    function resize() {
+      var dimensions = computeWidthHeight();
+      gameHandler.resize(dimensions[0], dimensions[1]);
+    }  
+    function computeWidthHeight() {
+      var height = (window.innerHeight - 20) * 0.9;
+      var width = (window.innerWidth - 20) * 0.7;
+      if (height < 100) height = 100;
+      if (width < 100) width = 100;
+    
+      if (width < height) height = width;
+      if (height < width) width = height;
+    
+      return [width, height];
+    }    
+  </script>  
+</body>
+</html>
