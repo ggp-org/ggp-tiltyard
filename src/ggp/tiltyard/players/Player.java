@@ -40,6 +40,7 @@ public class Player {
     @Persistent private String visibleEmail;
     @Persistent private String visibleWebsite;
     @Persistent private Boolean isPingable;
+    @Persistent private String exponentURL;
     
     // Optional image-related fields.
     @Persistent private String imageBlobKey;
@@ -65,6 +66,7 @@ public class Player {
         this.setVisibleEmail("");
         this.setVisibleWebsite("");
         this.setImageBlobKey("");
+        this.setExponentURL("");
         
         this.nStrikes = 0;
         
@@ -136,6 +138,10 @@ public class Player {
         return gdlVersion;
     }
     
+    public void setExponentURL(String exponentURL) {
+    	this.exponentURL = exponentURL;
+    }
+    
     public void addOwner(User anOwner) {
     	if (theOwnerEmails == null) {
     		theOwnerEmails = new HashSet<String>();
@@ -197,6 +203,7 @@ public class Player {
             theJSON.put("gdlVersion", gdlVersion);
             theJSON.put("visibleEmail", visibleEmail);
             theJSON.put("visibleWebsite", visibleWebsite);
+            theJSON.put("exponentURL", exponentURL);
             theJSON.put("pingStatus", pingStatus);
             if (imageBlobKey != null && !imageBlobKey.isEmpty()) {
             	theJSON.put("imageURL", imageLargeURL);
