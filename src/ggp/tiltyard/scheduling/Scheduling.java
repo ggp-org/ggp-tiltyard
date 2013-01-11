@@ -202,6 +202,12 @@ public class Scheduling {
 	        	}
 	        }
 	        nGamesLookupAttempt++;
+	        // Backoff between requests
+        	try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+				;
+			}	        
         }        
 
         // Collect all of the games which have visualizations, which we'll call the
