@@ -64,6 +64,7 @@ public class Scheduling {
 
     public static void runSchedulingRound(ServerState theState) throws IOException {        
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
+        long expectedTimeUntilMoreAvailablePlayers = Long.MAX_VALUE;
         
         Counter.increment("Tiltyard.Scheduling.Round.Started");
 
@@ -98,7 +99,7 @@ public class Scheduling {
             // Find and clear all of the completed or wedged matches. For matches
             // which are still ongoing, mark the players in those matches as busy.
             Set<String> doneMatches = new HashSet<String>();
-            Set<String> busyPlayerNames = new HashSet<String>();
+            Set<String> busyPlayerNames = new HashSet<String>();            
             for (String matchURL : theState.getRunningMatches()) {
                 try {
                     JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(matchURL);
@@ -111,14 +112,19 @@ public class Scheduling {
                           }
                         }
 
+                        long elapsedTime = System.currentTimeMillis() - theMatchInfo.getLong("startTime");
                         if(theMatchInfo.getBoolean("isCompleted")) {
                           doneMatches.add(matchURL);
                           handleStrikesForPlayers(theMatchInfo, matchPlayers, theAvailablePlayers);
-                        } else if (System.currentTimeMillis() > theMatchInfo.getLong("startTime") + 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
+                        } else if (elapsedTime > 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
                           // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
                           doneMatches.add(matchURL);
                         } else {
                           busyPlayerNames.addAll(matchPlayers);
+                    	  // Naively assume that each match takes 30 moves. Later on, this can be
+                    	  // refined to look at the average step count in the game being played.
+                          long predictedLength = 1000L*theMatchInfo.getInt("startClock") + 30L*1000L*theMatchInfo.getInt("playClock");
+                          expectedTimeUntilMoreAvailablePlayers = Math.min(expectedTimeUntilMoreAvailablePlayers, Math.max(0L, predictedLength - elapsedTime));
                         }
                     }
                 } catch (Exception e) {
@@ -173,6 +179,14 @@ public class Scheduling {
         int readyPlayers = theAvailablePlayers.size();
         if (readyPlayers == 0) return;
         
+        // When there is only a single available player, but there are busy players,
+        // and we expect one of those busy players to become available within 15 minutes,
+        // don't assign that player into a match vs all random opponents. Instead, wait
+        // until a real opponent becomes available.
+        if (theAvailablePlayers.size() == 1 && expectedTimeUntilMoreAvailablePlayers < 15*60*1000) {
+        	return;
+        }        
+        
         Counter.increment("Tiltyard.Scheduling.Round.AvailablePlayers");
         
         // Load the aggregated game metadata from the base repository server.
@@ -203,7 +217,7 @@ public class Scheduling {
         		continue;
         	try {
 	        	JSONObject gameMetadata = metadataForGames.getJSONObject(key);
-	        	if (gameMetadata.has("stylesheet")) {        		
+	        	if (gameMetadata.has("stylesheet")) {
 	        		properGames.put(key, gameMetadata);
 	        		properGameKeys.add(key);
 	        	}
