@@ -3,7 +3,7 @@ a.darklink {
 }
 a.biglink {
 	color: #222222;
-	font-family: 'Droid Sans', bold;
+	font-family: 'Roboto', bold;
 	font-size: 20px;
 	text-shadow: #AAAAAA 0px 0px 10px;
 	margin: 5px;
@@ -11,7 +11,7 @@ a.biglink {
 }
 a.hugelink {
 	color: #222222;
-	font-family: 'Droid Sans', bold;
+	font-family: 'Roboto', bold;
 	font-size: 60px;
 	text-align: left;
 	font-variant: small-caps;
@@ -21,7 +21,7 @@ a.hugelink {
 }
 div.login {
 	color: #222222;
-	font-family: 'Droid Sans', bold;
+	font-family: 'Roboto', bold;
 	font-size: 14px;
 	text-shadow: #AAAAAA 0px 0px 5px;
 	margin: 5px;

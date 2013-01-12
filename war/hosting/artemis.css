@@ -7,7 +7,7 @@ a {
 }
 h1 {
   color: #222222;
-  font-family: 'Droid Sans', bold;
+  font-family: 'Roboto', bold;
   font-size: 64px;
   text-shadow: #AAAAAA 0px 0px 10px;
   margin: 5px;
@@ -15,7 +15,7 @@ h1 {
 }
 h2 {
   color: #222222;
-  font-family: 'Droid Sans', bold;
+  font-family: 'Roboto', bold;
   font-size: 32px;
   text-shadow: #AAAAAA 0px 0px 10px;
   margin: 5px;
