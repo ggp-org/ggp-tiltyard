@@ -10,7 +10,6 @@ import javax.jdo.annotations.*;
 import com.google.appengine.api.datastore.Text;
 
 import org.ggp.galaxy.shared.game.Game;
-import org.ggp.galaxy.shared.game.RemoteGameRepository;
 import org.ggp.galaxy.shared.match.Match;
 import org.ggp.galaxy.shared.match.MatchPublisher;
 import org.ggp.galaxy.shared.persistence.Persistence;
@@ -23,37 +22,36 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 @PersistenceCapable
-public class MatchData {
+public class MatchData {	
     // NOTE: matchKey is the unique identifier under which this match has been
     // published to the http://matches.ggp.org/ spectator server. The complete
     // match can thus be found at http://matches.ggp.org/matches/X/ where X is
     // the matchKey.
     @PrimaryKey @Persistent private String matchKey;
-    @Persistent private String theGameURL;    
 
+    @SuppressWarnings("unused")
+	@Persistent private String[] playerURLs;
     @Persistent private String[] pendingMoves;
     @Persistent private Text theGameJSON;
     @Persistent private Text theMatchJSON;
     @Persistent private String theAuthToken;
     
     private Match theMatch;
-
-    public MatchData(String matchId, int startClock, int playClock, String theGameURL) throws IOException {
-        this.theGameURL = theGameURL;
-
-        Game theGame = RemoteGameRepository.loadSingleGame(theGameURL);
+    
+    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int startClock, int playClock, Game theGame) throws IOException {        
         try {
             JSONObject theSerializedGame = new JSONObject(theGame.serializeToJSON());            
             theSerializedGame.remove("theStylesheet");
             theSerializedGame.remove("theDescription");
-            theSerializedGame.put("theProcessedRulesheet", "");
             theGameJSON = new Text(theSerializedGame.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        
+
         theMatch = new Match(matchId, startClock, playClock, theGame);
         theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Artemis"));
+        this.playerURLs = playerURLs.toArray(new String[]{});
+        //theMatch.setPlayerNamesFromHost(playerNames);
 
         // NOTE: This code assumes that the first state for the match will always have
         // a non-forced move for at least one player. If this is not the case, it will
@@ -131,28 +129,13 @@ public class MatchData {
 
     public StateMachine getMyStateMachine() throws IOException {
         StateMachine theMachine = new ProverStateMachine();
-        theMachine.initialize(RemoteGameRepository.loadSingleGame(theGameURL).getRules());
+        theMachine.initialize(Game.loadFromJSON(theGameJSON.getValue()).getRules());
         return theMachine;
     }
 
-    public String convertToJSON(boolean includeStatesAndMoves) throws IOException {
-        try {
-            JSONObject theObject = new JSONObject(theMatch.toJSON());
-            theObject.put("matchURL", "http://matches.ggp.org/matches/" + this.matchKey + "/");
-            if (!includeStatesAndMoves) {
-                theObject.remove("statartemises");
-                theObject.remove("moves");
-                theObject.remove("stateTimes");
-                theObject.remove("errors");
-            }
-            return theObject.toString();
-        } catch(JSONException je) {
-            throw new IOException(je);
-        }
-    }
-
+    public static final String SPECTATOR_SERVER = "http://matches.ggp.org/";
     public String publish() throws IOException {
-        return MatchPublisher.publishToSpectatorServer("http://matches.ggp.org/", theMatch);
+        return MatchPublisher.publishToSpectatorServer(SPECTATOR_SERVER, theMatch);
     }
 
     private void deflateForSaving() {

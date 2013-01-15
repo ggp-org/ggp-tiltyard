@@ -9,9 +9,12 @@ import java.util.List;
 
 import javax.servlet.http.*;
 
+import org.ggp.galaxy.shared.game.Game;
+import org.ggp.galaxy.shared.game.RemoteGameRepository;
 import org.ggp.galaxy.shared.gdl.factory.GdlFactory;
 import org.ggp.galaxy.shared.statemachine.MachineState;
 import org.ggp.galaxy.shared.statemachine.Move;
+import org.ggp.galaxy.shared.statemachine.Role;
 import org.ggp.galaxy.shared.statemachine.StateMachine;
 
 public class Hosting {
@@ -42,8 +45,16 @@ public class Hosting {
                 return;
             }
 
+            // TODO: Fill out all of these with real values.
             String matchId = "party." + (new Date()).getTime();
-            MatchData m = new MatchData(matchId, 0, 0, theGameURL);
+            Game theGame = RemoteGameRepository.loadSingleGame(theGameURL);            
+            List<String> playerNames = new ArrayList<String>();
+            List<String> playerURLs = new ArrayList<String>();
+            for (int i = 0; i < Role.computeRoles(theGame.getRules()).size(); i++) {
+            	playerURLs.add("");
+            	playerNames.add("");
+            }
+            MatchData m = new MatchData(matchId, playerNames, playerURLs, 0, 0, theGame);
 
             resp.setHeader("Access-Control-Allow-Origin", "*");
             resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -71,7 +82,7 @@ public class Hosting {
             writeStaticPage(resp, "MatchPage.html");
             return;
         }
-
+        
         subpageName = subpageName.split("#")[0];
         if (subpageName.startsWith("player")) {
             int nIndex = Integer.parseInt(subpageName.substring("player".length()))-1;
@@ -126,7 +137,7 @@ public class Hosting {
                     theMatch.publish();
                     theMatch.save();
                 } else {
-                    throw new IOException("Bad move! " + theMove);
+                    throw new IOException("Bad move for role " + nRoleIndex + "! " + theMove + "; Valid moves are: " + theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex)));
                 }
             }
         } catch (Exception e) {
