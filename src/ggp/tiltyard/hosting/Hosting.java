@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.*;
@@ -42,7 +43,8 @@ public class Hosting {
                 return;
             }
 
-            MatchData m = new MatchData(theGameURL);
+            String matchId = "party." + (new Date()).getTime();
+            MatchData m = new MatchData(matchId, 0, 0, theGameURL);
 
             resp.setHeader("Access-Control-Allow-Origin", "*");
             resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");

@@ -1,7 +1,6 @@
 package ggp.tiltyard.hosting;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -32,13 +31,14 @@ public class MatchData {
     @PrimaryKey @Persistent private String matchKey;
     @Persistent private String theGameURL;    
 
-    @Persistent private String[] pendingMoves;        
+    @Persistent private String[] pendingMoves;
     @Persistent private Text theGameJSON;
     @Persistent private Text theMatchJSON;
     @Persistent private String theAuthToken;
+    
     private Match theMatch;
 
-    public MatchData(String theGameURL) throws IOException {
+    public MatchData(String matchId, int startClock, int playClock, String theGameURL) throws IOException {
         this.theGameURL = theGameURL;
 
         Game theGame = RemoteGameRepository.loadSingleGame(theGameURL);
@@ -51,9 +51,8 @@ public class MatchData {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-        String matchId = "party." + (new Date()).getTime();
-        theMatch = new Match(matchId, 0, 0, theGame);
+        
+        theMatch = new Match(matchId, startClock, playClock, theGame);
         theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Artemis"));
 
         // NOTE: This code assumes that the first state for the match will always have
