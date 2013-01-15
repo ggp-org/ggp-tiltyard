@@ -9,16 +9,16 @@ import javax.jdo.annotations.*;
 
 import com.google.appengine.api.datastore.Text;
 
-import org.ggp.shared.game.Game;
-import org.ggp.shared.game.RemoteGameRepository;
-import org.ggp.shared.match.Match;
-import org.ggp.shared.match.MatchPublisher;
-import org.ggp.shared.persistence.Persistence;
-import org.ggp.shared.statemachine.MachineState;
-import org.ggp.shared.statemachine.Move;
-import org.ggp.shared.statemachine.StateMachine;
-import org.ggp.shared.statemachine.exceptions.GoalDefinitionException;
-import org.ggp.shared.statemachine.implementation.prover.ProverStateMachine;
+import org.ggp.galaxy.shared.game.Game;
+import org.ggp.galaxy.shared.game.RemoteGameRepository;
+import org.ggp.galaxy.shared.match.Match;
+import org.ggp.galaxy.shared.match.MatchPublisher;
+import org.ggp.galaxy.shared.persistence.Persistence;
+import org.ggp.galaxy.shared.statemachine.MachineState;
+import org.ggp.galaxy.shared.statemachine.Move;
+import org.ggp.galaxy.shared.statemachine.StateMachine;
+import org.ggp.galaxy.shared.statemachine.exceptions.GoalDefinitionException;
+import org.ggp.galaxy.shared.statemachine.implementation.prover.ProverStateMachine;
 import org.json.JSONException;
 import org.json.JSONObject;
 

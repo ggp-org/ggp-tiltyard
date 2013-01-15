@@ -9,11 +9,10 @@ import java.util.List;
 
 import javax.servlet.http.*;
 
-import org.ggp.shared.gdl.factory.GdlFactory;
-import org.ggp.shared.gdl.grammar.GdlSentence;
-import org.ggp.shared.statemachine.MachineState;
-import org.ggp.shared.statemachine.Move;
-import org.ggp.shared.statemachine.StateMachine;
+import org.ggp.galaxy.shared.gdl.factory.GdlFactory;
+import org.ggp.galaxy.shared.statemachine.MachineState;
+import org.ggp.galaxy.shared.statemachine.Move;
+import org.ggp.galaxy.shared.statemachine.StateMachine;
 
 public class Hosting {
     public static void doGet(String reqURI, HttpServletResponse resp)
@@ -107,7 +106,7 @@ public class Hosting {
         MachineState theState = theMatch.getState(theMachine);
         try {
             if (!theMachine.isTerminal(theState)) {
-                Move theMove = theMachine.getMoveFromSentence((GdlSentence)GdlFactory.create(move));
+                Move theMove = theMachine.getMoveFromTerm(GdlFactory.createTerm(move));
 
                 if(theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex)).contains(theMove)) {
                     theMatch.setPendingMove(nRoleIndex, move);
@@ -118,7 +117,7 @@ public class Hosting {
                         List<Move> theMoves = new ArrayList<Move>();
                         String[] thePendingMoves = theMatch.getPendingMoves();
                         for (int i = 0; i < thePendingMoves.length; i++)
-                            theMoves.add(theMachine.getMoveFromSentence((GdlSentence)GdlFactory.create(thePendingMoves[i])));
+                            theMoves.add(theMachine.getMoveFromTerm(GdlFactory.createTerm(thePendingMoves[i])));
 
                         theState = theMachine.getNextState(theState, theMoves);
                         theMatch.setState(theMachine, theState, theMoves);                            

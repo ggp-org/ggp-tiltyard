@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.ggp.shared.crypto.SignableJSON;
-import org.ggp.shared.loader.RemoteResourceLoader;
+import org.ggp.galaxy.shared.crypto.SignableJSON;
+import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
