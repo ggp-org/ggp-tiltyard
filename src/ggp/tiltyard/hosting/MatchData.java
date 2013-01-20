@@ -38,7 +38,7 @@ public class MatchData {
     
     private Match theMatch;
     
-    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int startClock, int playClock, Game theGame) throws IOException {        
+    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int analysisClock, int startClock, int playClock, Game theGame) throws IOException {        
         try {
             JSONObject theSerializedGame = new JSONObject(theGame.serializeToJSON());            
             theSerializedGame.remove("theStylesheet");
@@ -48,10 +48,16 @@ public class MatchData {
             e.printStackTrace();
         }
 
+        // TODO(schreib): Add support for the analysis clock here.
         theMatch = new Match(matchId, startClock, playClock, theGame);
         theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Artemis"));
         this.playerURLs = playerURLs.toArray(new String[]{});
-        //theMatch.setPlayerNamesFromHost(playerNames);
+    	// TODO(schreib): Add support for matches where some players are
+    	// authenticated but others aren't. For now, only vouch for players
+    	// when all players are authenticated.        
+        if (!playerNames.contains(null)) {
+        	theMatch.setPlayerNamesFromHost(playerNames);        	
+        }
 
         // NOTE: This code assumes that the first state for the match will always have
         // a non-forced move for at least one player. If this is not the case, it will

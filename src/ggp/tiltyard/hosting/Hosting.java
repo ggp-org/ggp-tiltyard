@@ -52,9 +52,9 @@ public class Hosting {
             List<String> playerURLs = new ArrayList<String>();
             for (int i = 0; i < Role.computeRoles(theGame.getRules()).size(); i++) {
             	playerURLs.add("");
-            	playerNames.add("");
+            	playerNames.add(null);
             }
-            MatchData m = new MatchData(matchId, playerNames, playerURLs, 0, 0, theGame);
+            MatchData m = new MatchData(matchId, playerNames, playerURLs, -1, 0, 0, theGame);
 
             resp.setHeader("Access-Control-Allow-Origin", "*");
             resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -134,6 +134,7 @@ public class Hosting {
                         theMatch.setState(theMachine, theState, theMoves);                            
                     }
 
+                    // TODO(schreib): Fix the race condition here.
                     theMatch.publish();
                     theMatch.save();
                 } else {
