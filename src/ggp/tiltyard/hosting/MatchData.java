@@ -9,6 +9,7 @@ import javax.jdo.annotations.*;
 
 import com.google.appengine.api.datastore.Text;
 
+import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
 import org.ggp.galaxy.shared.game.Game;
 import org.ggp.galaxy.shared.match.Match;
 import org.ggp.galaxy.shared.match.MatchPublisher;
@@ -17,6 +18,7 @@ import org.ggp.galaxy.shared.statemachine.MachineState;
 import org.ggp.galaxy.shared.statemachine.Move;
 import org.ggp.galaxy.shared.statemachine.StateMachine;
 import org.ggp.galaxy.shared.statemachine.exceptions.GoalDefinitionException;
+import org.ggp.galaxy.shared.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.galaxy.shared.statemachine.implementation.prover.ProverStateMachine;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,7 +67,13 @@ public class MatchData {
         // we get from getInitialState().
         StateMachine theMachine = getMyStateMachine();
         MachineState theState = theMachine.getInitialState();
-        this.setState(theMachine, theState, null);        
+        try {
+        	this.setState(theMachine, theState, null);
+        } catch (Exception e) {
+        	// TODO(schreib): Eventually stop casting this to an IOException and properly
+        	// handle ggp-related exceptions in the match setup.
+        	throw new IOException(e);
+        }
 
         matchKey = publish();
         save();
@@ -79,47 +87,34 @@ public class MatchData {
         return pendingMoves;
     }
 
-    public void setState(StateMachine theMachine, MachineState state, List<Move> moves) throws IOException {
+    public void setState(StateMachine theMachine, MachineState state, List<Move> moves) throws MoveDefinitionException, GoalDefinitionException {
         theMatch.appendState(state.getContents());
         theMatch.appendNoErrors();
         if (moves != null) {
             theMatch.appendMoves2(moves);            
         }
         if (theMachine.isTerminal(state)) {
-            try {
-                theMatch.markCompleted(theMachine.getGoals(state));
-            } catch (GoalDefinitionException e) {
-                throw new IOException(e);
-            }
+        	theMatch.markCompleted(theMachine.getGoals(state));
         }
 
-        try {
-            // Clear the current pending moves
-            pendingMoves = new String[theMachine.getRoles().size()];
+        // Clear the current pending moves
+        pendingMoves = new String[theMachine.getRoles().size()];
 
-            // If the match isn't completed, we should fill in all of the moves
-            // that are automatically forced (because the player has no other move).
-            if (!theMatch.isCompleted()) {
-                for (int i = 0; i < pendingMoves.length; i++) {
-                    if (theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).size() == 1) {
-                        pendingMoves[i] = theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).get(0).toString();
-                    }
+        // If the match isn't completed, we should fill in all of the moves
+        // that are automatically forced (because the player has no other move).
+        if (!theMatch.isCompleted()) {
+            for (int i = 0; i < pendingMoves.length; i++) {
+                if (theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).size() == 1) {
+                    pendingMoves[i] = theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).get(0).toString();
                 }
             }
-        } catch(Exception e) {
-            throw new IOException(e);
         }
     }    
 
-    public MachineState getState(StateMachine theMachine) throws IOException {
+    public MachineState getState(StateMachine theMachine) {
         if (theMatch.getMostRecentState() == null)
             return null;
-
-        try {
-            return theMachine.getMachineStateFromSentenceList(theMatch.getMostRecentState());
-        } catch(Exception e) {
-            throw new IOException(e);
-        }
+        return theMachine.getMachineStateFromSentenceList(theMatch.getMostRecentState());
     }
 
     public void setPendingMove(int nRoleIndex, String move) {
@@ -133,7 +128,7 @@ public class MatchData {
         return true;
     }
 
-    public StateMachine getMyStateMachine() throws IOException {
+    public StateMachine getMyStateMachine() {
         StateMachine theMachine = new ProverStateMachine();
         theMachine.initialize(Game.loadFromJSON(theGameJSON.getValue()).getRules());
         return theMachine;
@@ -144,12 +139,12 @@ public class MatchData {
         return MatchPublisher.publishToSpectatorServer(SPECTATOR_SERVER, theMatch);
     }
 
-    private void deflateForSaving() {
+    void deflateForSaving() {
         theMatchJSON = new Text(theMatch.toJSON());
         theAuthToken = theMatch.getSpectatorAuthToken();
     }
 
-    private void inflateAfterLoading() {
+    void inflateAfterLoading() {
         try {
             theMatch = new Match(theMatchJSON.getValue(), Game.loadFromJSON(theGameJSON.getValue()), theAuthToken);
             theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Artemis"));
@@ -157,6 +152,15 @@ public class MatchData {
             throw new RuntimeException(e);
         }
     }
+    
+    void inflateAfterLoading(EncodedKeyPair theKeys) {
+        try {
+            theMatch = new Match(theMatchJSON.getValue(), Game.loadFromJSON(theGameJSON.getValue()), theAuthToken);
+            theMatch.setCryptographicKeys(theKeys);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }    
 
     public void save() {
         deflateForSaving();

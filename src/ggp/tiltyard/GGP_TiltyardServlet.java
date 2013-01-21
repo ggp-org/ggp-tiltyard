@@ -54,7 +54,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
         }
         
         if (req.getRequestURI().startsWith("/hosting/")) {
-        	Hosting.doGet(req.getRequestURI().replaceFirst("/hosting/", ""), resp);
+        	Hosting.doGet(req, resp);
         	return;
         }
         
