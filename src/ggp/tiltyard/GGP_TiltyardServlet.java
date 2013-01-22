@@ -120,6 +120,11 @@ public class GGP_TiltyardServlet extends HttpServlet {
 	        }
 	        in = theInput.toString().trim();
         }
+        
+        if (theURI.equals("/hosting/callback")) {
+        	Hosting.handleCallback(in);
+        	return;
+        }
 
         if (theURI.startsWith("/backends/")) {
             BackendRegistration.doPost(theURI, in, req.getRemoteAddr(), resp);

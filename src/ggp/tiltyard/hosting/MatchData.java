@@ -1,7 +1,18 @@
 package ggp.tiltyard.hosting;
 
+import ggp.tiltyard.backends.BackendRegistration;
+import ggp.tiltyard.backends.Backends;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -11,11 +22,14 @@ import com.google.appengine.api.datastore.Text;
 
 import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
 import org.ggp.galaxy.shared.game.Game;
+import org.ggp.galaxy.shared.gdl.scrambler.NoOpGdlScrambler;
 import org.ggp.galaxy.shared.match.Match;
 import org.ggp.galaxy.shared.match.MatchPublisher;
 import org.ggp.galaxy.shared.persistence.Persistence;
+import org.ggp.galaxy.shared.server.request.RequestBuilder;
 import org.ggp.galaxy.shared.statemachine.MachineState;
 import org.ggp.galaxy.shared.statemachine.Move;
+import org.ggp.galaxy.shared.statemachine.Role;
 import org.ggp.galaxy.shared.statemachine.StateMachine;
 import org.ggp.galaxy.shared.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.galaxy.shared.statemachine.exceptions.MoveDefinitionException;
@@ -31,7 +45,6 @@ public class MatchData {
     // the matchKey.
     @PrimaryKey @Persistent private String matchKey;
 
-    @SuppressWarnings("unused")
 	@Persistent private String[] playerURLs;
     @Persistent private String[] pendingMoves;
     @Persistent private Text theGameJSON;
@@ -56,7 +69,7 @@ public class MatchData {
         this.playerURLs = playerURLs.toArray(new String[]{});
     	// TODO(schreib): Add support for matches where some players are
     	// authenticated but others aren't. For now, only vouch for players
-    	// when all players are authenticated.        
+    	// when all players are authenticated.
         if (!playerNames.contains(null)) {
         	theMatch.setPlayerNamesFromHost(playerNames);        	
         }
@@ -82,9 +95,25 @@ public class MatchData {
     public String getMatchKey() {
         return matchKey;
     }
+    
+    public String getMatchId() {
+    	return theMatch.getMatchId();
+    }
 
     public String[] getPendingMoves() {
         return pendingMoves;
+    }
+    
+    public boolean isCompleted() {
+    	return theMatch.isCompleted();
+    }
+    
+    public boolean hasComputerPlayers() {
+    	for (int i = 0; i < playerURLs.length; i++) {
+    		if (playerURLs[i] != null)
+    			return true;
+    	}
+    	return false;
     }
 
     public void setState(StateMachine theMachine, MachineState state, List<Move> moves) throws MoveDefinitionException, GoalDefinitionException {
@@ -102,15 +131,135 @@ public class MatchData {
 
         // If the match isn't completed, we should fill in all of the moves
         // that are automatically forced (because the player has no other move).
+        // Moves are never forced for computer-controlled players.
         if (!theMatch.isCompleted()) {
             for (int i = 0; i < pendingMoves.length; i++) {
-                if (theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).size() == 1) {
+                if (playerURLs[i] == null && theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).size() == 1) {
                     pendingMoves[i] = theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).get(0).toString();
                 }
             }
         }
-    }    
+    }
 
+    public void issueRequestTo(int nRole, String requestContent, boolean isStart) throws IOException {
+    	try {
+	    	JSONObject theRequestJSON = new JSONObject();
+	    	theRequestJSON.put("requestContent", requestContent);
+	    	theRequestJSON.put("timeoutClock", isStart ? theMatch.getStartClock()*1000 : theMatch.getPlayClock()*1000);
+	    	theRequestJSON.put("callbackURL", "http://tiltyard.ggp.org/hosting/callback");
+	    	theRequestJSON.put("matchId", theMatch.getMatchId());	    	
+	    	theRequestJSON.put("matchKey", matchKey);
+	    	if (playerURLs[nRole] == null) return;
+	    			    		
+            String playerAddress = playerURLs[nRole];
+            if (playerAddress.startsWith("http://")) {
+                playerAddress = playerAddress.replace("http://", "");
+            }
+            if (playerAddress.endsWith("/")) {
+                playerAddress = playerAddress.substring(0, playerAddress.length()-1);
+            }
+            String[] splitAddress = playerAddress.split(":");
+    		theRequestJSON.put("targetHost", splitAddress[0]);
+    		theRequestJSON.put("targetPort", Integer.parseInt(splitAddress[1]));
+    		theRequestJSON.put("forPlayerName", "PLAYER"); //theMatch.getPlayerNamesFromHost().get(nRole));
+    		
+    		theRequestJSON.put("playerIndex", nRole);    		
+	    	
+	    	issueRequest(theRequestJSON);
+    	} catch (JSONException je) {
+    		throw new RuntimeException(je);
+    	}
+    }
+    
+    public void issueStartRequests() throws IOException {
+    	List<Role> theRoles = Role.computeRoles(theMatch.getGame().getRules());
+    	for (int i = 0; i < playerURLs.length; i++) {
+    		if (playerURLs[i] == null) continue;
+    		issueRequestTo(i, RequestBuilder.getStartRequest(theMatch.getMatchId(), theRoles.get(i), theMatch.getGame().getRules(), theMatch.getStartClock(), theMatch.getPlayClock(), new NoOpGdlScrambler()), true);
+    	}
+    }
+    
+    public void issueRequestForAll(String requestContent) throws IOException {
+    	for (int i = 0; i < playerURLs.length; i++) {
+    		if (playerURLs[i] == null) continue;
+    		issueRequestTo(i, requestContent, false);
+    	}
+    }
+
+    private static void issueRequest(JSONObject requestJSON) throws IOException {
+        // Find a backend server to run the request. As part of this process,
+        // ping all of the registered backend servers to verify that they're
+        // still available, and deregister those that aren't. Lastly choose
+        // randomly from the remaining ones.
+        Backends theBackends = Backends.loadBackends();
+        List<String> validBackends = new ArrayList<String>();
+        for (String theBackendAddress : theBackends.getFarmBackendAddresses()) {
+            try {
+                URL url = new URL("http://" + theBackendAddress + ":9125/" + URLEncoder.encode("ping", "UTF-8"));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                if(!BackendRegistration.verifyBackendPing(reader.readLine())) {
+                    continue;
+                }
+                reader.close();
+            } catch (Exception e) {
+                continue;
+            }
+            validBackends.add(theBackendAddress);
+        }
+        if (validBackends.size() == 0) {            
+            //Counter.increment("Tiltyard.Scheduling.Backend.Errors");
+            theBackends.getFarmBackendAddresses().clear();
+            theBackends.save();
+            return;
+        }
+        // TODO(schreib): Eventually this might be a good place for load balancing
+        // logic, to ensure the requests-per-backend load is distributed roughly evenly
+        // rather than clobbering one unlucky backend. This may also be a good place
+        // for rate-limiting logic to avoid overloading backends: we can always just
+        // not issue new requests if all of the backends are overloaded.
+        String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
+        theBackends.getFarmBackendAddresses().retainAll(validBackends);
+        theBackends.save();
+        
+        // Send the match request to the request farm backend. Repeat until we can confirm
+        // that the request has been received successfully, or until it has failed enough
+        // times that it's unlikely it will succeed in the future.
+        int nIssueRequestAttempt = 0;
+        //String requestPayload = URLEncoder.encode(requestJSON.toString(), "UTF-8");
+        String requestPayload = requestJSON.toString();
+        while (true) {        	
+	        try {	        	
+	            URL url = new URL("http://" + theBackendAddress + ":9125/");
+	            
+	            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+	            connection.setDoOutput(true);
+	            connection.setRequestMethod("POST");
+
+	    		PrintWriter pw = new PrintWriter(connection.getOutputStream());
+	    		/*
+	    		pw.println("POST / HTTP/1.0");
+	    		pw.println("Content-Length: " + requestPayload.length());
+	    		pw.println();
+	    		*/
+	    		pw.print(requestPayload);	    		
+	    		pw.flush();
+	    		pw.close();
+
+	            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {	            	
+	                break;
+	            } else {
+	                // Server returned HTTP error code.
+	            }
+	        } catch (Exception e) {
+	        	if (nIssueRequestAttempt > 9) {
+	        		throw new RuntimeException(e);
+	        	}
+	        }
+	        nIssueRequestAttempt++;
+        }
+        //Counter.increment("Tiltyard.Scheduling.Round.Success");
+    }
+    
     public MachineState getState(StateMachine theMachine) {
         if (theMatch.getMostRecentState() == null)
             return null;

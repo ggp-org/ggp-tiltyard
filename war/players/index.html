@@ -106,6 +106,7 @@
         thePlayer.gdlVersion = "GDLv1";
         thePlayer.visibleEmail = "";
         thePlayer.visibleWebsite = "";
+        thePlayer.exponentURL = "";
         if (theName.length > 0) {
           var theResponse = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(thePlayer)));
           if (theResponse) {
