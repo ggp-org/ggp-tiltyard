@@ -18,6 +18,7 @@ var ArtemisGameHandler = {
   machine: null,
   selectedMove: null,
   interfaceEnabled: null,
+  stepCount: null,
   
   parent: null,
   
@@ -64,6 +65,7 @@ var ArtemisGameHandler = {
     
     this.machine = load_machine(rule_compound[0])    
     this.state = SymbolList.symbolListIntoArray(matchData.states[matchData.states.length-1]);
+    this.stepCount = matchData.moves.length;
     
     if (myRole < 0 || myRole >= this.machine.get_roles().length) {
         this.emptyDiv(this.gameDiv);
@@ -88,6 +90,7 @@ var ArtemisGameHandler = {
       var newStateString = newMatchData.states[newMatchData.states.length-1];
       if (newStateString != SymbolList.arrayIntoSymbolList(gameHandler.state)) {
         gameHandler.state = SymbolList.symbolListIntoArray(newStateString);
+        gameHandler.stepCount = newMatchData.moves.length;
         gameHandler.interface_enabled = true;
         gameHandler.renderCurrentState();
       }
@@ -207,16 +210,17 @@ var ArtemisGameHandler = {
       // a significant improvement for the user experience for such games.
       var rand_moves = this.machine.get_random_joint_moves(this.state);
       rand_moves[this.myRole] = this.selectedMove;
-      this.state = this.machine.get_next_state(this.state, rand_moves);
+      this.state = this.machine.get_next_state(this.state, rand_moves);      
 
-      var zXHR = "ResourceLoader.load_raw(\"play/" + this.writeGDL([this.selectedMove]) + "\")";
+      var zXHR = "ResourceLoader.load_raw(\"play/" + this.stepCount + "/" + this.writeGDL([this.selectedMove]) + "\")";
+      this.stepCount = this.stepCount+1;
       this.selectedMove = null;
       this.interface_enabled = true;
-      this.renderCurrentState();
+      this.renderCurrentState();      
 
       setTimeout(zXHR, 1);
     } else {
-      ResourceLoader.load_raw("play/" + this.writeGDL([this.selectedMove]));        
+      ResourceLoader.load_raw("play/" + this.stepCount + "/" + this.writeGDL([this.selectedMove]));        
       this.selectedMove = null;
       this.interface_enabled = false;
       this.renderCurrentState();

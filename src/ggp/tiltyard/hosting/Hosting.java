@@ -3,6 +3,8 @@ package ggp.tiltyard.hosting;
 import static com.google.appengine.api.taskqueue.RetryOptions.Builder.withTaskRetryLimit;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.withUrl;
 
+import ggp.tiltyard.players.Player;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -48,7 +50,7 @@ public class Hosting {
 				if (theResponseJSON.has("response")) {
 					theMove = theResponseJSON.getString("response");
 				}
-				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("theMove", theMove).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 			} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
                 String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, new NoOpGdlScrambler());                        
                 QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
@@ -76,13 +78,15 @@ public class Hosting {
         if (reqURI.equals("start_ttt_test")) {
             // TODO: Fill out all of these with real values.
             String matchId = "party." + (new Date()).getTime();
-            Game theGame = RemoteGameRepository.loadSingleGame("http://games.ggp.org/base/games/ticTacToe/");            
+            Game theGame = RemoteGameRepository.loadSingleGame("http://games.ggp.org/base/games/3pttc/");            
             List<String> playerNames = new ArrayList<String>();
             List<String> playerURLs = new ArrayList<String>();
+            playerURLs.add(Player.loadPlayer("LabOne").getURL());
             playerURLs.add(null);
-            playerURLs.add(null);
-           	playerNames.add(null);
-           	playerNames.add(null);
+            playerURLs.add(Player.loadPlayer("LabTwo").getURL());            
+           	playerNames.add("LabOne");
+           	playerNames.add("Random");
+           	playerNames.add("LabTwo");
             MatchData m = new MatchData(matchId, playerNames, playerURLs, -1, 20, 15, theGame);
             if (m.hasComputerPlayers()) {
             	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
@@ -97,7 +101,7 @@ public class Hosting {
            	int nRetryAttempt = Integer.parseInt(req.getHeader("X-AppEngine-TaskRetryCount"));
            	try {
            		if (uriParts[1].equals("select_move")) {
-               		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), req.getParameter("theMove").replace("%20", " ").replace("+", " "));
+               		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("theMove").replace("%20", " ").replace("+", " "));
            		} else if (uriParts[1].equals("publish")) {
                		MatchData.loadMatchData(req.getParameter("matchKey")).publish();
            		} else if (uriParts[1].equals("request")) {
@@ -121,12 +125,6 @@ public class Hosting {
                		throw new RuntimeException(e);
                	}
                	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString());
-               	// Wait a little time, in case that helps.
-               	try {
-               		Thread.sleep(1000);
-               	} catch (InterruptedException ie) {
-               		;
-               	}
             }            
     		return;
         } else if (uriParts[0].equals("startMatch")) {
@@ -183,12 +181,13 @@ public class Hosting {
         if (subpageName.startsWith("player")) {
             int nIndex = Integer.parseInt(subpageName.substring("player".length()))-1;
 
-            if (uriParts.length == 5) {
+            if (uriParts.length == 6) {
                 String subSubpageName = uriParts[3];
                 if (subSubpageName.equals("play")) {
+                	Integer forStep = Integer.parseInt(uriParts[4]);
                     resp.setContentType("text/plain");
-                    resp.getWriter().println(uriParts[4].replace("%20", " "));
-                    QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchName).param("playerIndex", "" + nIndex).param("theMove", uriParts[4]).retryOptions(withTaskRetryLimit(TASK_RETRIES)));            
+                    resp.getWriter().println(uriParts[5].replace("%20", " "));
+                    QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchName).param("playerIndex", "" + nIndex).param("forStep", "" + forStep).param("theMove", uriParts[5]).retryOptions(withTaskRetryLimit(TASK_RETRIES)));            
                     return;
                 }
                 resp.setStatus(404);
@@ -203,8 +202,15 @@ public class Hosting {
         resp.setStatus(404);
         return;
     }
+    
+    @SuppressWarnings("serial")
+	static class MoveSelectException extends Exception {
+		public MoveSelectException(String x) {
+    		super(x);
+    	}
+    }
 
-    public static void selectMove(String matchName, int nRoleIndex, String move) {
+    public static void selectMove(String matchName, int nRoleIndex, int forStep, String move) throws MoveSelectException {
    		EncodedKeyPair theKeys = null;
    		try {
    			theKeys = StoredCryptoKeys.loadCryptoKeys("Artemis");
@@ -212,16 +218,14 @@ public class Hosting {
    			throw new RuntimeException(ie);
    		}
    		
-   		Logger.getAnonymousLogger().severe("Got move: " + move + " for role " + nRoleIndex + " for match " + matchName);
-   		
+   		// Attempt the transaction five times. If the transaction can't go through
+   		// after five attempts, fail out and let the task queue retry: occasionally
+   		// this will get stuck and failing out to the task queue fixes things.
    		int nAttempt = 0;
-   		
-    	while (true) {
+    	for (; nAttempt < 5; nAttempt++) {
 	    	PersistenceManager pm = Persistence.getPersistenceManager();
 	    	Transaction tx = pm.currentTransaction();
 
-	    	Logger.getAnonymousLogger().severe("Attempt " + (nAttempt++) + " to make transaction.");
-	    	
 	    	try {
 		    	// Start the transaction
 	    	    tx.begin();
@@ -233,7 +237,13 @@ public class Hosting {
 	    	    pm.makeTransactional(oldMatch);
 	        	MatchData theMatch = pm.detachCopy(oldMatch);
 	        	theMatch.inflateAfterLoading(theKeys);
-		
+	        	
+	        	if (forStep != theMatch.getStepCount()) {
+	        		Logger.getAnonymousLogger().severe("Got misaligned move for " + nRoleIndex + "; got move for step " + forStep + " but match is actually at step " + theMatch.getStepCount());
+	        		return;
+	        	}
+	        	
+	        	boolean shouldPublish = false;
 		        StateMachine theMachine = theMatch.getMyStateMachine();
 		        MachineState theState = theMatch.getState(theMachine);
 	            if (!theMachine.isTerminal(theState)) {
@@ -249,7 +259,6 @@ public class Hosting {
 	
 	                    // This is a loop so that when all players have NOOP moves, we'll still
 	                    // push through to the next state.
-	                    boolean stateChanged = false;
 	                    while (!theMachine.isTerminal(theState) && theMatch.allPendingMovesSubmitted()) {
 	                        List<Move> theMoves = new ArrayList<Move>();
 	                        String[] thePendingMoves = theMatch.getPendingMoves();
@@ -258,8 +267,7 @@ public class Hosting {
 	
 	                        theState = theMachine.getNextState(theState, theMoves);
 	                        theMatch.setState(theMachine, theState, theMoves);
-	                        stateChanged = true;
-	                        Logger.getAnonymousLogger().severe("Final move selected; match state transitioning.");
+	                        shouldPublish = true;
 	
 	                        if (theMatch.hasComputerPlayers()) {
 		                        String theRequest = null;
@@ -269,14 +277,8 @@ public class Hosting {
 		                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), theMoves, new NoOpGdlScrambler());
 		                        }
 		                        QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-	                        }                        
-	                    }
-	                    
-	                    if (stateChanged) {
-	                    	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-	                    } else {
-	                    	Logger.getAnonymousLogger().severe("Not all moves yet submitted; waiting for others.");
-	                    }
+	                        }
+	                    }	                    
 					} catch (MoveDefinitionException e) {
 						Logger.getAnonymousLogger().severe("GGP Prover move issue: " + e.toString());
 					} catch (TransitionDefinitionException e) {
@@ -288,21 +290,27 @@ public class Hosting {
 					}
 	                
 	                theMatch.deflateForSaving();
-	                pm.makePersistent(theMatch);	                
+	                pm.makePersistent(theMatch);
+	                
+                    if (shouldPublish) {
+                    	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+                    }	                
 	            }
 	
 	    	    // Commit the transaction, flushing the object to the datastore
 	    	    tx.commit();
 	    	    pm.close();
 	    	    return;
+	    	} catch (javax.jdo.JDOException e) {
+	    		;
 	    	} finally {
 	    	    if (tx.isActive()) {
-	    	    	Logger.getAnonymousLogger().severe("Transaction failed, rolling back...");
 	    	        // Error occurred so rollback the transaction and try again
 	    	        tx.rollback();
 	    	    }
 	    	}
     	}
+    	throw new MoveSelectException("Could not select a move in " + nAttempt + " attempts.");
     }
     
     public static void writeStaticPage (HttpServletResponse resp, String rootFile) throws IOException {

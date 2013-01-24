@@ -11,6 +11,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -46,6 +47,7 @@ public class MatchData {
     @PrimaryKey @Persistent private String matchKey;
 
 	@Persistent private String[] playerURLs;
+	@Persistent private boolean[] playsRandomly;
     @Persistent private String[] pendingMoves;
     @Persistent private Text theGameJSON;
     @Persistent private Text theMatchJSON;
@@ -71,7 +73,12 @@ public class MatchData {
     	// authenticated but others aren't. For now, only vouch for players
     	// when all players are authenticated.
         if (!playerNames.contains(null)) {
-        	theMatch.setPlayerNamesFromHost(playerNames);        	
+        	theMatch.setPlayerNamesFromHost(playerNames);   	
+        }
+        // Players named Random will play randomly; all others will not.
+        playsRandomly = new boolean[playerNames.size()];
+        for (int i = 0; i < playerNames.size(); i++) {
+        	playsRandomly[i] = playerNames.get(i) != null && playerNames.get(i).toLowerCase().equals("random");
         }
 
         // NOTE: This code assumes that the first state for the match will always have
@@ -108,6 +115,10 @@ public class MatchData {
     	return theMatch.isCompleted();
     }
     
+    public int getStepCount() {
+    	return theMatch.getMoveHistory().size();
+    }
+    
     public boolean hasComputerPlayers() {
     	for (int i = 0; i < playerURLs.length; i++) {
     		if (playerURLs[i] != null)
@@ -134,8 +145,15 @@ public class MatchData {
         // Moves are never forced for computer-controlled players.
         if (!theMatch.isCompleted()) {
             for (int i = 0; i < pendingMoves.length; i++) {
-                if (playerURLs[i] == null && theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).size() == 1) {
+            	if (playerURLs[i] != null)
+            		continue;
+
+            	List<Move> theMoves = theMachine.getLegalMoves(state, theMachine.getRoles().get(i));
+                if (theMoves.size() == 1) {
                     pendingMoves[i] = theMachine.getLegalMoves(state, theMachine.getRoles().get(i)).get(0).toString();
+                } else if (playsRandomly[i]) {
+                	Collections.shuffle(theMoves);
+                	pendingMoves[i] = theMoves.get(0).toString();
                 }
             }
         }
@@ -150,7 +168,7 @@ public class MatchData {
 	    	theRequestJSON.put("matchId", theMatch.getMatchId());	    	
 	    	theRequestJSON.put("matchKey", matchKey);
 	    	if (playerURLs[nRole] == null) return;
-	    			    		
+
             String playerAddress = playerURLs[nRole];
             if (playerAddress.startsWith("http://")) {
                 playerAddress = playerAddress.replace("http://", "");
@@ -163,7 +181,8 @@ public class MatchData {
     		theRequestJSON.put("targetPort", Integer.parseInt(splitAddress[1]));
     		theRequestJSON.put("forPlayerName", "PLAYER"); //theMatch.getPlayerNamesFromHost().get(nRole));
     		
-    		theRequestJSON.put("playerIndex", nRole);    		
+    		theRequestJSON.put("playerIndex", nRole);
+    		theRequestJSON.put("forStep", getStepCount());
 	    	
 	    	issueRequest(theRequestJSON);
     	} catch (JSONException je) {
