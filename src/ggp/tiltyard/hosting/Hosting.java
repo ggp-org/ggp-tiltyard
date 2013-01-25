@@ -32,6 +32,7 @@ import org.ggp.galaxy.shared.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.galaxy.shared.statemachine.exceptions.MoveDefinitionException;
 import org.ggp.galaxy.shared.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.galaxy.shared.symbol.factory.exceptions.SymbolFormatException;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -41,25 +42,6 @@ import com.google.appengine.api.taskqueue.TaskOptions.Method;
 public class Hosting {
 	private static final int TASK_RETRIES = 10;
 
-	public static void handleCallback(String in) {
-		try {
-			JSONObject theResponseJSON = new JSONObject(in);
-			JSONObject theRequestJSON = new JSONObject(theResponseJSON.getString("originalRequest"));
-			if (theRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
-				String theMove = "unspecified";
-				if (theResponseJSON.has("response")) {
-					theMove = theResponseJSON.getString("response");
-				}
-				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-			} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
-                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, new NoOpGdlScrambler());                        
-                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-			}
-		} catch (JSONException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
     public static void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {    	
     	// TODO(schreib): Factor out the parts of this responsible for
@@ -74,26 +56,6 @@ public class Hosting {
         if (reqURI.equals("artemis.css")) {
             writeStaticPage(resp, "artemis.css");
             return;
-        }
-        if (reqURI.equals("start_ttt_test")) {
-            // TODO: Fill out all of these with real values.
-            String matchId = "party." + (new Date()).getTime();
-            Game theGame = RemoteGameRepository.loadSingleGame("http://games.ggp.org/base/games/4pttc/");            
-            List<String> playerNames = new ArrayList<String>();
-            List<String> playerURLs = new ArrayList<String>();
-            playerURLs.add(Player.loadPlayer("LabOne").getURL());
-            playerURLs.add(null);
-            playerURLs.add(Player.loadPlayer("LabTwo").getURL());
-            playerURLs.add(null);
-           	playerNames.add("LabOne");
-           	playerNames.add("Random");
-           	playerNames.add("LabTwo");
-           	playerNames.add("");
-            MatchData m = new MatchData(matchId, playerNames, playerURLs, -1, 20, 15, theGame);
-            if (m.hasComputerPlayers()) {
-            	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-            }
-        	return;
         }
         if (uriParts.length < 2) {
             resp.setStatus(404);
@@ -146,43 +108,11 @@ public class Hosting {
                	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString());
             }            
     		return;
-        } else if (uriParts[0].equals("startMatch")) {
-            String theGameURL = reqURI.substring("startMatch/".length());
-
-            // For now, only permit games from one repository (for security).
-            if (!theGameURL.startsWith("http://games.ggp.org/base/games/")) {
-                resp.setStatus(404);
-                return;
-            }
-
-            // TODO: Fill out all of these with real values.
-            String matchId = "party." + (new Date()).getTime();
-            Game theGame = RemoteGameRepository.loadSingleGame(theGameURL);            
-            List<String> playerNames = new ArrayList<String>();
-            List<String> playerURLs = new ArrayList<String>();
-            for (int i = 0; i < Role.computeRoles(theGame.getRules()).size(); i++) {
-            	playerURLs.add(null);
-            	playerNames.add("");
-            }
-            MatchData m = new MatchData(matchId, playerNames, playerURLs, -1, 0, 0, theGame);
-
-            if (m.hasComputerPlayers()) {
-            	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-            }
-            
-            resp.setHeader("Access-Control-Allow-Origin", "*");
-            resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-            resp.setHeader("Access-Control-Allow-Headers", "*");
-            resp.setHeader("Access-Control-Allow-Age", "86400");        
-            resp.setContentType("text/plain");
-            resp.getWriter().println(m.getMatchKey());            
-            return;
         } else if (!uriParts[0].equals("matches")) {
             resp.setStatus(404);
             return;
         }
 
-        String matchName = uriParts[1];
         if (uriParts.length == 2) {
             if (!reqURI.endsWith("/")) { resp.setStatus(404); return; }
             writeStaticPage(resp, "MatchPage.html");
@@ -198,21 +128,6 @@ public class Hosting {
         
         subpageName = subpageName.split("#")[0];
         if (subpageName.startsWith("player")) {
-            int nIndex = Integer.parseInt(subpageName.substring("player".length()))-1;
-
-            if (uriParts.length == 6) {
-                String subSubpageName = uriParts[3];
-                if (subSubpageName.equals("play")) {
-                	Integer forStep = Integer.parseInt(uriParts[4]);
-                    resp.setContentType("text/plain");
-                    resp.getWriter().println(uriParts[5].replace("%20", " "));
-                    QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchName).param("playerIndex", "" + nIndex).param("forStep", "" + forStep).param("theMove", uriParts[5]).retryOptions(withTaskRetryLimit(TASK_RETRIES)));            
-                    return;
-                }
-                resp.setStatus(404);
-                return;
-            }
-
             if (!reqURI.endsWith("/")) { resp.setStatus(404); return; }            
             writeStaticPage(resp, "PlayerPage.html");
             return;
@@ -345,4 +260,100 @@ public class Hosting {
         resp.setContentType("text/html");
         resp.getWriter().println(response.toString());
     }
+
+	public static void doPost(String theURI, String in, HttpServletResponse resp) {
+		try {		
+			if (theURI.equals("callback")) {
+				JSONObject theResponseJSON = new JSONObject(in);
+				JSONObject theRequestJSON = new JSONObject(theResponseJSON.getString("originalRequest"));
+				if (theRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
+					String theMove = "unspecified";
+					if (theResponseJSON.has("response")) {
+						theMove = theResponseJSON.getString("response");
+					}
+					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
+	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, new NoOpGdlScrambler());                        
+	                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+				}
+				
+				resp.getWriter().println("okay");
+			} else if (theURI.equals("start_match")) {
+				JSONObject theRequest = new JSONObject(in);
+				
+				String gameURL = theRequest.getString("gameURL");
+				if (!gameURL.startsWith("http://games.ggp.org/base/games/")) {
+					Logger.getAnonymousLogger().severe("Game URL did not start with valid prefix.");
+					return;
+				}
+				
+	            String matchId = "tiltyard." + (new Date()).getTime();
+	            Game theGame = RemoteGameRepository.loadSingleGame(gameURL);
+	            
+	            int nRoles = Role.computeRoles(theGame.getRules()).size();
+	            JSONArray thePlayers = null;
+	            if (theRequest.has("playerNames")) {
+		            thePlayers = theRequest.getJSONArray("playerNames");
+		            if (nRoles != thePlayers.length()) {
+						Logger.getAnonymousLogger().severe("Game has " + nRoles + " roles but start request has " + thePlayers.length() + " roles.");
+						return;
+		            }
+	            }
+	            List<String> playerNames = new ArrayList<String>();
+	            List<String> playerURLs = new ArrayList<String>();
+	            for (int i = 0; i < nRoles; i++) {
+	            	String name = thePlayers == null ? "" : thePlayers.getString(i);
+	            	if (name.isEmpty()) {		            		
+	            		playerNames.add("");
+	            		playerURLs.add(null);
+	            	} else if (name.toLowerCase().equals("random")) {
+	            		playerNames.add("Random");
+	            		playerURLs.add(null);
+	            	} else {
+	            		Player p = Player.loadPlayer(name);
+	            		if (p == null) {
+	            			Logger.getAnonymousLogger().severe("Player " + name + " not found.");
+	            			return;
+	            		} else {
+		            		playerNames.add(name);
+		            		playerURLs.add(p.getURL());
+	            		}
+	            	}
+	            }
+	            
+	            int analysisClock = theRequest.getInt("analysisClock");
+	            int startClock = theRequest.getInt("startClock");
+	            int playClock = theRequest.getInt("playClock");
+	            
+	            MatchData m = new MatchData(matchId, playerNames, playerURLs, analysisClock, startClock, playClock, theGame);
+	            if (m.hasComputerPlayers()) {
+	            	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+	            }
+	            
+	            resp.getWriter().println(m.getMatchKey());
+			} else if(theURI.equals("select_move")) {
+				JSONObject theRequest = new JSONObject(in);
+
+				int playerIndex = theRequest.getInt("roleIndex");
+				int forStep = theRequest.getInt("forStep");
+				String theMove = theRequest.getString("theMove");
+				String matchKey = theRequest.getString("matchKey");
+
+				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+				
+				resp.getWriter().println(theMove);
+			}
+			
+            resp.setHeader("Access-Control-Allow-Origin", "*");
+            resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+            resp.setHeader("Access-Control-Allow-Headers", "*");
+            resp.setHeader("Access-Control-Allow-Age", "86400");        
+            resp.setContentType("text/plain");
+            resp.setStatus(200);			
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

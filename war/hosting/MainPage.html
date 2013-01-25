@@ -46,13 +46,15 @@
     setTimeout("UserInterface.loadRepositoryGamesIntoMenu(repo_prefix, selector, true)", 1);    
   
     function startNewGame() {
-      var gameChooser = document.getElementById("gameChooser");
-      var gameStartURL = 'startMatch/' + repo_prefix + 'games/' + gameChooser.value + '/';
-      var matchKey = ResourceLoader.load_raw(gameStartURL);
-      // NOTE: This will automatically take you to the match page when you start a match.
-      //if (matchId) {
-      //	window.location = 'matches/' + matchKey + '/';
-      //}
+      var startMatchJSON = {};      
+      startMatchJSON.gameURL = repo_prefix + 'games/' + document.getElementById("gameChooser").value + '/';
+      startMatchJSON.analysisClock = -1;
+      startMatchJSON.startClock = 20;
+      startMatchJSON.playClock = 15;
+      var matchKey = ResourceLoader.post_raw('/hosting/start_match', JSON.stringify(startMatchJSON), 'text/plain');
+      if (matchKey) {
+      	window.location = 'matches/' + matchKey + '/';
+      }
     }
 
     function updateMatchList() {

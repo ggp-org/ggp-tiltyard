@@ -204,6 +204,13 @@ var ArtemisGameHandler = {
 
     document.getElementById("selected_move_div").innerHTML = "<b>Selected Move: </b>";
 
+    var moveSelectionJSON = {};
+    moveSelectionJSON.forStep = this.stepCount;
+    moveSelectionJSON.theMove = this.writeGDL([this.selectedMove]);
+    moveSelectionJSON.roleIndex = this.myRole;
+    moveSelectionJSON.matchKey = this.matchURL.split('/')[4];
+    var moveSelection = JSON.stringify(moveSelectionJSON);
+    
     if (isOnlyRoleWithLegals(this.myRole, this.machine, this.state)) {
       // Special case for alternating-play games, in which we can render the
       // updated state before we actually send the XHR to the server. This is
@@ -212,7 +219,7 @@ var ArtemisGameHandler = {
       rand_moves[this.myRole] = this.selectedMove;
       this.state = this.machine.get_next_state(this.state, rand_moves);      
 
-      var zXHR = "ResourceLoader.load_raw(\"play/" + this.stepCount + "/" + this.writeGDL([this.selectedMove]) + "\")";
+      var zXHR = "ResourceLoader.post_raw('/hosting/select_move', '" + moveSelection + "', 'text/plain')";
       this.stepCount = this.stepCount+1;
       this.selectedMove = null;
       this.interface_enabled = true;
@@ -220,7 +227,7 @@ var ArtemisGameHandler = {
 
       setTimeout(zXHR, 1);
     } else {
-      ResourceLoader.load_raw("play/" + this.stepCount + "/" + this.writeGDL([this.selectedMove]));        
+      ResourceLoader.post_raw("/hosting/select_move", moveSelection, "text/plain");        
       this.selectedMove = null;
       this.interface_enabled = false;
       this.renderCurrentState();
