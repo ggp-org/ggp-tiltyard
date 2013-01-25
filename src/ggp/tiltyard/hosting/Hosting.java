@@ -78,14 +78,16 @@ public class Hosting {
         if (reqURI.equals("start_ttt_test")) {
             // TODO: Fill out all of these with real values.
             String matchId = "party." + (new Date()).getTime();
-            Game theGame = RemoteGameRepository.loadSingleGame("http://games.ggp.org/base/games/3pttc/");            
+            Game theGame = RemoteGameRepository.loadSingleGame("http://games.ggp.org/base/games/4pttc/");            
             List<String> playerNames = new ArrayList<String>();
             List<String> playerURLs = new ArrayList<String>();
             playerURLs.add(Player.loadPlayer("LabOne").getURL());
             playerURLs.add(null);
-            playerURLs.add(Player.loadPlayer("LabTwo").getURL());            
+            playerURLs.add(Player.loadPlayer("LabTwo").getURL());
+            playerURLs.add(null);
            	playerNames.add("LabOne");
            	playerNames.add("Random");
+           	playerNames.add("LabTwo");
            	playerNames.add("");
             MatchData m = new MatchData(matchId, playerNames, playerURLs, -1, 20, 15, theGame);
             if (m.hasComputerPlayers()) {
@@ -103,7 +105,24 @@ public class Hosting {
            		if (uriParts[1].equals("select_move")) {
                		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("theMove").replace("%20", " ").replace("+", " "));
            		} else if (uriParts[1].equals("publish")) {
-               		MatchData.loadMatchData(req.getParameter("matchKey")).publish();
+           			MatchData m = MatchData.loadMatchData(req.getParameter("matchKey"));
+           			int stepCountToPublish = Integer.parseInt(req.getParameter("stepCount")); 
+           			while (stepCountToPublish > m.getStepCount()) {
+           				// Only publish the match when the step count actually matches the
+           				// step count that we intend to publish. When we're supposed to publish
+           				// a step count and the loaded match isn't yet at that step count, reload
+           				// it until it reaches the desired step count -- it's possible that the
+           				// newer version is still being persisted and we've got an old version.
+           				try { Thread.sleep(500); } catch (InterruptedException ie) {}
+           				m = MatchData.loadMatchData(req.getParameter("matchKey"));
+           			}
+           			// If the match is already past the point where we're supposed to publish,
+           			// just drop it, since there's going to be another task queued up to publish
+           			// it at that point.
+           			if (m.getStepCount() > stepCountToPublish) {
+           				Logger.getAnonymousLogger().severe("Was supposed to publish step " + stepCountToPublish + " for match, but match is already at step " + m.getStepCount());
+           			}
+               		m.publish();
            		} else if (uriParts[1].equals("request")) {
            			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
            		} else if (uriParts[1].equals("request_to")) {
@@ -143,7 +162,7 @@ public class Hosting {
             List<String> playerURLs = new ArrayList<String>();
             for (int i = 0; i < Role.computeRoles(theGame.getRules()).size(); i++) {
             	playerURLs.add(null);
-            	playerNames.add(null);
+            	playerNames.add("");
             }
             MatchData m = new MatchData(matchId, playerNames, playerURLs, -1, 0, 0, theGame);
 
@@ -293,7 +312,7 @@ public class Hosting {
 	                pm.makePersistent(theMatch);
 	                
                     if (shouldPublish) {
-                    	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+                    	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("stepCount", "" + theMatch.getStepCount()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
                     }	                
 	            }
 	
