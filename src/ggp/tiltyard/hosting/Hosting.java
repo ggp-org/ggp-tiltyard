@@ -86,7 +86,7 @@ public class Hosting {
             playerURLs.add(Player.loadPlayer("LabTwo").getURL());            
            	playerNames.add("LabOne");
            	playerNames.add("Random");
-           	playerNames.add("LabTwo");
+           	playerNames.add("");
             MatchData m = new MatchData(matchId, playerNames, playerURLs, -1, 20, 15, theGame);
             if (m.hasComputerPlayers()) {
             	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));

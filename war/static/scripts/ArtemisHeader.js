@@ -146,7 +146,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
     } else {
         theMatchHTML += '<tr>'
     }
-    if ("playerNamesFromHost" in theMatchJSON) {
+    if ("playerNamesFromHost" in theMatchJSON && theMatchJSON.playerNamesFromHost[j].length > 0) {
       theMatchHTML += '<td class="imageHolder" style="width:25px; padding-right:5px"><img width=25 height=25 src="http://placekitten.com/g/25/25"/></td>';
       theMatchHTML += '<td><a href="//www.ggp.org/view/artemis/players/' + theMatchJSON.playerNamesFromHost[j] + '">' + theMatchJSON.playerNamesFromHost[j] + '</a></td>';
     } else {
