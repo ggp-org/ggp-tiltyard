@@ -29,7 +29,7 @@ public class BackendRegistration {
     }
 
     public static void doPost(String theURI, String in, String remoteAddr, HttpServletResponse resp) throws IOException {
-        if (theURI.equals("/backends/register") || theURI.equals("/backends/register/host")) {
+        if (theURI.equals("register/host")) {
             if (!verifyBackendPing(in)) {
                 resp.setStatus(404);
                 return;
@@ -37,7 +37,7 @@ public class BackendRegistration {
             Backends theBackends = Backends.loadBackends();
             theBackends.getHostBackendAddresses().add(remoteAddr);
             theBackends.save();
-        } else if (theURI.equals("/backends/register/farm")) {
+        } else if (theURI.equals("register/farm")) {
             if (!verifyBackendPing(in)) {
                 resp.setStatus(404);
                 return;

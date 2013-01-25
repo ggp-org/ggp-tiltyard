@@ -124,7 +124,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
         if (theURI.startsWith("/hosting/")) {
         	Hosting.doPost(theURI.replace("/hosting/", ""), in, resp);
         } else if (theURI.startsWith("/backends/")) {
-            BackendRegistration.doPost(theURI, in, req.getRemoteAddr(), resp);
+            BackendRegistration.doPost(theURI.replace("/backends/", ""), in, req.getRemoteAddr(), resp);
         } else {
             Registration.doPost(theURI, in, req, resp);
         }
