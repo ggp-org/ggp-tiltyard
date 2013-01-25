@@ -51,10 +51,7 @@
       startMatchJSON.analysisClock = -1;
       startMatchJSON.startClock = 20;
       startMatchJSON.playClock = 15;
-      var matchKey = ResourceLoader.post_raw('/hosting/start_match', JSON.stringify(startMatchJSON), 'text/plain');
-      if (matchKey) {
-      	window.location = 'matches/' + matchKey + '/';
-      }
+      ResourceLoader.post_raw('/hosting/start_match', JSON.stringify(startMatchJSON), 'text/plain');
     }
 
     function updateMatchList() {
