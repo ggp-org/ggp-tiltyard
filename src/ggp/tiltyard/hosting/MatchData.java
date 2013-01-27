@@ -77,7 +77,7 @@ public class MatchData {
         }
         List<Boolean> isPlayerHuman = new ArrayList<Boolean>();
         for (int i = 0; i < playerURLs.size(); i++) {
-        	isPlayerHuman.add(playerURLs.get(i) == null);
+        	isPlayerHuman.add(isPlayerHuman(i));
         }
         theMatch.setWhichPlayersAreHuman(isPlayerHuman);
         // Players named Random will play randomly; all others will not.
@@ -124,11 +124,12 @@ public class MatchData {
     	return theMatch.getMoveHistory().size();
     }
     
+    public boolean isPlayerHuman(int nPlayer) {
+    	return playerURLs[nPlayer] == null;
+    }
+    
     public boolean hasComputerPlayers() {
-    	for (int i = 0; i < playerURLs.length; i++) {
-    		if (playerURLs[i] != null)
-    			return true;
-    	}
+    	for (int i = 0; i < playerURLs.length; i++) if (!isPlayerHuman(i)) return true;
     	return false;
     }
 

@@ -65,7 +65,7 @@ public class Hosting {
            	int nRetryAttempt = Integer.parseInt(req.getHeader("X-AppEngine-TaskRetryCount"));
            	try {
            		if (uriParts[1].equals("select_move")) {
-               		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("theMove").replace("%20", " ").replace("+", " "));
+               		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("theMove").replace("%20", " ").replace("+", " "), req.getParameter("source"));
            		} else if (uriParts[1].equals("publish")) {
            			MatchData m = MatchData.loadMatchData(req.getParameter("matchKey"));
            			int stepCountToPublish = Integer.parseInt(req.getParameter("stepCount")); 
@@ -144,7 +144,7 @@ public class Hosting {
     	}
     }
 
-    public static void selectMove(String matchName, int nRoleIndex, int forStep, String move) throws MoveSelectException {
+    public static void selectMove(String matchName, int nRoleIndex, int forStep, String move, String source) throws MoveSelectException {
    		EncodedKeyPair theKeys = null;
    		try {
    			theKeys = StoredCryptoKeys.loadCryptoKeys("Artemis");
@@ -171,6 +171,15 @@ public class Hosting {
 	    	    pm.makeTransactional(oldMatch);
 	        	MatchData theMatch = pm.detachCopy(oldMatch);
 	        	theMatch.inflateAfterLoading(theKeys);
+
+	        	if (source.equals("human") && theMatch.isPlayerHuman(nRoleIndex)) {
+	        		// Okay -- move by a human, for a human role
+	        	} else if (source.equals("robot") && !theMatch.isPlayerHuman(nRoleIndex)) {
+	        		// Okay -- move by a robot, for a robot role
+	        	} else {
+	        		Logger.getAnonymousLogger().severe("Got move from source " + source + " for player " + nRoleIndex + " which " + (theMatch.isPlayerHuman(nRoleIndex) ? "is" : "is not") + " human");
+	        		return;
+	        	}	        	
 	        	
 	        	if (forStep != theMatch.getStepCount()) {
 	        		Logger.getAnonymousLogger().severe("Got misaligned move for " + nRoleIndex + "; got move for step " + forStep + " but match is actually at step " + theMatch.getStepCount());
@@ -271,7 +280,7 @@ public class Hosting {
 					if (theResponseJSON.has("response")) {
 						theMove = theResponseJSON.getString("response");
 					}
-					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("source", "robot").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
 	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, new NoOpGdlScrambler());                        
 	                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
@@ -359,12 +368,12 @@ public class Hosting {
 				String theMove = theRequest.getString("theMove");
 				String matchKey = theRequest.getString("matchKey");
 
-				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("source", "human").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 				
 				resp.getWriter().println(theMove);
 			}
-			
-            resp.setHeader("Access-Control-Allow-Origin", "*");
+
+            resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
             resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
             resp.setHeader("Access-Control-Allow-Headers", "*");
             resp.setHeader("Access-Control-Allow-Age", "86400");        
