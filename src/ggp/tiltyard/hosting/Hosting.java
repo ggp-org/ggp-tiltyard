@@ -289,35 +289,55 @@ public class Hosting {
 				
 	            String matchId = "tiltyard." + (new Date()).getTime();
 	            Game theGame = RemoteGameRepository.loadSingleGame(gameURL);
-	            
+
+	            // This code parses the "playerCodes" that can be sent to the
+	            // match hosting system to indicate which players to use. There
+	            // are four types of valid match codes:
+	            //
+	            // empty string         = a human player
+	            // "random"             = a random player
+	            // "tiltyard://foo"     = player named "foo" on Tiltyard
+	            // any URL              = remote player at that URL
+	            //
+	            // Start requests that don't include a playerCodes field are
+	            // assumed to consist entirely of human players.
 	            int nRoles = Role.computeRoles(theGame.getRules()).size();
-	            JSONArray thePlayers = null;
-	            if (theRequest.has("playerNames")) {
-		            thePlayers = theRequest.getJSONArray("playerNames");
-		            if (nRoles != thePlayers.length()) {
-						Logger.getAnonymousLogger().severe("Game has " + nRoles + " roles but start request has " + thePlayers.length() + " roles.");
+	            JSONArray thePlayerCodes = null;
+	            if (theRequest.has("playerCodes")) {
+	            	thePlayerCodes = theRequest.getJSONArray("playerCodes");
+		            if (nRoles != thePlayerCodes.length()) {
+						Logger.getAnonymousLogger().severe("Game has " + nRoles + " roles but start request has " + thePlayerCodes.length() + " player codes.");
 						return;
 		            }
+	            } else {
+	            	thePlayerCodes = new JSONArray();
+	            	for (int i = 0; i < nRoles; i++) {
+	            		thePlayerCodes.put("");
+	            	}
 	            }
-	            List<String> playerNames = new ArrayList<String>();
 	            List<String> playerURLs = new ArrayList<String>();
+	            List<String> playerNames = new ArrayList<String>();
 	            for (int i = 0; i < nRoles; i++) {
-	            	String name = thePlayers == null ? "" : thePlayers.getString(i);
-	            	if (name.isEmpty()) {		            		
+	            	String code = thePlayerCodes.getString(i);
+	            	if (code.isEmpty()) {
 	            		playerNames.add("");
 	            		playerURLs.add(null);
-	            	} else if (name.toLowerCase().equals("random")) {
+	            	} else if (code.toLowerCase().equals("random")) {
 	            		playerNames.add("Random");
 	            		playerURLs.add(null);
-	            	} else {
-	            		Player p = Player.loadPlayer(name);
+	            	} else if (code.startsWith("tiltyard://")) {
+	            		code = code.substring("tiltyard://".length());
+	            		Player p = Player.loadPlayer(code);
 	            		if (p == null) {
-	            			Logger.getAnonymousLogger().severe("Player " + name + " not found.");
+	            			Logger.getAnonymousLogger().severe("Player " + code + " not found.");
 	            			return;
 	            		} else {
-		            		playerNames.add(name);
+		            		playerNames.add(code);
 		            		playerURLs.add(p.getURL());
 	            		}
+	            	} else {
+	            		playerNames.add("");
+	            		playerURLs.add(code);
 	            	}
 	            }
 	            

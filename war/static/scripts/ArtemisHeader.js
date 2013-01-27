@@ -154,7 +154,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
       theMatchHTML += '<td>Anonymous</td>';
     }
     theMatchHTML += '<td width=5></td><td>';
-    if (!("goalValues" in theMatchJSON) && "playerNamesFromHost" in theMatchJSON && theMatchJSON.playerNamesFromHost[j].length == 0) {
+    if (!("goalValues" in theMatchJSON) && "playerNamesFromHost" in theMatchJSON && theMatchJSON.playerNamesFromHost[j].length == 0 && "isPlayerHuman" in theMatchJSON && theMatchJSON.isPlayerHuman[j]) {
       theMatchHTML += '<a href="' + theMatchJSON.matchURL.replace("http://matches.ggp.org/matches/", "http://tiltyard.ggp.org/hosting/matches/") + 'player' + (j+1) + '/">(play)</a>';
     }
     theMatchHTML += '</td><td width=5></td>';

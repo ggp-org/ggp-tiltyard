@@ -75,6 +75,11 @@ public class MatchData {
         if (!playerNames.contains(null)) {
         	theMatch.setPlayerNamesFromHost(playerNames);   	
         }
+        List<Boolean> isPlayerHuman = new ArrayList<Boolean>();
+        for (int i = 0; i < playerURLs.size(); i++) {
+        	isPlayerHuman.add(playerURLs.get(i) == null);
+        }
+        theMatch.setWhichPlayersAreHuman(isPlayerHuman);
         // Players named Random will play randomly; all others will not.
         playsRandomly = new boolean[playerNames.size()];
         for (int i = 0; i < playerNames.size(); i++) {
