@@ -3,6 +3,7 @@ package ggp.tiltyard.hosting;
 import static com.google.appengine.api.taskqueue.RetryOptions.Builder.withTaskRetryLimit;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.withUrl;
 
+import ggp.tiltyard.TiltyardPublicKey;
 import ggp.tiltyard.players.Player;
 
 import java.io.BufferedReader;
@@ -17,6 +18,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
 import javax.servlet.http.*;
 
+import org.ggp.galaxy.shared.crypto.SignableJSON;
 import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
 import org.ggp.galaxy.shared.game.Game;
 import org.ggp.galaxy.shared.game.RemoteGameRepository;
@@ -271,9 +273,18 @@ public class Hosting {
     }
 
 	public static void doPost(String theURI, String in, HttpServletResponse resp) {
-		try {		
+		try {
 			if (theURI.equals("callback")) {
 				JSONObject theResponseJSON = new JSONObject(in);
+                if (!SignableJSON.isSignedJSON(theResponseJSON)) {
+                    throw new RuntimeException("Got callback response that wasn't signed.");
+                }
+                if (!theResponseJSON.getString("matchHostPK").equals(TiltyardPublicKey.theKey)) {
+                	throw new RuntimeException("Got callback response that was signed but not by Tiltyard.");
+                }
+                if (!SignableJSON.verifySignedJSON(theResponseJSON)) {
+                	throw new RuntimeException("Got callback response whose signature didn't validate.");
+                }
 				JSONObject theRequestJSON = new JSONObject(theResponseJSON.getString("originalRequest"));
 				if (theRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
 					String theMove = "unspecified";
