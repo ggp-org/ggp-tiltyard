@@ -1,14 +1,17 @@
 <html>
 <head>
+  <title>GGP.org - Tiltyard Gaming Server</title>
+  <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />
   <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <meta name="description" content="Gaming with other people. Games you've never seen before." />
-  <title>GGP.org Human vs Human Matches</title>
+  <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto">
   <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:bold">
   <link rel="stylesheet" type="text/css" href="/artemis.css" />
+  <link rel="canonical" href="http://tiltyard.ggp.org/hosting/" />
   <script type='text/javascript' src='/_ah/channel/jsapi'></script>
   <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
 </head>
-<body>
+<body style="font-family: 'Roboto';">
   <script type="text/javascript" src="//www.ggp.org/scripts/common/ResourceLoader.js"></script>
   <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>  
   <script type='text/javascript' src='//database.ggp.org/subscribe/channel.js'></script>
@@ -28,10 +31,69 @@
   </div>
   <div style="float: left; margin-left: 1%; margin-top: 1%; height: 89%; width:79%;">
     <center style="width: 100%; height: 100%">
-      <div>
-        <b>Would you like to start a match of <select id='gameChooser' style='width:200px'></select>?</b>        
-        <button onclick="startNewGame()">Start!</button>        
+      <div id='new_game_div'>
+        Shall we start a <select id='gameChooser'></select> match?    
+        <button onclick="showGamePanel();">Start!</button>
+        <br>
+        You can include remote players, random players, and a single human player.<br>
+        This user interface is a rough prototype and will be improved in the future.<br>
       </div>
+      <br>
+      
+  <div id="config_gamePanel" style="display: none;">  
+    <table width=600px border=1px cellpadding=5px>
+    <tr>
+      <td border=1px width=50px height=50px>
+        <img width=50px height=50px src="http://placekitten.com/50/50"></img>
+      </td>
+      <td width=300px>
+        <font size=5> <b><div id="config_gameName"></div></b> </font>
+      </td>
+      <td>
+        <table width=100%>
+          <tr>
+            <td><div id="config_gameVersion"></div></td>
+            <td width=50px height=50px rowspan=2><a href="javascript: document.getElementById('config_gamePanel').style.display = 'none';"><img src="/static/images/x_button.png"></img></a></td>
+          </tr>
+          <tr>
+            <td><div id="config_gameNumRoles"></div></td>
+          </tr>
+        </table>
+      </td>    
+    </tr>
+    <tr>
+      <td colspan=3>
+        <div id="config_gameDescription"></div>
+      </td>
+    </tr>
+    <tr>
+      <td colspan=3>
+        <table id="config_gameRolesTable">
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td colspan=2>
+        <table>
+          <tr>
+            <td><b>Start clock</b> (in seconds)</td> <td width=10px></td>
+            <td><input type="text" id="config_gameStartClock" size=3 value="45"></td>
+          </tr>
+          <tr>
+            <td><b>Play clock</b> (in seconds)</td> <td width=10px></td>
+            <td><input type="text" id="config_gamePlayClock" size=3 value="15"></td>
+          </tr>
+        </table>
+      </td>
+      <td>
+        <center>
+          <a href="javascript: document.getElementById('config_gamePanel').style.display = 'none'; startNewGame();"><font size=5>Start!</font></a>
+        </center>
+      </td>
+    </tr>
+  </table>
+  </div>
+      
       <br>
       <div id='list_div'></div>
       <br>
@@ -42,15 +104,109 @@
   <script type='text/javascript' language='javascript'>
     var repo_prefix = 'http://games.ggp.org/base/';
     
-    var selector = document.getElementById("gameChooser");
-    setTimeout("UserInterface.loadRepositoryGamesIntoMenu(repo_prefix, selector, true)", 1);    
-  
+    var selector = document.getElementById("gameChooser");      
+    setTimeout("UserInterface.loadRepositoryGamesIntoMenu(repo_prefix, selector, false, true)", 1);  
+    
+    var gameName;
+    var numRoles;
+    function showGamePanel() {
+      var gameChooser = document.getElementById("gameChooser");
+      gameName = gameChooser.value;
+
+      var gameURL = repo_prefix + "games/" + gameName + "/";
+      var metadata = ResourceLoader.load_json(gameURL);            
+      var roleNames = metadata.roleNames;
+      numRoles = roleNames.length;
+
+      if ("gameName" in metadata) {
+        var gameDisplayName = metadata.gameName;
+      } else {
+        var gameDisplayName = gameName;
+      }
+
+      if ("description" in metadata) {
+        var description = "<b>Game description:</b> " + ResourceLoader.load_raw(gameURL + metadata.description);        
+      } else {
+        var description = "<b>Game description:</b> <i>Not yet available.</i>";
+      }
+
+      var toProperString = function (x) {
+        if (x <= 0) return "Zero";
+        if (x == 1) return "One";
+        if (x == 2) return "Two";
+        if (x == 3) return "Three";
+        if (x == 4) return "Four";
+        if (x == 5) return "Five";
+        if (x == 6) return "Six";
+        if (x == 7) return "Seven";
+        if (x == 8) return "Eight";
+        if (x == 9) return "Nine";
+        return "10+";
+      }
+
+      document.getElementById("config_gameName").innerHTML = gameDisplayName;
+      document.getElementById("config_gameVersion").innerHTML = "<b>Version "+metadata.version+"</b>";
+      document.getElementById("config_gameNumRoles").innerHTML = "<b>"+toProperString(roleNames.length)+" players</b>";
+      document.getElementById("config_gameDescription").innerHTML = description;
+
+      var tableBlock = document.getElementById("config_gameRolesTable");
+      var tableHTML = "";
+      for (var i = 0; i < roleNames.length; i++) {
+        var capitalizedRoleName = roleNames[i].charAt(0).toUpperCase() + roleNames[i].slice(1);
+        tableHTML += '<tr>';
+        tableHTML += '<td><b>'+capitalizedRoleName+'</b></td> <td width=10px></td>';
+        if ("user_interface" in metadata) {
+          tableHTML += '<td><input type="radio" name="role'+i+'" value="human" onchange="document.getElementById(\'config_role'+i+'address\').disabled=true;">Human</input></td> <td width=10px></td>';
+        } else {
+          tableHTML += '<td><input type="radio" value="human" disabled="true" title="Humans can only play games which have user interfaces">Human</input></td> <td width=10px></td>';
+        }
+        tableHTML += '<td><input type="radio" checked name="role'+i+'" value="random" onchange="document.getElementById(\'config_role'+i+'address\').disabled=true;">Random</input></td> <td width=10px></td>';
+        tableHTML += '<td><input type="radio" name="role'+i+'" value="remote" onchange="document.getElementById(\'config_role'+i+'address\').disabled=false;">Remote:</input></td> <td width=10px></td>';
+        tableHTML += '<td><input type="text" size=30 id="config_role'+i+'address" value="'+i+'.player.ggp.org:80" disabled=true></input></td>';
+        tableHTML += '</tr>';
+      }
+      tableBlock.innerHTML = tableHTML;
+
+      document.getElementById("config_gamePanel").style.display = "";
+    }
+
+    function config_getPlayerCode(roleIndex) {
+      var x = document.getElementsByName("role" + roleIndex);
+      for (var i = 0; i < x.length; i++) {
+        if(x[i].checked) {
+          if (x[i].value == "remote") {
+            return document.getElementById("config_role" + roleIndex + "address").value;
+          } else if (x[i].value == "random") {
+            return "random";
+          } else if (x[i].value == "human") {
+            return "";
+          } else {
+            alert("Got unexpected player code " + x[i].value);
+          }
+        }
+      }
+    }
+    function config_getPlayerCodes() {
+      var theCodes = [];
+      for(var i = 0; i < numRoles; i++) {
+        theCodes.push(config_getPlayerCode(i));
+      }
+      return theCodes;
+    }
+    function config_getStartClock() {
+      return 1*document.getElementById("config_gameStartClock").value;
+    }
+    function config_getPlayClock() {
+      return 1*document.getElementById("config_gamePlayClock").value;
+    }
+
     function startNewGame() {
       var startMatchJSON = {};      
-      startMatchJSON.gameURL = repo_prefix + 'games/' + document.getElementById("gameChooser").value + '/';
+      startMatchJSON.gameURL = repo_prefix + 'games/' + gameName + '/';
       startMatchJSON.analysisClock = -1;
-      startMatchJSON.startClock = 20;
-      startMatchJSON.playClock = 15;
+      startMatchJSON.startClock = config_getStartClock();
+      startMatchJSON.playClock = config_getPlayClock();
+      startMatchJSON.playerCodes = config_getPlayerCodes();
       ResourceLoader.post_raw('/hosting/start_match', JSON.stringify(startMatchJSON), 'text/plain');
     }
 
