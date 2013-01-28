@@ -53,21 +53,27 @@ public class GGP_TiltyardServlet extends HttpServlet {
             return;
         }
         
-        if (req.getRequestURI().startsWith("/hosting/")) {
-        	Hosting.doGet(req, resp);
+        if (req.getRequestURI().startsWith("/hosting/tasks/")) {
+        	Hosting.doTask(req, resp);
         	return;
         }
         
         String reqURI = req.getRequestURI();
         if (reqURI.equals("/about")) reqURI += "/";
         if (reqURI.equals("/players")) reqURI += "/";
+        if (reqURI.equals("/hosting")) reqURI += "/";
         if (reqURI.endsWith("/")) {
             reqURI += "index.html";
         }
 
+        // TODO: Tighten these up so they only return valid pages for a specific,
+        // well-constrained URL structure.
         if (reqURI.startsWith("/players/") && !reqURI.equals("/players/index.html")) {
             reqURI = "/players/playerPage.html";
-        }             
+        }
+        if (reqURI.startsWith("/hosting/") && !reqURI.equals("/hosting/index.html")) {
+        	reqURI = "/hosting/humanUI.html";
+        }
 
         boolean writeAsBinary = false;        
         if (reqURI.endsWith(".html")) {

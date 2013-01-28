@@ -44,99 +44,54 @@ import com.google.appengine.api.taskqueue.TaskOptions.Method;
 public class Hosting {
 	private static final int TASK_RETRIES = 10;
 
-    public static void doGet(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {    	
-    	// TODO(schreib): Factor out the parts of this responsible for
-    	// serving static web pages and include them in the top level servlet.
-    	String reqURI = req.getRequestURI().replaceFirst("/hosting/", "");
-    	
-        String[] uriParts = reqURI.split("[/?]");
-        if (reqURI.isEmpty() || reqURI.equals("index.html")) {
-            writeStaticPage(resp, "MainPage.html");
-            return;
-        }
-        if (reqURI.equals("artemis.css")) {
-            writeStaticPage(resp, "artemis.css");
-            return;
-        }
-        if (uriParts.length < 2) {
-            resp.setStatus(404);
-            return;
-        }
-        if (uriParts[0].equals("tasks")) {
-           	int nRetryAttempt = Integer.parseInt(req.getHeader("X-AppEngine-TaskRetryCount"));
-           	try {
-           		if (uriParts[1].equals("select_move")) {
-               		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("theMove").replace("%20", " ").replace("+", " "), req.getParameter("source"));
-           		} else if (uriParts[1].equals("publish")) {
-           			MatchData m = MatchData.loadMatchData(req.getParameter("matchKey"));
-           			int stepCountToPublish = Integer.parseInt(req.getParameter("stepCount")); 
-           			while (stepCountToPublish > m.getStepCount()) {
-           				// Only publish the match when the step count actually matches the
-           				// step count that we intend to publish. When we're supposed to publish
-           				// a step count and the loaded match isn't yet at that step count, reload
-           				// it until it reaches the desired step count -- it's possible that the
-           				// newer version is still being persisted and we've got an old version.
-           				try { Thread.sleep(500); } catch (InterruptedException ie) {}
-           				m = MatchData.loadMatchData(req.getParameter("matchKey"));
-           			}
-           			// If the match is already past the point where we're supposed to publish,
-           			// just drop it, since there's going to be another task queued up to publish
-           			// it at that point.
-           			if (m.getStepCount() > stepCountToPublish) {
-           				Logger.getAnonymousLogger().severe("Was supposed to publish step " + stepCountToPublish + " for match, but match is already at step " + m.getStepCount());
-           			}
-               		m.publish();
-           		} else if (uriParts[1].equals("request")) {
-           			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
-           		} else if (uriParts[1].equals("request_to")) {
-           			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestTo(Integer.parseInt(req.getParameter("playerIndex")), req.getParameter("requestContent"), false);
-           		} else if (uriParts[1].equals("request_start")) {
-           			MatchData.loadMatchData(req.getParameter("matchKey")).issueStartRequests();           			
-           		} else {
-           			Logger.getAnonymousLogger().severe("Could not identify task associated with task queue URL: " + uriParts[1]);
-           			resp.setStatus(404);
-           			return;
-           		}
-           		resp.setStatus(200);
-           	} catch (Exception e) {
-           		resp.setStatus(503);
-           		// For the first few exceptions, silently issue errors to task queue to trigger retries.
-          		// After a few retries, start surfacing the exceptions, since they're clearly not transient.
-               	// This reduces the amount of noise in the error logs caused by transient PuSH hub errors.
-               	if (nRetryAttempt > TASK_RETRIES - 3) {
-               		throw new RuntimeException(e);
-               	}
-               	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString());
-            }            
-    		return;
-        } else if (!uriParts[0].equals("matches")) {
-            resp.setStatus(404);
-            return;
-        }
-
-        if (uriParts.length == 2) {
-            if (!reqURI.endsWith("/")) { resp.setStatus(404); return; }
-            writeStaticPage(resp, "MatchPage.html");
-            return;
-        }
-
-        String subpageName = uriParts[2];
-        if (subpageName.isEmpty() || subpageName.equals("index.html")) {
-            if (!reqURI.endsWith("/")) { resp.setStatus(404); return; }
-            writeStaticPage(resp, "MatchPage.html");
-            return;
-        }
-        
-        subpageName = subpageName.split("#")[0];
-        if (subpageName.startsWith("player")) {
-            if (!reqURI.endsWith("/")) { resp.setStatus(404); return; }            
-            writeStaticPage(resp, "PlayerPage.html");
-            return;
-        }
-
-        resp.setStatus(404);
-        return;
+    public static void doTask(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    	String requestedTask = req.getRequestURI().replaceFirst("/hosting/tasks/", "");
+       	int nRetryAttempt = Integer.parseInt(req.getHeader("X-AppEngine-TaskRetryCount"));
+       	try {
+       		if (requestedTask.equals("publish")) {
+       			MatchData m = MatchData.loadMatchData(req.getParameter("matchKey"));
+       			int stepCountToPublish = Integer.parseInt(req.getParameter("stepCount")); 
+       			while (stepCountToPublish > m.getStepCount()) {
+       				// Only publish the match when the step count actually matches the
+       				// step count that we intend to publish. When we're supposed to publish
+       				// a step count and the loaded match isn't yet at that step count, reload
+       				// it until it reaches the desired step count -- it's possible that the
+       				// newer version is still being persisted and we've got an old version.
+       				try { Thread.sleep(500); } catch (InterruptedException ie) {}
+       				m = MatchData.loadMatchData(req.getParameter("matchKey"));
+       			}
+       			// If the match is already past the point where we're supposed to publish,
+       			// just drop it, since there's going to be another task queued up to publish
+       			// it at that point.
+       			if (m.getStepCount() > stepCountToPublish) {
+       				Logger.getAnonymousLogger().severe("Was supposed to publish step " + stepCountToPublish + " for match, but match is already at step " + m.getStepCount());
+       			}
+           		m.publish();
+       		} else if (requestedTask.equals("select_move")) {
+           		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("theMove").replace("%20", " ").replace("+", " "), req.getParameter("source"));
+       		} else if (requestedTask.equals("request")) {
+       			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
+       		} else if (requestedTask.equals("request_to")) {
+       			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestTo(Integer.parseInt(req.getParameter("playerIndex")), req.getParameter("requestContent"), false);
+       		} else if (requestedTask.equals("request_start")) {
+       			MatchData.loadMatchData(req.getParameter("matchKey")).issueStartRequests();           			
+       		} else {
+       			Logger.getAnonymousLogger().severe("Could not identify task associated with task queue URL: " + requestedTask);
+       			resp.setStatus(404);
+       			return;
+       		}
+       		resp.setStatus(200);
+       	} catch (Exception e) {
+       		resp.setStatus(503);
+       		// For the first few exceptions, silently issue errors to task queue to trigger retries.
+      		// After a few retries, start surfacing the exceptions, since they're clearly not transient.
+           	// This reduces the amount of noise in the error logs caused by transient PuSH hub errors.
+           	if (nRetryAttempt > TASK_RETRIES - 3) {
+           		throw new RuntimeException(e);
+           	}
+           	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString());
+        }            
+		return;
     }
     
     @SuppressWarnings("serial")

@@ -59,15 +59,14 @@
           gamesDiv.innerHTML = theHTML;
         }
 
-        loadView = function (theViewSuffix) {
-          var theViewURL = "http://tiltyard.ggp.org/hosting/matches/" + theViewSuffix;
+        loadView = function (theViewURL) {
           console.log('Loading View URL: ' + theViewURL);
           document.getElementById("gameSelector").hidden = 'hidden';
           document.getElementById("iframe").hidden = '';
           document.getElementById("iframe").src = theViewURL;
         }
         startSpectatorView = function (matchID) {
-          loadView(matchID + "/");
+          loadView("http://www.ggp.org/view/artemis/matches/" + matchID + "/");
         }
         startTheMatch = function (matchID) {
           console.log('Starting the match: ' + matchID);          
@@ -91,7 +90,7 @@
           var playerNum = getPlayerNum()+1;
           var matchToken = gapi.hangout.getHangoutId();
           var meHash = getMeHash(gapi.hangout.getParticipantById(gapi.hangout.getParticipantId()));
-          loadView(matchID + "/player" + playerNum + "/#" + meHash);
+          loadView("http://tiltyard.ggp.org/hosting/matches/" + matchID + "/player" + playerNum + "/#" + meHash);
         }
         
         showGamesListingWithGames = function (gameResponse) {
