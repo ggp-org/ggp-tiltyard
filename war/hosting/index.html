@@ -32,42 +32,36 @@
   <div style="float: left; margin-left: 1%; margin-top: 1%; height: 89%; width:79%;">
     <center style="width: 100%; height: 100%">
       <div id='new_game_div'>
-        Shall we start a <select id='gameChooser'></select> match?    
+        Would you like to start a <select id='gameChooser'></select> match?    
         <button onclick="showGamePanel();">Start!</button>
         <br>
-        You can include remote players, random players, and a single human player.<br>
-        This user interface is a rough prototype and will be improved in the future.<br>
+        You can include human players, computer players, and random players.
       </div>
       <br>
       
   <div id="config_gamePanel" style="display: none;">  
     <table width=600px border=1px cellpadding=5px>
     <tr>
-      <td border=1px width=50px height=50px>
-        <img width=50px height=50px src="http://placekitten.com/50/50"></img>
+      <td style="padding: 0; width: 50; height: 47; border: 1;">
+        <img width=50px height=47px src="http://placekitten.com/50/47"></img>
       </td>
       <td width=300px>
-        <font size=5> <b><div id="config_gameName"></div></b> </font>
+        <font size=5><center><b><div id="config_gameName"></div></b><center></font>
       </td>
       <td>
-        <table width=100%>
-          <tr>
-            <td><div id="config_gameVersion"></div></td>
-            <td width=50px height=50px rowspan=2><a href="javascript: document.getElementById('config_gamePanel').style.display = 'none';"><img src="/static/images/x_button.png"></img></a></td>
-          </tr>
-          <tr>
-            <td><div id="config_gameNumRoles"></div></td>
-          </tr>
-        </table>
-      </td>    
+        <center><b><div id="config_gameNumRoles"></div></b></center>
+      </td>
+      <td style="padding: 0; width: 50; height: 47; border: 1;">
+        <a href="javascript: document.getElementById('config_gamePanel').style.display = 'none';"><img width=50px height=47px src="/static/images/x_button.png"></img></a>
+      </td>
     </tr>
     <tr>
-      <td colspan=3>
+      <td colspan=4>
         <div id="config_gameDescription"></div>
       </td>
     </tr>
     <tr>
-      <td colspan=3>
+      <td colspan=4>
         <table id="config_gameRolesTable">
         </table>
       </td>
@@ -85,18 +79,16 @@
           </tr>
         </table>
       </td>
-      <td>
+      <td colspan=2>
         <center>
           <a href="javascript: document.getElementById('config_gamePanel').style.display = 'none'; startNewGame();"><font size=5>Start!</font></a>
         </center>
       </td>
     </tr>
   </table>
+  <br>
   </div>
       
-      <br>
-      <div id='list_div'></div>
-      <br>
       <div id='recentMatchesInfo'></div>
     </center>
   </div>
@@ -130,23 +122,8 @@
         var description = "<b>Game description:</b> <i>Not yet available.</i>";
       }
 
-      var toProperString = function (x) {
-        if (x <= 0) return "Zero";
-        if (x == 1) return "One";
-        if (x == 2) return "Two";
-        if (x == 3) return "Three";
-        if (x == 4) return "Four";
-        if (x == 5) return "Five";
-        if (x == 6) return "Six";
-        if (x == 7) return "Seven";
-        if (x == 8) return "Eight";
-        if (x == 9) return "Nine";
-        return "10+";
-      }
-
       document.getElementById("config_gameName").innerHTML = gameDisplayName;
-      document.getElementById("config_gameVersion").innerHTML = "<b>Version "+metadata.version+"</b>";
-      document.getElementById("config_gameNumRoles").innerHTML = "<b>"+toProperString(roleNames.length)+" players</b>";
+      document.getElementById("config_gameNumRoles").innerHTML = UserInterface.properNameForInteger(roleNames.length)+" players";
       document.getElementById("config_gameDescription").innerHTML = description;
 
       var tableBlock = document.getElementById("config_gameRolesTable");
@@ -161,8 +138,8 @@
           tableHTML += '<td><input type="radio" value="human" disabled="true" title="Humans can only play games which have user interfaces">Human</input></td> <td width=10px></td>';
         }
         tableHTML += '<td><input type="radio" checked name="role'+i+'" value="random" onchange="document.getElementById(\'config_role'+i+'address\').disabled=true;">Random</input></td> <td width=10px></td>';
-        tableHTML += '<td><input type="radio" name="role'+i+'" value="remote" onchange="document.getElementById(\'config_role'+i+'address\').disabled=false;">Remote:</input></td> <td width=10px></td>';
-        tableHTML += '<td><input type="text" size=30 id="config_role'+i+'address" value="'+i+'.player.ggp.org:80" disabled=true></input></td>';
+        tableHTML += '<td><input type="radio" name="role'+i+'" value="computer" onchange="document.getElementById(\'config_role'+i+'address\').disabled=false;">Computer:</input></td> <td width=10px></td>';
+        tableHTML += '<td><input type="text" size=20 id="config_role'+i+'address" value="'+i+'.player.ggp.org:80" disabled=true></input></td>';
         tableHTML += '</tr>';
       }
       tableBlock.innerHTML = tableHTML;
@@ -174,7 +151,7 @@
       var x = document.getElementsByName("role" + roleIndex);
       for (var i = 0; i < x.length; i++) {
         if(x[i].checked) {
-          if (x[i].value == "remote") {
+          if (x[i].value == "computer") {
             return document.getElementById("config_role" + roleIndex + "address").value;
           } else if (x[i].value == "random") {
             return "random";
