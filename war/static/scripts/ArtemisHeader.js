@@ -160,9 +160,9 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
     theMatchHTML += '</td><td width=5></td>';
     theMatchHTML += '<td class="imageHolder">'
     if (allErrorsForPlayer[j]) {
-      theMatchHTML += '<img width=20 height=20 src="/viewer/images/warnings/YellowAlert.png" title="This player had all errors in this match.">';
+      theMatchHTML += '<img width=20 height=20 src="//www.ggp.org/viewer/images/warnings/YellowAlert.png" title="This player had all errors in this match.">';
     } else if (hasErrorsForPlayer[j]) {
-      theMatchHTML += '<img width=20 height=20 src="/viewer/images/warnings/WhiteAlert.png" title="This player had errors in this match.">';
+      theMatchHTML += '<img width=20 height=20 src="//www.ggp.org/viewer/images/warnings/WhiteAlert.png" title="This player had errors in this match.">';
     }
     theMatchHTML += '</td>'
     theMatchHTML += '<td width=5></td>';
@@ -183,17 +183,17 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
   if ("hashedMatchHostPK" in theMatchJSON) {
     theMatchHTML += '<td class="imageHolder"><a href="//www.ggp.org/view/artemis/matches/"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Party.png" title="Match has a valid digital signature from Artemis."></img></a></td>';
   } else {
-    theMatchHTML += '<td class="imageHolder"><img width=25 height=25 src="/viewer/images/hosts/Unsigned.png" title="Match does not have a valid digital signature."></img></td>';
+    theMatchHTML += '<td class="imageHolder"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Unsigned.png" title="Match does not have a valid digital signature."></img></td>';
   }
   theMatchHTML += '<td width=5></td>';
   
   // Warning badge.
   if (allErrors) {
-    theMatchHTML += '<td class="imageHolder"><img src="/viewer/images/warnings/OrangeAlert.png" title="Every player had all errors during this match." height=20px></img></td>';
+    theMatchHTML += '<td class="imageHolder"><img src="//www.ggp.org/viewer/images/warnings/OrangeAlert.png" title="Every player had all errors during this match." height=20px></img></td>';
   } else if (allErrorsForSomePlayer) {
-    theMatchHTML += '<td class="imageHolder"><img src="/viewer/images/warnings/YellowAlert.png" title="At least one player had all errors during this match." height=20px></img></td>';
+    theMatchHTML += '<td class="imageHolder"><img src="//www.ggp.org/viewer/images/warnings/YellowAlert.png" title="At least one player had all errors during this match." height=20px></img></td>';
   } else if (hasErrors) {
-    theMatchHTML += '<td class="imageHolder"><img src="/viewer/images/warnings/WhiteAlert.png" title="Players had errors during this match." height=20px></img></td>';
+    theMatchHTML += '<td class="imageHolder"><img src="//www.ggp.org/viewer/images/warnings/WhiteAlert.png" title="Players had errors during this match." height=20px></img></td>';
   } else {
     theMatchHTML += '<td></td>';
   }

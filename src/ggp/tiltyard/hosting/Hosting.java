@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -30,9 +31,7 @@ import org.ggp.galaxy.shared.statemachine.MachineState;
 import org.ggp.galaxy.shared.statemachine.Move;
 import org.ggp.galaxy.shared.statemachine.Role;
 import org.ggp.galaxy.shared.statemachine.StateMachine;
-import org.ggp.galaxy.shared.statemachine.exceptions.GoalDefinitionException;
 import org.ggp.galaxy.shared.statemachine.exceptions.MoveDefinitionException;
-import org.ggp.galaxy.shared.statemachine.exceptions.TransitionDefinitionException;
 import org.ggp.galaxy.shared.symbol.factory.exceptions.SymbolFormatException;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -68,7 +67,7 @@ public class Hosting {
        			}
            		m.publish();
        		} else if (requestedTask.equals("select_move")) {
-           		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("theMove").replace("%20", " ").replace("+", " "), req.getParameter("source"));
+           		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("withError"), req.getParameter("theMove").replace("%20", " ").replace("+", " "), req.getParameter("source"));
        		} else if (requestedTask.equals("request")) {
        			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
        		} else if (requestedTask.equals("request_to")) {
@@ -101,7 +100,7 @@ public class Hosting {
     	}
     }
 
-    public static void selectMove(String matchName, int nRoleIndex, int forStep, String move, String source) throws MoveSelectException {
+    public static void selectMove(String matchName, int nRoleIndex, int forStep, String withError, String move, String source) throws MoveSelectException {
    		EncodedKeyPair theKeys = null;
    		try {
    			theKeys = StoredCryptoKeys.loadCryptoKeys("Artemis");
@@ -146,57 +145,72 @@ public class Hosting {
 	        	boolean shouldPublish = false;
 		        StateMachine theMachine = theMatch.getMyStateMachine();
 		        MachineState theState = theMatch.getState(theMachine);
-	            if (!theMachine.isTerminal(theState)) {
-	            	try {
-	            		Move theMove = theMachine.getMoveFromTerm(GdlFactory.createTerm(move));
-		                
-						if(!theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex)).contains(theMove)) {
-							Logger.getAnonymousLogger().severe("Bad move for role " + nRoleIndex + "! " + theMove + "; Valid moves are: " + theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex)));
-							return;
-						}
-	                
-	                    theMatch.setPendingMove(nRoleIndex, move);
-	
-	                    // This is a loop so that when all players have NOOP moves, we'll still
-	                    // push through to the next state.
-	                    while (!theMachine.isTerminal(theState) && theMatch.allPendingMovesSubmitted()) {
-	                        List<Move> theMoves = new ArrayList<Move>();
-	                        String[] thePendingMoves = theMatch.getPendingMoves();
-	                        for (int i = 0; i < thePendingMoves.length; i++)
-	                            theMoves.add(theMachine.getMoveFromTerm(GdlFactory.createTerm(thePendingMoves[i])));
-	
-	                        theState = theMachine.getNextState(theState, theMoves);
-	                        theMatch.setState(theMachine, theState, theMoves);
-	                        shouldPublish = true;
-	
-	                        if (theMatch.hasComputerPlayers()) {
-		                        String theRequest = null;
-		                        if (theMatch.isCompleted()) {
-		                        	theRequest = RequestBuilder.getStopRequest(theMatch.getMatchId(), theMoves, new NoOpGdlScrambler());
-		                        } else {
-		                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), theMoves, new NoOpGdlScrambler());
-		                        }
-		                        QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-	                        }
-	                    }	                    
-					} catch (MoveDefinitionException e) {
-						Logger.getAnonymousLogger().severe("GGP Prover move issue: " + e.toString());
-					} catch (TransitionDefinitionException e) {
-						Logger.getAnonymousLogger().severe("GGP Prover transition issue: " + e.toString());
-					} catch (SymbolFormatException e) {
-						Logger.getAnonymousLogger().severe("GGP Prover symbol issue: " + e.toString());
-					} catch (GoalDefinitionException e) {
-						Logger.getAnonymousLogger().severe("GGP Prover goal issue: " + e.toString());
-					}
-	                
-	                theMatch.deflateForSaving();
-	                pm.makePersistent(theMatch);
-	                
-                    if (shouldPublish) {
-                    	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("stepCount", "" + theMatch.getStepCount()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-                    }	                
+	            if (theMachine.isTerminal(theState)) {
+	            	Logger.getAnonymousLogger().severe("Got move for match that has already terminated.");
+	            	return;
 	            }
-	
+	            
+	            try {
+	            	// First, parse the move, check its validity, and include
+	            	// it in the match description.
+	            	{
+			            Move theMove = null;
+			            if (withError.isEmpty()) {		            
+			            	try {
+			            		theMove = theMachine.getMoveFromTerm(GdlFactory.createTerm(move));
+							} catch (SymbolFormatException e) {
+								// Can't parse the move? Not valid.
+								theMove = null;
+							}
+							if(theMove != null && !theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex)).contains(theMove)) {
+								// Move isn't in the set of legal moves? Not valid.
+								theMove = null;
+							}
+			            	if (theMove == null) {
+			            		// Move isn't valid? Set an error.
+			            		withError = "IL " + move;
+			            	}
+			            }
+			            if (theMove == null) {
+			            	// When the move isn't valid, choose a random move.
+			            	List<Move> theMoves = theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex));
+		                	Collections.shuffle(theMoves);
+		                	theMove = theMoves.get(0);
+			            }
+		            	
+		            	theMatch.setPendingMove(nRoleIndex, theMove.toString());
+		            	theMatch.setPendingError(nRoleIndex, withError);
+	            	}
+
+	            	// Once the move has been set as pending, check to see if the match can
+	            	// transition to the next step. This is done as a loop so that even when
+	            	// all of the players have NOOP moves or are playing randomly, we'll still
+	            	// push through to the next state.
+                    while (!theMachine.isTerminal(theState) && theMatch.allPendingMovesSubmitted()) {
+                        List<Move> theMoves = theMatch.advanceState(theMachine);
+                        shouldPublish = true;
+
+                        if (theMatch.hasComputerPlayers()) {
+	                        String theRequest = null;
+	                        if (theMatch.isCompleted()) {
+	                        	theRequest = RequestBuilder.getStopRequest(theMatch.getMatchId(), theMoves, new NoOpGdlScrambler());
+	                        } else {
+	                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), theMoves, new NoOpGdlScrambler());
+	                        }
+	                        QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+                        }
+                    }
+				} catch (MoveDefinitionException e) {
+					throw new RuntimeException(e);
+				}
+                
+                theMatch.deflateForSaving();
+                pm.makePersistent(theMatch);
+                
+                if (shouldPublish) {
+                	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("stepCount", "" + theMatch.getStepCount()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+                }	                
+
 	    	    // Commit the transaction, flushing the object to the datastore
 	    	    tx.commit();
 	    	    pm.close();
@@ -242,11 +256,18 @@ public class Hosting {
                 }
 				JSONObject theRequestJSON = new JSONObject(theResponseJSON.getString("originalRequest"));
 				if (theRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
-					String theMove = "unspecified";
+					String theMove = "";
+					String theError = "";
 					if (theResponseJSON.has("response")) {
 						theMove = theResponseJSON.getString("response");
 					}
-					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("source", "robot").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+					if (theResponseJSON.has("responseType")) {
+						String type = theResponseJSON.getString("responseType");
+						if (type.equals("TO") || type.equals("CE")) {
+							theError = type;
+						} 
+					}
+					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
 	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, new NoOpGdlScrambler());                        
 	                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
@@ -334,7 +355,7 @@ public class Hosting {
 				String theMove = theRequest.getString("theMove");
 				String matchKey = theRequest.getString("matchKey");
 
-				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("source", "human").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("withError", "").param("source", "human").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 				
 				resp.getWriter().println(theMove);
 			}
