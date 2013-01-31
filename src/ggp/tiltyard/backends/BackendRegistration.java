@@ -1,6 +1,5 @@
 package ggp.tiltyard.backends;
 
-import ggp.tiltyard.TiltyardPublicKey;
 
 import java.io.IOException;
 
@@ -20,7 +19,7 @@ public class BackendRegistration {
             long currentTimeBlock = getTimeBlock();
             if (!SignableJSON.isSignedJSON(thePingJSON)) throw new Exception("Backend registration not signed.");
             if (!SignableJSON.verifySignedJSON(thePingJSON)) throw new Exception("Backend registration signature not valid.");
-            if (!thePingJSON.getString("matchHostPK").equals(TiltyardPublicKey.theKey)) throw new Exception("Backend registration not signed with Tiltyard key.");
+            if (!thePingJSON.getString("matchHostPK").equals(BackendPublicKey.theKey)) throw new Exception("Backend registration not signed with Tiltyard key.");
             if (thePingJSON.getLong("lastTimeBlock") != currentTimeBlock && thePingJSON.getLong("nextTimeBlock") != currentTimeBlock) throw new Exception("Backend registration time block not valid.");
             return true;
         } catch (Exception e) {

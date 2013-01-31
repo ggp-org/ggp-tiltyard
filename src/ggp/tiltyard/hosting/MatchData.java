@@ -71,19 +71,19 @@ public class MatchData {
 
         // TODO(schreib): Add support for the analysis clock here.
         theMatch = new Match(matchId, startClock, playClock, theGame);
-        theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Artemis"));        
-        this.playerURLs = playerURLs.toArray(new String[]{});
-        List<Boolean> isPlayerHuman = new ArrayList<Boolean>();
-        for (int i = 0; i < playerURLs.size(); i++) {
-        	isPlayerHuman.add(isPlayerHuman(i));
-        }
-        theMatch.setWhichPlayersAreHuman(isPlayerHuman);
+        theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Tiltyard"));        
+        this.playerURLs = playerURLs.toArray(new String[]{});        
         theMatch.setPlayerNamesFromHost(playerNames);
         // Players named Random will play randomly; all others will not.
         playsRandomly = new boolean[playerNames.size()];
         for (int i = 0; i < playerNames.size(); i++) {
         	playsRandomly[i] = playerNames.get(i) != null && playerNames.get(i).toLowerCase().equals("random");
         }
+        List<Boolean> isPlayerHuman = new ArrayList<Boolean>();
+        for (int i = 0; i < playerURLs.size(); i++) {
+        	isPlayerHuman.add(isPlayerHuman(i));
+        }
+        theMatch.setWhichPlayersAreHuman(isPlayerHuman);
 
         // NOTE: This code assumes that the first state for the match will always have
         // a non-forced move for at least one player. If this is not the case, it will
@@ -120,11 +120,13 @@ public class MatchData {
     }
     
     public boolean isPlayerHuman(int nPlayer) {
-    	return playerURLs[nPlayer] == null;
+    	return playerURLs[nPlayer] == null && !playsRandomly[nPlayer];
     }
     
     public boolean hasComputerPlayers() {
-    	for (int i = 0; i < playerURLs.length; i++) if (!isPlayerHuman(i)) return true;
+    	for (int i = 0; i < playerURLs.length; i++)
+    		if (playerURLs[i] != null)
+    			return true;
     	return false;
     }
     
@@ -351,7 +353,7 @@ public class MatchData {
     void inflateAfterLoading() {
         try {
             theMatch = new Match(theMatchJSON.getValue(), Game.loadFromJSON(theGameJSON.getValue()), theAuthToken);
-            theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Artemis"));
+            theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Tiltyard"));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -188,8 +188,8 @@
     }
 
     function updateMatchList() {
-      var ongoingMatches = ResourceLoader.load_json('//database.ggp.org/query/filterActiveSet,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0').queryMatches;
-      var recentMatches = ResourceLoader.load_json('//database.ggp.org/query/filter,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0').queryMatches;      
+      var ongoingMatches = ResourceLoader.load_json('//database.ggp.org/query/filterActiveSet,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2').queryMatches;
+      var recentMatches = ResourceLoader.load_json('//database.ggp.org/query/filter,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2').queryMatches;      
       var matchListCaption = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
       var recentMatchesHTML = renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, null);
       document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
@@ -197,7 +197,7 @@
     updateMatchList();
     
     function update_query_via_channel(channelMessage) {
-      if (channelMessage.data != '//database.ggp.org/query/filter,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0') {
+      if (channelMessage.data != '//database.ggp.org/query/filter,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2') {
         // Channel update notification was about a different match.
         // Ignore it -- it was meant for a different SpectatorView.
         return;
@@ -219,6 +219,6 @@
       }
     }
     window.theGlobalChannelCallbacks.push(update_query_via_channel);
-    ResourceLoader.load_raw('//database.ggp.org/subscribe/query/filter,recent,5bc94f8e793772e8585a444f2fc95d2ac087fed0/clientId=' + theChannelID);  
+    ResourceLoader.load_raw('//database.ggp.org/subscribe/query/filter,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2/clientId=' + theChannelID);  
   </script>
 </body></html>

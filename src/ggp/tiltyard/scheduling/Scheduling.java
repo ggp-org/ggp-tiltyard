@@ -1,15 +1,9 @@
 package ggp.tiltyard.scheduling;
 
-import ggp.tiltyard.TiltyardPublicKey;
 import ggp.tiltyard.players.Player;
-import ggp.tiltyard.backends.BackendRegistration;
-import ggp.tiltyard.backends.Backends;
+import ggp.tiltyard.hosting.Hosting;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -267,18 +261,16 @@ public class Scheduling {
         // Once the final mapping of players to roles has been chosen,
         // extract the names and URLs from the players into a form that
         // will appear in the match creation request.
-        int i = 0;
-        String[] playerURLsForMatch = new String[theChosenPlayers.size()];
-        String[] playerNamesForMatch = new String[theChosenPlayers.size()];
+        List<String> playerURLsForMatch = new ArrayList<String>();
+        List<String> playerNamesForMatch = new ArrayList<String>();
         for (Player p : theChosenPlayers) {        	
         	if (p == null) {
-        		playerURLsForMatch[i] = "127.0.0.1:12345";
-        		playerNamesForMatch[i] = "Random";
+        		playerURLsForMatch.add(null);
+        		playerNamesForMatch.add("Random");
         	} else {
-        		playerURLsForMatch[i] = p.getURL();
-        		playerNamesForMatch[i] = p.getName();
+        		playerURLsForMatch.add(p.getURL());
+        		playerNamesForMatch.add(p.getName());
         	}
-        	i++;
         }
         
         // Choose randomized start clocks and play clocks for the match.
@@ -287,79 +279,19 @@ public class Scheduling {
         Random theRandom = new Random();
         int startClock = 90 + 10*theRandom.nextInt(10);
         int playClock = 15 + 5*theRandom.nextInt(7);
-        	
-        // Construct a JSON request to the Tiltyard backend with the information
-        // needed to run a match of the selected game w/ the selected players.
-        JSONObject theMatchRequest = new JSONObject();
+
+        // Start the match using the hybrid match hosting system.
         try {
-            theMatchRequest.put("startClock", startClock);
-            theMatchRequest.put("playClock", playClock);
-            theMatchRequest.put("gameURL", theGameURL);
-            theMatchRequest.put("matchId", "tiltyard." + gameKey + "." + System.currentTimeMillis());
-            theMatchRequest.put("players", playerURLsForMatch);
-            theMatchRequest.put("playerNames", playerNamesForMatch);
+        	String matchKey = Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, -1, startClock, playClock);        	
+        	if (matchKey != null) {
+        		String matchURL = "http://matches.ggp.org/matches/" + matchKey;
+        		theState.getRunningMatches().add(matchURL);
+        	}
         } catch (JSONException e) {
-            e.printStackTrace();
-            return;
+        	throw new RuntimeException(e);
         }
         
-        // Find a backend server to run the match. As part of this process,
-        // ping all of the registered backend servers to verify that they're
-        // still available, and deregister those that aren't. Lastly choose
-        // randomly from the remaining ones.
-        Backends theBackends = Backends.loadBackends();
-        List<String> validBackends = new ArrayList<String>();
-        for (String theBackendAddress : theBackends.getHostBackendAddresses()) {
-            try {
-                URL url = new URL("http://" + theBackendAddress + ":9124/" + URLEncoder.encode("ping", "UTF-8"));
-                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-                if(!BackendRegistration.verifyBackendPing(reader.readLine())) {
-                    continue;
-                }
-                reader.close();
-            } catch (Exception e) {
-                continue;
-            }
-            validBackends.add(theBackendAddress);
-        }
-        if (validBackends.size() == 0) {            
-            Counter.increment("Tiltyard.Scheduling.Backend.Errors");
-            theBackends.getHostBackendAddresses().clear();
-            theBackends.save();
-            return;
-        }
-        // TODO(schreib): Eventually this might be a good place for load balancing
-        // logic, to ensure the matches-per-backend load is distributed roughly evenly
-        // rather than clobbering one unlucky backend. This may also be a good place
-        // for rate-limiting logic to avoid overloading backends: we can always just
-        // not start new matches if all of the backends are overloaded.
-        String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
-        theBackends.getHostBackendAddresses().retainAll(validBackends);
-        theBackends.save();
-        
-        // Send the match request to the Tiltyard backend, and get back the URL
-        // for the match on the spectator server.
-        int nStartMatchAttempt = 0;
-        String theSpectatorURL = null;
-        while (true) {        	
-	        try {
-	            URL url = new URL("http://" + theBackendAddress + ":9124/" + URLEncoder.encode(theMatchRequest.toString(), "UTF-8"));
-	          	BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
-	           	theSpectatorURL = reader.readLine();
-	            reader.close();
-	            break;
-	        } catch (Exception e) {
-	        	if (nStartMatchAttempt > 9) {
-	        		throw new RuntimeException(e);
-	        	}
-	        }
-	        nStartMatchAttempt++;
-        }
-        if (!theSpectatorURL.equals("http://matches.ggp.org/matches/null/")) {
-            theState.getRunningMatches().add(theSpectatorURL);
-        }
-        
-        Counter.increment("Tiltyard.Scheduling.Round.Success");
+        Counter.increment("Tiltyard.Scheduling.Round.Success");        
     }
 
     private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {

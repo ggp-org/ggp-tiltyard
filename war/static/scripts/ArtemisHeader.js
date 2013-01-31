@@ -148,7 +148,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
     }
     if ("playerNamesFromHost" in theMatchJSON && theMatchJSON.playerNamesFromHost[j].length > 0) {
       theMatchHTML += '<td class="imageHolder" style="width:25px; padding-right:5px"><img width=25 height=25 src="http://placekitten.com/g/25/25"/></td>';
-      theMatchHTML += '<td><a href="//www.ggp.org/view/artemis/players/' + theMatchJSON.playerNamesFromHost[j] + '">' + theMatchJSON.playerNamesFromHost[j] + '</a></td>';
+      theMatchHTML += '<td><a href="//www.ggp.org/view/tiltyard/players/' + theMatchJSON.playerNamesFromHost[j] + '">' + theMatchJSON.playerNamesFromHost[j] + '</a></td>';
     } else {
       theMatchHTML += '<td class="imageHolder" style="width:25px; padding-right:5px"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Unsigned.png" title="This player is not identified." /></td>';
       theMatchHTML += '<td>Anonymous</td>';
@@ -176,12 +176,12 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
   theMatchHTML += '</table></td>';
 
   // Match game profile.
-  theMatchHTML += '<td class="padded"><a href="//www.ggp.org/view/artemis/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + trimTo(getGameName(theMatchJSON.gameMetaURL),20) + '</a></td>';
+  theMatchHTML += '<td class="padded"><a href="//www.ggp.org/view/tiltyard/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + trimTo(getGameName(theMatchJSON.gameMetaURL),20) + '</a></td>';
   theMatchHTML += '<td width=5></td>';
   
   // Signature badge.
   if ("hashedMatchHostPK" in theMatchJSON) {
-    theMatchHTML += '<td class="imageHolder"><a href="//www.ggp.org/view/artemis/matches/"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Party.png" title="Match has a valid digital signature from Artemis."></img></a></td>';
+    theMatchHTML += '<td class="imageHolder"><a href="//www.ggp.org/view/tiltyard/matches/"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Tiltyard2.png" title="Match has a valid digital signature from Tiltyard."></img></a></td>';
   } else {
     theMatchHTML += '<td class="imageHolder"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Unsigned.png" title="Match does not have a valid digital signature."></img></td>';
   }
@@ -201,7 +201,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
   
   // Match page URL.
   var matchURL = theMatchJSON.matchURL.replace("http://matches.ggp.org/matches/", "");
-  theMatchHTML += '<td class="padded"><a href="//www.ggp.org/view/artemis/matches/' + matchURL + '">View</a></td>';
+  theMatchHTML += '<td class="padded"><a href="//www.ggp.org/view/tiltyard/matches/' + matchURL + '">View</a></td>';
   theMatchHTML += '<td width=5></td>';
   return theMatchHTML + "</tr>";
 }
@@ -228,7 +228,7 @@ function loadBellerophonMetadataForGames() {
     // TODO: Ultimately we should look up version-specific metadata?
     var gameInfo = global_gameMetadata[gameUnversionedURL];
 
-    gameInfo.bellerophonLink = '//www.ggp.org/view/artemis/games/' + translateRepositoryIntoCodename(gameVersionedURL);
+    gameInfo.bellerophonLink = '//www.ggp.org/view/tiltyard/games/' + translateRepositoryIntoCodename(gameVersionedURL);
     gameInfo.bellerophonVersionFromURL = versionFromURL;
 
     if (!("gameName" in gameInfo)) {

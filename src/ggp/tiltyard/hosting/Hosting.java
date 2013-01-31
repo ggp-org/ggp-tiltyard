@@ -3,7 +3,7 @@ package ggp.tiltyard.hosting;
 import static com.google.appengine.api.taskqueue.RetryOptions.Builder.withTaskRetryLimit;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.withUrl;
 
-import ggp.tiltyard.TiltyardPublicKey;
+import ggp.tiltyard.backends.BackendPublicKey;
 import ggp.tiltyard.players.Player;
 
 import java.io.BufferedReader;
@@ -88,7 +88,7 @@ public class Hosting {
            	if (nRetryAttempt > TASK_RETRIES - 3) {
            		throw new RuntimeException(e);
            	}
-           	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString());
+           	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString() + " ... " + e.getStackTrace());
         }            
 		return;
     }
@@ -103,7 +103,7 @@ public class Hosting {
     public static void selectMove(String matchName, int nRoleIndex, int forStep, String withError, String move, String source) throws MoveSelectException {
    		EncodedKeyPair theKeys = null;
    		try {
-   			theKeys = StoredCryptoKeys.loadCryptoKeys("Artemis");
+   			theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
    		} catch (IOException ie) {
    			throw new RuntimeException(ie);
    		}
@@ -240,6 +240,29 @@ public class Hosting {
         resp.setContentType("text/html");
         resp.getWriter().println(response.toString());
     }
+    
+    public static String startMatch(String gameURL, List<String> playerURLs, List<String> playerNames, int analysisClock, int startClock, int playClock) throws JSONException, IOException {    	
+		if (!gameURL.startsWith("http://games.ggp.org/base/games/")) {
+			Logger.getAnonymousLogger().severe("Game URL did not start with valid prefix.");
+			return null;
+		}
+		
+		String gameKey = gameURL.replace("http://games.ggp.org/base/games/","").replace("/", "");		
+        String matchId = "tiltyard." + gameKey + "." + (new Date()).getTime();
+        Game theGame = RemoteGameRepository.loadSingleGame(gameURL);
+
+        int nRoles = Role.computeRoles(theGame.getRules()).size();
+        if (nRoles != playerURLs.size() || nRoles != playerNames.size()) {
+			Logger.getAnonymousLogger().severe("Game has " + nRoles + " roles but start request has " + playerURLs.size() + " player URLs and " + playerNames.size() + " player names.");
+			return null;
+        }        
+        
+        MatchData m = new MatchData(matchId, playerNames, playerURLs, analysisClock, startClock, playClock, theGame);
+        if (m.hasComputerPlayers()) {
+        	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+        }
+        return m.getMatchKey();
+    }
 
 	public static void doPost(String theURI, String in, HttpServletResponse resp) {
 		try {
@@ -248,8 +271,8 @@ public class Hosting {
                 if (!SignableJSON.isSignedJSON(theResponseJSON)) {
                     throw new RuntimeException("Got callback response that wasn't signed.");
                 }
-                if (!theResponseJSON.getString("matchHostPK").equals(TiltyardPublicKey.theKey)) {
-                	throw new RuntimeException("Got callback response that was signed but not by Tiltyard.");
+                if (!theResponseJSON.getString("matchHostPK").equals(BackendPublicKey.theKey)) {
+                	throw new RuntimeException("Got callback response that was signed but not by request farm.");
                 }
                 if (!SignableJSON.verifySignedJSON(theResponseJSON)) {
                 	throw new RuntimeException("Got callback response whose signature didn't validate.");
@@ -276,77 +299,45 @@ public class Hosting {
 				resp.getWriter().println("okay");
 			} else if (theURI.equals("start_match")) {
 				JSONObject theRequest = new JSONObject(in);
-				
-				String gameURL = theRequest.getString("gameURL");
-				if (!gameURL.startsWith("http://games.ggp.org/base/games/")) {
-					Logger.getAnonymousLogger().severe("Game URL did not start with valid prefix.");
-					return;
-				}
-				
-	            String matchId = "tiltyard." + (new Date()).getTime();
-	            Game theGame = RemoteGameRepository.loadSingleGame(gameURL);
 
-	            // This code parses the "playerCodes" that can be sent to the
-	            // match hosting system to indicate which players to use. There
-	            // are four types of valid match codes:
-	            //
-	            // empty string         = a human player
-	            // "random"             = a random player
-	            // "tiltyard://foo"     = player named "foo" on Tiltyard
-	            // any URL              = remote player at that URL
-	            //
-	            // Start requests that don't include a playerCodes field are
-	            // assumed to consist entirely of human players.
-	            int nRoles = Role.computeRoles(theGame.getRules()).size();
-	            JSONArray thePlayerCodes = null;
-	            if (theRequest.has("playerCodes")) {
-	            	thePlayerCodes = theRequest.getJSONArray("playerCodes");
-		            if (nRoles != thePlayerCodes.length()) {
-						Logger.getAnonymousLogger().severe("Game has " + nRoles + " roles but start request has " + thePlayerCodes.length() + " player codes.");
-						return;
-		            }
-	            } else {
-	            	thePlayerCodes = new JSONArray();
-	            	for (int i = 0; i < nRoles; i++) {
-	            		thePlayerCodes.put("");
-	            	}
-	            }
-	            List<String> playerURLs = new ArrayList<String>();
-	            List<String> playerNames = new ArrayList<String>();
-	            for (int i = 0; i < nRoles; i++) {
-	            	String code = thePlayerCodes.getString(i);
-	            	if (code.isEmpty()) {
-	            		playerNames.add("");
-	            		playerURLs.add(null);
-	            	} else if (code.toLowerCase().equals("random")) {
-	            		playerNames.add("Random");
-	            		playerURLs.add(null);
-	            	} else if (code.startsWith("tiltyard://")) {
-	            		code = code.substring("tiltyard://".length());
-	            		Player p = Player.loadPlayer(code);
-	            		if (p == null) {
-	            			Logger.getAnonymousLogger().severe("Player " + code + " not found.");
-	            			return;
-	            		} else {
+		        // This code parses the "playerCodes" that can be sent to the
+		        // match hosting system to indicate which players to use. There
+		        // are four types of valid match codes:
+		        //
+		        // empty string         = a human player
+		        // "random"             = a random player
+		        // "tiltyard://foo"     = player named "foo" on Tiltyard
+		        // any URL              = remote player at that URL
+				//
+		        JSONArray thePlayerCodes = theRequest.getJSONArray("playerCodes");
+		        List<String> playerURLs = new ArrayList<String>();
+		        List<String> playerNames = new ArrayList<String>();
+		        for (int i = 0; i < thePlayerCodes.length(); i++) {
+		        	String code = thePlayerCodes.getString(i);
+		        	if (code.isEmpty()) {
+		        		playerNames.add("");
+		        		playerURLs.add(null);
+		        	} else if (code.toLowerCase().equals("random")) {
+		        		playerNames.add("Random");
+		        		playerURLs.add(null);
+		        	} else if (code.startsWith("tiltyard://")) {
+		        		code = code.substring("tiltyard://".length());
+		        		Player p = Player.loadPlayer(code);
+		        		if (p == null) {
+		        			Logger.getAnonymousLogger().severe("Player " + code + " not found.");
+		        			return;
+		        		} else {
 		            		playerNames.add(code);
 		            		playerURLs.add(p.getURL());
-	            		}
-	            	} else {
-	            		playerNames.add("");
-	            		playerURLs.add(code);
-	            	}
-	            }
-	            
-	            int analysisClock = theRequest.getInt("analysisClock");
-	            int startClock = theRequest.getInt("startClock");
-	            int playClock = theRequest.getInt("playClock");
-	            
-	            MatchData m = new MatchData(matchId, playerNames, playerURLs, analysisClock, startClock, playClock, theGame);
-	            if (m.hasComputerPlayers()) {
-	            	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
-	            }
-	            
-	            resp.getWriter().println(m.getMatchKey());
+		        		}
+		        	} else {
+		        		playerNames.add("");
+		        		playerURLs.add(code);
+		        	}
+		        }
+				
+		        String matchKey = startMatch(theRequest.getString("gameURL"), playerURLs, playerNames, theRequest.getInt("analysisClock"), theRequest.getInt("startClock"), theRequest.getInt("playClock"));
+	            resp.getWriter().println(matchKey);
 			} else if(theURI.equals("select_move")) {
 				JSONObject theRequest = new JSONObject(in);
 
