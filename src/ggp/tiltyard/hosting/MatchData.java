@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
@@ -341,8 +342,22 @@ public class MatchData {
     }
 
     public static final String SPECTATOR_SERVER = "http://matches.ggp.org/";
-    public String publish() throws IOException {
-        return MatchPublisher.publishToSpectatorServer(SPECTATOR_SERVER, theMatch);
+    public String publish() {
+    	Exception fatalException = null;
+    	for (int i = 0; i < 10; i++) {
+	    	try {
+	    		return MatchPublisher.publishToSpectatorServer(SPECTATOR_SERVER, theMatch);
+	    	} catch (IOException ie) {
+	    		fatalException = ie;
+	    		Logger.getAnonymousLogger().severe("Caught exception while publishing: " + ie.toString() + " ... " + ie.getCause());
+	    	}
+	    	try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				;
+			}
+    	}
+    	throw new RuntimeException(fatalException);
     }
 
     void deflateForSaving() {

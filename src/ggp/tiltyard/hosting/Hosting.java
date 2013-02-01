@@ -88,7 +88,7 @@ public class Hosting {
            	if (nRetryAttempt > TASK_RETRIES - 3) {
            		throw new RuntimeException(e);
            	}
-           	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString() + " ... " + e.getStackTrace());
+           	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString() + " ... " + e.getCause());
         }            
 		return;
     }
