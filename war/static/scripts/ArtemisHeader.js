@@ -71,50 +71,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
     var allErrorsForPlayer = theMatchJSON.allErrorsForPlayer;
     var allErrorsForSomePlayer = theMatchJSON.allErrorsForSomePlayer;
   }
-
-  // TODO(schreib): Factor this out into a general function.
-  renderDuration = function(x) {
-      if (x <= 0) return "0s";
-      
-      var s = Math.round(x/1000);
-      var sV = "" + (s % 60);
-      
-      var m = Math.floor(s/60);
-      var mV = "" + (m % 60);
-      
-      var h = Math.floor(m/60);
-      var hV = "" + h;
-      
-      if (m != 0) {
-          while (sV.length < 2) sV = "0" + sV;
-      }
-      if (h != 0) {
-          while (mV.length < 2) mV = "0" + mV;
-          while (sV.length < 2) sV = "0" + sV;
-      }
-
-      hV += ":";
-      mV += ":";
-      
-      if (h == 0) {
-        if (m == 0) {
-          mV = "";
-          sV += "s";
-        }
-        hV = "";
-      }
-
-      return hV + mV + sV;
-  }
   
-  // TODO(schreib): Find the right place for this.
-  updateLiveDuration = function (objName, startTime) {
-    var theSpan = document.getElementById(objName);
-    if (theSpan == null) return;
-    theSpan.innerHTML = renderDuration(new Date() - new Date(startTime));
-    setTimeout("updateLiveDuration('" + objName + "'," + startTime + ")", 1000);
-  }
-
   var theMatchHTML = "<tr>";
   if (showShadow == 1) {
     theMatchHTML = "<tr bgcolor=#E0E0E0>";
@@ -124,11 +81,14 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
   
   // Match start time.
   var theDate = new Date(theMatchJSON.startTime);
-  theMatchHTML += '<td class="padded">' + UserInterface.renderDateTime(theDate);
+  theMatchHTML += '<td class="padded">';  
   if (theOngoingMatches.indexOf(theMatchJSON.matchURL) >= 0) {
-      theMatchHTML += '<br><center><b>(Ongoing! <span id="dlx_' + theMatchJSON.randomToken + '">' + renderDuration(new Date() - new Date(theMatchJSON.startTime)) + '</span>)</b></center>';
-      setTimeout("updateLiveDuration('dlx_" + theMatchJSON.randomToken + "'," + theMatchJSON.startTime + ")", 1000);
+	  theMatchHTML += '<b>';
   }
+  theMatchHTML += UserInterface.renderDateTime(theDate);
+  if (theOngoingMatches.indexOf(theMatchJSON.matchURL) >= 0) {
+	  theMatchHTML += '</b>';
+  }  
   theMatchHTML += "</td>"
   
   // Match players...
