@@ -343,21 +343,24 @@ public class MatchData {
 
     public static final String SPECTATOR_SERVER = "http://matches.ggp.org/";
     public String publish() {
-    	Exception fatalException = null;
-    	for (int i = 0; i < 10; i++) {
+    	int nAttempt = 0;
+    	while (true) {
 	    	try {
 	    		return MatchPublisher.publishToSpectatorServer(SPECTATOR_SERVER, theMatch);
 	    	} catch (IOException ie) {
-	    		fatalException = ie;
-	    		Logger.getAnonymousLogger().severe("Caught exception while publishing: " + ie.toString() + " ... " + ie.getCause());
+	    		if (nAttempt > 10) {
+	    			throw new RuntimeException(ie);
+	    		} else if (nAttempt > 7) {	    		
+	    			Logger.getAnonymousLogger().severe("Caught exception while publishing: " + ie.toString() + " ... " + ie.getCause());
+	    		}
 	    	}
+    	    nAttempt++;
 	    	try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				;
-			}
+			}	    	
     	}
-    	throw new RuntimeException(fatalException);
     }
 
     void deflateForSaving() {
