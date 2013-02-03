@@ -123,6 +123,7 @@ public class Registration {
                 p.setVisibleEmail(sanitize(playerInfo.getString("visibleEmail")));
                 p.setVisibleWebsite(sanitize(playerInfo.getString("visibleWebsite")));
                 p.setExponentURL(sanitize(playerInfo.getString("exponentURL")));
+                p.setExponentVizURL(sanitize(playerInfo.getString("exponentVizURL")));
                 p.save();
 
                 resp.getWriter().println(p.asJSON(true));
