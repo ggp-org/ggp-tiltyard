@@ -1,7 +1,6 @@
 package ggp.tiltyard.scheduling;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -13,17 +12,11 @@ import org.ggp.galaxy.shared.persistence.Persistence;
 public class ServerState {
     @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
-    @Persistent private Set<String> theRunningMatches;
     @Persistent public boolean isDrained;
 
     private ServerState() {
         thePrimaryKey = "ServerState";
-        theRunningMatches = new HashSet<String>();
         isDrained = false;
-    }
-
-    public Set<String> getRunningMatches() {
-        return theRunningMatches;
     }
 
     public void save() {

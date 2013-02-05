@@ -71,7 +71,7 @@ public class MatchData {
         }
 
         // TODO(schreib): Add support for the analysis clock here.
-        theMatch = new Match(matchId, startClock, playClock, theGame);
+        theMatch = new Match(matchId, analysisClock, startClock, playClock, theGame);
         theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Tiltyard"));        
         this.playerURLs = playerURLs.toArray(new String[]{});        
         theMatch.setPlayerNamesFromHost(playerNames);
@@ -103,7 +103,7 @@ public class MatchData {
         matchKey = publish();
         save();
     }
-
+    
     public String getMatchKey() {
         return matchKey;
     }
@@ -122,6 +122,35 @@ public class MatchData {
     
     public boolean isPlayerHuman(int nPlayer) {
     	return playerURLs[nPlayer] == null && !playsRandomly[nPlayer];
+    }
+    
+    public List<String> getPlayerNames() {
+    	return theMatch.getPlayerNamesFromHost();
+    }
+    
+    private long getElapsedTime() {
+    	return System.currentTimeMillis() - theMatch.getStartTime().getTime();
+    }
+    
+    public boolean isWedged() {
+    	// Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
+    	// Later on, this can be refined to look at the average step count in the game being played.
+    	return getElapsedTime() > 1000L*theMatch.getStartClock() + 256L*1000L*theMatch.getPlayClock();
+    }
+    
+    public JSONObject getMatchInfo() {
+    	try {
+    		return new JSONObject(theMatch.toJSON());
+    	} catch (JSONException je) {
+    		throw new RuntimeException(je);
+    	}
+    }
+    
+    public long getExpectedTimeToCompletion() {
+  	    // Naively assume that each match takes 30 moves. Later on, this can be
+  	    // refined to look at the average step count in the game being played.
+        long predictedLength = 1000L*theMatch.getStartClock() + 30L*1000L*theMatch.getPlayClock();
+        return Math.max(0L, predictedLength - getElapsedTime());
     }
     
     public boolean hasComputerPlayers() {
@@ -391,7 +420,11 @@ public class MatchData {
         PersistenceManager pm = Persistence.getPersistenceManager();
         pm.makePersistent(this);
         pm.close();
-    }    
+    }
+    
+    public void delete() {
+    	Persistence.clearSpecific(getMatchKey(), MatchData.class);
+    }
 
     /* Static accessor methods */
     public static Set<MatchData> loadMatches() throws IOException {

@@ -2,6 +2,7 @@ package ggp.tiltyard.scheduling;
 
 import ggp.tiltyard.players.Player;
 import ggp.tiltyard.hosting.Hosting;
+import ggp.tiltyard.hosting.MatchData;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,7 +16,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.ggp.galaxy.shared.crypto.SignableJSON;
 import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -58,75 +58,28 @@ public class Scheduling {
 
     public static void runSchedulingRound(ServerState theState) throws IOException {        
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
-        long expectedTimeUntilMoreAvailablePlayers = Long.MAX_VALUE;
+        long morePlayersIn = Long.MAX_VALUE;
         
         Counter.increment("Tiltyard.Scheduling.Round.Started");
 
-        // Load the ongoing matches list from the database. When this query fails,
-        // retry a few times to suss out transient errors.
-        JSONObject activeSet = null;
-        int nQueryAttempt = 0;
-        while (true) {        	
-	        try {
-	            activeSet = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterActiveSet,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2");
-	            break;
-	        } catch (Exception e) {
-	        	if (nQueryAttempt > 9) {
-	        		throw new RuntimeException(e);
-	        	}
-	        }
-	        nQueryAttempt++;
-        }
-
-        try {
-            JSONArray activeMatchArray = activeSet.getJSONArray("queryMatches");
-            Set<String> activeMatches = new HashSet<String>();
-            for (int i = 0; i < activeMatchArray.length(); i++) {
-                activeMatches.add(activeMatchArray.getString(i));
-            }
-            theState.getRunningMatches().addAll(activeMatches);
-        } catch (JSONException je) {
-            throw new RuntimeException(je);
-        }
-        
         {
             // Find and clear all of the completed or wedged matches. For matches
             // which are still ongoing, mark the players in those matches as busy.
-            Set<String> doneMatches = new HashSet<String>();
+        	// Also keep track of how long it will be before some are available.
+        	Set<MatchData> activeMatches = MatchData.loadMatches();
             Set<String> busyPlayerNames = new HashSet<String>();            
-            for (String matchURL : theState.getRunningMatches()) {
-                try {
-                    JSONObject theMatchInfo = RemoteResourceLoader.loadJSON(matchURL);
-                    if (verifyTiltyardCryptography(theMatchInfo)) {
-                        List<String> matchPlayers = new ArrayList<String>();
-                        {
-                          JSONArray thePlayers = theMatchInfo.getJSONArray("playerNamesFromHost");
-                          for (int i = 0; i < thePlayers.length(); i++) {
-                            matchPlayers.add(thePlayers.getString(i));
-                          }
-                        }
-
-                        long elapsedTime = System.currentTimeMillis() - theMatchInfo.getLong("startTime");
-                        if(theMatchInfo.getBoolean("isCompleted")) {
-                          doneMatches.add(matchURL);
-                          handleStrikesForPlayers(theMatchInfo, matchPlayers, theAvailablePlayers);
-                        } else if (elapsedTime > 1000L*theMatchInfo.getInt("startClock") + 256L*1000L*theMatchInfo.getInt("playClock")) {
-                          // Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
-                          doneMatches.add(matchURL);
-                        } else {
-                          busyPlayerNames.addAll(matchPlayers);
-                    	  // Naively assume that each match takes 30 moves. Later on, this can be
-                    	  // refined to look at the average step count in the game being played.
-                          long predictedLength = 1000L*theMatchInfo.getInt("startClock") + 30L*1000L*theMatchInfo.getInt("playClock");
-                          expectedTimeUntilMoreAvailablePlayers = Math.min(expectedTimeUntilMoreAvailablePlayers, Math.max(0L, predictedLength - elapsedTime));
-                        }
-                    }
-                } catch (Exception e) {
-                    // For some reason the match isn't recorded on the match server, or the match server
-                    // is down. Just keep it around, in case it becomes available later.
-                }
+            for (MatchData activeMatch : activeMatches) {
+            	List<String> matchPlayers = activeMatch.getPlayerNames();
+            	if (activeMatch.isCompleted()) {
+            		handleStrikesForPlayers(activeMatch.getMatchInfo(), matchPlayers, theAvailablePlayers);
+            		activeMatch.delete();
+            	} else if (activeMatch.isWedged()) {
+            		activeMatch.delete();
+            	} else {
+            		busyPlayerNames.addAll(matchPlayers);
+            		morePlayersIn = Math.min(activeMatch.getExpectedTimeToCompletion(), morePlayersIn);
+            	}
             }
-            theState.getRunningMatches().removeAll(doneMatches);
 
             // For all of the players listed as enabled, record whether or not they're actually
             // identifying themselves as available. For players that are marked as pingable, we
@@ -177,7 +130,7 @@ public class Scheduling {
         // and we expect one of those busy players to become available within 15 minutes,
         // don't assign that player into a match vs all random opponents. Instead, wait
         // until a real opponent becomes available.
-        if (theAvailablePlayers.size() == 1 && expectedTimeUntilMoreAvailablePlayers < 15*60*1000) {
+        if (theAvailablePlayers.size() == 1 && morePlayersIn < 15*60*1000) {
         	return;
         }        
         
@@ -276,17 +229,14 @@ public class Scheduling {
         // Choose randomized start clocks and play clocks for the match.
         // Start clocks vary between 90 seconds and 180 seconds.
         // Play clocks vary between 15 seconds and 45 seconds.
-        Random theRandom = new Random();
+        Random theRandom = new Random();        
         int startClock = 90 + 10*theRandom.nextInt(10);
         int playClock = 15 + 5*theRandom.nextInt(7);
+        int analysisClock = -1;
 
         // Start the match using the hybrid match hosting system.
         try {
-        	String matchKey = Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, -1, startClock, playClock);        	
-        	if (matchKey != null) {
-        		String matchURL = "http://matches.ggp.org/matches/" + matchKey;
-        		theState.getRunningMatches().add(matchURL);
-        	}
+        	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, analysisClock, startClock, playClock);        	
         } catch (JSONException e) {
         	throw new RuntimeException(e);
         }
@@ -326,16 +276,5 @@ public class Scheduling {
                 thePlayers.get(i).save();
             }
         }
-    }
-
-    public static boolean verifyTiltyardCryptography(JSONObject theMatchInfo) {
-        try {
-            if (!SignableJSON.isSignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
-            if (!SignableJSON.verifySignedJSON(new JSONObject(theMatchInfo.toString()))) return false;
-            if (!theMatchInfo.getString("matchHostPK").equals(TiltyardPublicKey.theKey)) return false;
-            return true;
-        } catch (Exception e) {
-            return false;
-        }        
     }
 }
