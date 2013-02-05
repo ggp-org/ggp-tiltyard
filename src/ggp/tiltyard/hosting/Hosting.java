@@ -24,7 +24,7 @@ import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
 import org.ggp.galaxy.shared.game.Game;
 import org.ggp.galaxy.shared.game.RemoteGameRepository;
 import org.ggp.galaxy.shared.gdl.factory.GdlFactory;
-import org.ggp.galaxy.shared.gdl.scrambler.NoOpGdlScrambler;
+import org.ggp.galaxy.shared.gdl.factory.exceptions.GdlFormatException;
 import org.ggp.galaxy.shared.persistence.Persistence;
 import org.ggp.galaxy.shared.server.request.RequestBuilder;
 import org.ggp.galaxy.shared.statemachine.MachineState;
@@ -193,9 +193,9 @@ public class Hosting {
                         if (theMatch.hasComputerPlayers()) {
 	                        String theRequest = null;
 	                        if (theMatch.isCompleted()) {
-	                        	theRequest = RequestBuilder.getStopRequest(theMatch.getMatchId(), theMoves, new NoOpGdlScrambler());
+	                        	theRequest = RequestBuilder.getStopRequest(theMatch.getMatchId(), theMoves, theMatch.getScrambler());
 	                        } else {
-	                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), theMoves, new NoOpGdlScrambler());
+	                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), theMoves, theMatch.getScrambler());
 	                        }
 	                        QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
                         }
@@ -284,15 +284,24 @@ public class Hosting {
 					if (theResponseJSON.has("response")) {
 						theMove = theResponseJSON.getString("response");
 					}
+					try {
+						MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
+						theMove = theMatch.getScrambler().unscramble(theMove).toString();
+					} catch (GdlFormatException ge) {
+						;
+					} catch (SymbolFormatException e) {
+						;
+					}
 					if (theResponseJSON.has("responseType")) {
 						String type = theResponseJSON.getString("responseType");
 						if (type.equals("TO") || type.equals("CE")) {
 							theError = type;
 						} 
-					}
+					}					
 					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
-	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, new NoOpGdlScrambler());                        
+					MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
+	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, theMatch.getScrambler());                        
 	                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 				}
 				

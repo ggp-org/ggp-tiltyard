@@ -25,7 +25,7 @@ import com.google.appengine.api.datastore.Text;
 import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
 import org.ggp.galaxy.shared.game.Game;
 import org.ggp.galaxy.shared.gdl.factory.GdlFactory;
-import org.ggp.galaxy.shared.gdl.scrambler.NoOpGdlScrambler;
+import org.ggp.galaxy.shared.gdl.scrambler.GdlScrambler;
 import org.ggp.galaxy.shared.match.Match;
 import org.ggp.galaxy.shared.match.MatchPublisher;
 import org.ggp.galaxy.shared.persistence.Persistence;
@@ -85,6 +85,7 @@ public class MatchData {
         	isPlayerHuman.add(isPlayerHuman(i));
         }
         theMatch.setWhichPlayersAreHuman(isPlayerHuman);
+        theMatch.enableScrambling();
 
         // NOTE: This code assumes that the first state for the match will always have
         // a non-forced move for at least one player. If this is not the case, it will
@@ -136,6 +137,10 @@ public class MatchData {
     	// Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
     	// Later on, this can be refined to look at the average step count in the game being played.
     	return getElapsedTime() > 1000L*theMatch.getStartClock() + 256L*1000L*theMatch.getPlayClock();
+    }
+    
+    public GdlScrambler getScrambler() {
+    	return theMatch.getGdlScrambler();
     }
     
     public JSONObject getMatchInfo() {
@@ -258,7 +263,7 @@ public class MatchData {
     	List<Role> theRoles = Role.computeRoles(theMatch.getGame().getRules());
     	for (int i = 0; i < playerURLs.length; i++) {
     		if (playerURLs[i] == null) continue;
-    		issueRequestTo(i, RequestBuilder.getStartRequest(theMatch.getMatchId(), theRoles.get(i), theMatch.getGame().getRules(), theMatch.getStartClock(), theMatch.getPlayClock(), new NoOpGdlScrambler()), true);
+    		issueRequestTo(i, RequestBuilder.getStartRequest(theMatch.getMatchId(), theRoles.get(i), theMatch.getGame().getRules(), theMatch.getStartClock(), theMatch.getPlayClock(), theMatch.getGdlScrambler()), true);
     	}
     }
     
@@ -401,6 +406,7 @@ public class MatchData {
         try {
             theMatch = new Match(theMatchJSON.getValue(), Game.loadFromJSON(theGameJSON.getValue()), theAuthToken);
             theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Tiltyard"));
+            theMatch.enableScrambling();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -410,10 +416,11 @@ public class MatchData {
         try {
             theMatch = new Match(theMatchJSON.getValue(), Game.loadFromJSON(theGameJSON.getValue()), theAuthToken);
             theMatch.setCryptographicKeys(theKeys);
+            theMatch.enableScrambling();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }    
+    }
 
     public void save() {
         deflateForSaving();
