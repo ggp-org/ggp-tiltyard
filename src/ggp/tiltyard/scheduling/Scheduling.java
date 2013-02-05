@@ -72,8 +72,10 @@ public class Scheduling {
             	List<String> matchPlayers = activeMatch.getPlayerNames();
             	if (activeMatch.isCompleted()) {
             		handleStrikesForPlayers(activeMatch.getMatchInfo(), matchPlayers, theAvailablePlayers);
+            		activeMatch.publish();
             		activeMatch.delete();
             	} else if (activeMatch.isWedged()) {
+            		activeMatch.publish();
             		activeMatch.delete();
             	} else {
             		busyPlayerNames.addAll(matchPlayers);
