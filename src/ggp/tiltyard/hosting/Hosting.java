@@ -284,20 +284,24 @@ public class Hosting {
 					if (theResponseJSON.has("response")) {
 						theMove = theResponseJSON.getString("response");
 					}
-					try {
-						MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
-						theMove = theMatch.getScrambler().unscramble(theMove).toString();
-					} catch (GdlFormatException ge) {
-						;
-					} catch (SymbolFormatException e) {
-						;
-					}
 					if (theResponseJSON.has("responseType")) {
 						String type = theResponseJSON.getString("responseType");
 						if (type.equals("TO") || type.equals("CE")) {
 							theError = type;
 						} 
 					}					
+					if (!theMove.isEmpty()) {
+						try {
+							MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
+							theMove = theMatch.getScrambler().unscramble(theMove).toString();
+						} catch (GdlFormatException ge) {
+							;
+						} catch (SymbolFormatException e) {
+							;
+						} catch (RuntimeException re) {
+							;
+						}
+					}
 					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
 				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
 					MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
