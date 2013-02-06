@@ -251,6 +251,7 @@ public class MatchData {
     		
     		theRequestJSON.put("playerIndex", nRole);
     		theRequestJSON.put("forStep", getStepCount());
+    		theRequestJSON.put("fastReturn", false);
 	    	
 	    	issueRequest(theRequestJSON);
     	} catch (JSONException je) {
