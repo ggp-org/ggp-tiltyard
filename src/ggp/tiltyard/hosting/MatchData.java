@@ -87,19 +87,18 @@ public class MatchData {
         theMatch.setWhichPlayersAreHuman(isPlayerHuman);
         theMatch.enableScrambling();
 
-        // NOTE: This code assumes that the first state for the match will always have
-        // a non-forced move for at least one player. If this is not the case, it will
-        // need to be updated, since we shouldn't actually begin the match in the state
-        // we get from getInitialState().
         StateMachine theMachine = getMyStateMachine();
         MachineState theState = theMachine.getInitialState();
         try {
-        	this.setState(theMachine, theState, null);
-        } catch (Exception e) {
-        	// TODO(schreib): Eventually stop casting this to an IOException and properly
-        	// handle ggp-related exceptions in the match setup.
-        	throw new IOException(e);
+        	setState(theMachine, theState, null);
+        } catch (MoveDefinitionException e) {
+        	throw new RuntimeException(e);
+        } catch (GoalDefinitionException e) {
+        	throw new RuntimeException(e);
         }
+        while (!theMachine.isTerminal(theState) && allPendingMovesSubmitted()) {
+            advanceState(theMachine);
+        }        
 
         matchKey = publish();
         save();
