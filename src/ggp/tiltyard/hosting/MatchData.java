@@ -190,7 +190,7 @@ public class MatchData {
     private void setState(StateMachine theMachine, MachineState state, List<Move> moves) throws MoveDefinitionException, GoalDefinitionException {
         theMatch.appendState(state.getContents());
         if (moves != null) {
-            theMatch.appendMoves2(moves);            
+            theMatch.appendMoves2(moves);
         }
         if (theMachine.isTerminal(state)) {
         	theMatch.markCompleted(theMachine.getGoals(state));
@@ -250,7 +250,7 @@ public class MatchData {
     	try {
 	    	JSONObject theRequestJSON = new JSONObject();
 	    	theRequestJSON.put("requestContent", requestContent);
-	    	theRequestJSON.put("timeoutClock", isStart ? theMatch.getStartClock()*1000 : theMatch.getPlayClock()*1000);
+	    	theRequestJSON.put("timeoutClock", 2000 + (isStart ? theMatch.getStartClock()*1000 : theMatch.getPlayClock()*1000));
 	    	theRequestJSON.put("callbackURL", "http://tiltyard.ggp.org/hosting/callback");
 	    	theRequestJSON.put("matchId", theMatch.getMatchId());	    	
 	    	theRequestJSON.put("matchKey", matchKey);
