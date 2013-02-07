@@ -51,12 +51,7 @@ public class Scheduling {
 	};
 
     public static void runSchedulingRound() throws IOException {
-        ServerState theState = ServerState.loadState();
-        runSchedulingRound(theState);
-        theState.save();
-    }
-
-    public static void runSchedulingRound(ServerState theState) throws IOException {        
+    	SchedulerConfig theConfig = SchedulerConfig.loadConfig();
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
         long morePlayersIn = Long.MAX_VALUE;
         
@@ -75,6 +70,7 @@ public class Scheduling {
             		activeMatch.publish();
             		activeMatch.delete();
             	} else if (activeMatch.isWedged()) {
+            		activeMatch.abort();
             		activeMatch.publish();
             		activeMatch.delete();
             	} else {
@@ -120,8 +116,8 @@ public class Scheduling {
         
         // At this point we've gotten everything up to date, and the only thing
         // left to do is schedule new matches. If the backends are being drained,
-        // we don't schedule any new matches.
-        if (theState.isDrained) return;
+        // we don't schedule any new matches.        
+        if (theConfig.isDrained) return;
 
         // Figure out how many players are available. If no players are available,
         // don't bother attempting to schedule a match.

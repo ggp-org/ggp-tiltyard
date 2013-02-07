@@ -227,6 +227,23 @@ public class MatchData {
         }
     }
     
+    /**
+     * Once this function returns, the match will be published and then deleted,
+     * so it's important to ensure that the abort requests have been sent before
+     * returning from the function.
+     */
+    public void abort() {
+    	while(true) {
+	    	try {
+	    		issueAbortRequests();
+	    		break;
+	    	} catch (IOException ie) {
+	    		;
+	    	}
+    	}
+    	theMatch.markAborted();
+    }
+    
     public void issueRequestTo(int nRole, String requestContent, boolean isStart) throws IOException {
     	try {
 	    	JSONObject theRequestJSON = new JSONObject();
@@ -266,6 +283,13 @@ public class MatchData {
     		issueRequestTo(i, RequestBuilder.getStartRequest(theMatch.getMatchId(), theRoles.get(i), theMatch.getGame().getRules(), theMatch.getStartClock(), theMatch.getPlayClock(), theMatch.getGdlScrambler()), true);
     	}
     }
+    
+    private void issueAbortRequests() throws IOException {
+    	for (int i = 0; i < playerURLs.length; i++) {
+    		if (playerURLs[i] == null) continue;
+    		issueRequestTo(i, RequestBuilder.getAbortRequest(theMatch.getMatchId()), false);
+    	}
+    }    
     
     public void issueRequestForAll(String requestContent) throws IOException {
     	for (int i = 0; i < playerURLs.length; i++) {

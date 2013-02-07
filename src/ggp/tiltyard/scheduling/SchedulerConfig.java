@@ -9,13 +9,13 @@ import javax.jdo.annotations.*;
 import org.ggp.galaxy.shared.persistence.Persistence;
 
 @PersistenceCapable
-public class ServerState {
+public class SchedulerConfig {
     @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
     @Persistent public boolean isDrained;
 
-    private ServerState() {
-        thePrimaryKey = "ServerState";
+    private SchedulerConfig() {
+        thePrimaryKey = "SchedulerConfig";
         isDrained = false;
     }
 
@@ -26,12 +26,12 @@ public class ServerState {
     }
 
     /* Static accessor methods */
-    public static ServerState loadState() throws IOException {
-        Set<ServerState> theStates = Persistence.loadAll(ServerState.class);
+    public static SchedulerConfig loadConfig() throws IOException {
+        Set<SchedulerConfig> theStates = Persistence.loadAll(SchedulerConfig.class);
         if (theStates.size() > 0) {
             return theStates.iterator().next();
         } else {
-            return new ServerState();
+            return new SchedulerConfig();
         }
    }
 }
