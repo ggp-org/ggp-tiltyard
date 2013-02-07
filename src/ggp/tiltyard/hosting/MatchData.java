@@ -135,7 +135,9 @@ public class MatchData {
     public boolean isWedged() {
     	// Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
     	// Later on, this can be refined to look at the average step count in the game being played.
-    	return getElapsedTime() > 1000L*theMatch.getStartClock() + 256L*1000L*theMatch.getPlayClock();
+    	// Only matches with computer players can be considered wedged, since computer players are
+    	// the only players that are negatively impacted by long-running matches.
+    	return hasComputerPlayers() && getElapsedTime() > 1000L*theMatch.getStartClock() + 256L*1000L*theMatch.getPlayClock();
     }
     
     public GdlScrambler getScrambler() {

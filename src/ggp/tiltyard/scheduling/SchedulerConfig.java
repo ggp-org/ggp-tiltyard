@@ -27,11 +27,13 @@ public class SchedulerConfig {
 
     /* Static accessor methods */
     public static SchedulerConfig loadConfig() throws IOException {
-        Set<SchedulerConfig> theStates = Persistence.loadAll(SchedulerConfig.class);
-        if (theStates.size() > 0) {
-            return theStates.iterator().next();
+        Set<SchedulerConfig> theConfigs = Persistence.loadAll(SchedulerConfig.class);
+        if (theConfigs.size() > 0) {
+            return theConfigs.iterator().next();
         } else {
-            return new SchedulerConfig();
+            SchedulerConfig config = new SchedulerConfig();
+            config.save();
+            return config;
         }
    }
 }
