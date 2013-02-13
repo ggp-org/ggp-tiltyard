@@ -117,7 +117,7 @@ public class Scheduling {
         // At this point we've gotten everything up to date, and the only thing
         // left to do is schedule new matches. If the backends are being drained,
         // we don't schedule any new matches.        
-        if (theConfig.isDrained) return;
+        if (theConfig.isDrained()) return;
 
         // Figure out how many players are available. If no players are available,
         // don't bother attempting to schedule a match.

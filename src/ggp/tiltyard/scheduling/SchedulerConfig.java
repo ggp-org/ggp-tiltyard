@@ -12,17 +12,15 @@ import org.ggp.galaxy.shared.persistence.Persistence;
 public class SchedulerConfig {
     @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
-    @Persistent public boolean isDrained;
+    @Persistent private boolean isDrained;
 
     private SchedulerConfig() {
         thePrimaryKey = "SchedulerConfig";
         isDrained = false;
     }
-
-    public void save() {
-        PersistenceManager pm = Persistence.getPersistenceManager();
-        pm.makePersistent(this);
-        pm.close();        
+    
+    public boolean isDrained() {
+    	return isDrained;
     }
 
     /* Static accessor methods */
@@ -32,7 +30,9 @@ public class SchedulerConfig {
             return theConfigs.iterator().next();
         } else {
             SchedulerConfig config = new SchedulerConfig();
-            config.save();
+            PersistenceManager pm = Persistence.getPersistenceManager();
+            pm.makePersistent(config);
+            pm.close();
             return config;
         }
    }
