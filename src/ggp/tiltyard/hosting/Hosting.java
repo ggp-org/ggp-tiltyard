@@ -41,7 +41,7 @@ import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions.Method;
 
 public class Hosting {
-	private static final int TASK_RETRIES = 10;
+	private static final int TASK_RETRIES = 50;
 
     public static void doTask(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     	String requestedTask = req.getRequestURI().replaceFirst("/hosting/tasks/", "");

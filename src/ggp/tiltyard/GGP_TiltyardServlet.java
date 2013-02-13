@@ -26,6 +26,12 @@ public class GGP_TiltyardServlet extends HttpServlet {
         CapabilityStatus status = service.getStatus(Capability.DATASTORE_WRITE).getStatus();
         return (status != CapabilityStatus.DISABLED);
     }
+    
+    public static boolean isDatastoreReadable() {
+        CapabilitiesService service = CapabilitiesServiceFactory.getCapabilitiesService();
+        CapabilityStatus status = service.getStatus(Capability.DATASTORE).getStatus();
+        return (status != CapabilityStatus.DISABLED);
+    }
 
     public static void setAccessControlHeader(HttpServletResponse resp) {
         resp.setHeader("Access-Control-Allow-Origin", "*");
@@ -110,8 +116,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
         }
     }
 
-    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        if (!isDatastoreWriteable()) return;
+    public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {        
         setAccessControlHeader(resp);
         resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
 
@@ -127,9 +132,19 @@ public class GGP_TiltyardServlet extends HttpServlet {
 	        in = theInput.toString().trim();
         }
         
-        if (theURI.startsWith("/hosting/")) {
+        if (!isDatastoreReadable()) {
+        	// TODO(schreib): Come up with a better solution for this, if it happens.
+        	throw new RuntimeException("Got incoming POST and datastore was not readable!");
+        } else if (theURI.startsWith("/hosting/")) {
+        	// Handle any match hosting callbacks even if the datastore isn't writeable,
+        	// as long as the datastore is readable; these just add tasks to the task queue
+        	// and the actual writing is done in the tasks, which will be retried until the
+        	// datastore is accepting writes again.
         	Hosting.doPost(theURI.replace("/hosting/", ""), in, resp);
-        } else if (theURI.startsWith("/backends/")) {
+        } else if (!isDatastoreWriteable()) {
+        	// For player registration or backend registration, just drop
+        	// incoming requests when the datastore isn't writeable.
+        } else if (theURI.startsWith("/backends/")) {        	
             BackendRegistration.doPost(theURI.replace("/backends/", ""), in, req.getRemoteAddr(), resp);
         } else {
             Registration.doPost(theURI, in, req, resp);
