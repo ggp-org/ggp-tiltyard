@@ -13,19 +13,13 @@ import org.ggp.galaxy.shared.persistence.Persistence;
 public class Backends {
     @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
-    @Persistent private Set<String> theHostBackendAddresses;
     @Persistent private Set<String> theFarmBackendAddresses;
 
     private Backends() {
         thePrimaryKey = "Backends";
-        theHostBackendAddresses = new HashSet<String>();
         theFarmBackendAddresses = new HashSet<String>();
     }
 
-    public Set<String> getHostBackendAddresses() {
-        return theHostBackendAddresses;
-    }
-    
     public Set<String> getFarmBackendAddresses() {
         return theFarmBackendAddresses;
     }    
