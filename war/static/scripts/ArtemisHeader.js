@@ -10,14 +10,6 @@ function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, play
     return theHTML;
 }
 
-function trimTo(x,y) {
-  if (x.length > y) {
-    return x.substring(0,y-3)+"...";
-  } else {
-    return x;
-  }
-}
-
 function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, showShadow) {
   getGameName = function (x) { return getGameInfo(x).bellerophonName; };
     
@@ -134,7 +126,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
   theMatchHTML += '</table></td>';
 
   // Match game profile.
-  theMatchHTML += '<td class="padded"><a href="//www.ggp.org/view/tiltyard/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + trimTo(getGameName(theMatchJSON.gameMetaURL),20) + '</a></td>';
+  theMatchHTML += '<td class="padded"><a href="//www.ggp.org/view/tiltyard/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + UserInterface.trimTo(getGameName(theMatchJSON.gameMetaURL),20) + '</a></td>';
   theMatchHTML += '<td width=5></td>';
   
   // Signature badge.
