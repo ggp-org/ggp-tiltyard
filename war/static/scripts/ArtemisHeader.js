@@ -1,7 +1,3 @@
-function toTitle(x) {
-  return x[0].toUpperCase()+x.substring(1);
-}
-
 function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, playerToHighlight) {
     loadBellerophonMetadataForGames();
     
@@ -128,6 +124,8 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
     theMatchHTML += '<td width=5></td>';
     if ("goalValues" in theMatchJSON) {
       theMatchHTML += '<td class="padded" style="text-align: right;">' + theMatchJSON.goalValues[j] + '</td>';
+    } else if ("isAborted" in theMatchJSON && theMatchJSON.isAborted) {
+      theMatchHTML += '<td class="padded""><img src="//www.ggp.org/viewer/images/warnings/Abort.png" title="This match was aborted midway through." style="float:right;"></td>';
     } else {
       theMatchHTML += '<td class="padded"></td>';
     }
@@ -141,21 +139,9 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
   
   // Signature badge.
   if ("hashedMatchHostPK" in theMatchJSON) {
-    theMatchHTML += '<td class="imageHolder"><a href="//www.ggp.org/view/tiltyard/matches/"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Tiltyard2.png" title="Match has a valid digital signature from Tiltyard."></img></a></td>';
+    theMatchHTML += '<td class="imageHolder"><a href="//www.ggp.org/view/tiltyard/matches/"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Tiltyard.png" title="Match has a valid digital signature from Tiltyard."></img></a></td>';
   } else {
     theMatchHTML += '<td class="imageHolder"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Unsigned.png" title="Match does not have a valid digital signature."></img></td>';
-  }
-  theMatchHTML += '<td width=5></td>';
-  
-  // Warning badge.
-  if (allErrors) {
-    theMatchHTML += '<td class="imageHolder"><img src="//www.ggp.org/viewer/images/warnings/OrangeAlert.png" title="Every player had all errors during this match." height=20px></img></td>';
-  } else if (allErrorsForSomePlayer) {
-    theMatchHTML += '<td class="imageHolder"><img src="//www.ggp.org/viewer/images/warnings/YellowAlert.png" title="At least one player had all errors during this match." height=20px></img></td>';
-  } else if (hasErrors) {
-    theMatchHTML += '<td class="imageHolder"><img src="//www.ggp.org/viewer/images/warnings/WhiteAlert.png" title="Players had errors during this match." height=20px></img></td>';
-  } else {
-    theMatchHTML += '<td></td>';
   }
   theMatchHTML += '<td width=5></td>';
   
@@ -192,7 +178,7 @@ function loadBellerophonMetadataForGames() {
     gameInfo.bellerophonVersionFromURL = versionFromURL;
 
     if (!("gameName" in gameInfo)) {
-      gameInfo.bellerophonName = toTitle(translateRepositoryIntoCodename(gameVersionedURL).split("/").splice(1)[0]);
+      gameInfo.bellerophonName = UserInteface.toTitle(translateRepositoryIntoCodename(gameVersionedURL).split("/").splice(1)[0]);
     } else {
       gameInfo.bellerophonName = gameInfo.gameName;
     }
