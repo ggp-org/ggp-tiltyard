@@ -65,11 +65,15 @@ public class Scheduling {
             Set<String> busyPlayerNames = new HashSet<String>();            
             for (MatchData activeMatch : activeMatches) {
             	List<String> matchPlayers = activeMatch.getPlayerNames();
-            	if (activeMatch.isCompleted()) {
+            	if (activeMatch.isCompleted() && activeMatch.getTimeSinceLastChange() > 1000L*60*2) {
+            		// Once a match has been completed for 2+ minutes, force it to be published one
+            		// last time, handle its consequences for player scheduling, and then delete it.
             		handleStrikesForPlayers(activeMatch.getMatchInfo(), matchPlayers, theAvailablePlayers);
             		activeMatch.publish();
             		activeMatch.delete();
             	} else if (activeMatch.isWedged()) {
+            		// When a match becomes wedged for whatever reason, issue abort requests to all of
+            		// the involved players, force it to be published one last time, and then delete it.
             		activeMatch.abort();
             		activeMatch.publish();
             		activeMatch.delete();

@@ -12,6 +12,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -130,14 +131,24 @@ public class MatchData {
     
     private long getElapsedTime() {
     	return System.currentTimeMillis() - theMatch.getStartTime().getTime();
+    }    
+    
+    public long getTimeSinceLastChange() {
+    	List<Date> theTimeHistory = theMatch.getStateTimeHistory();
+    	if (theTimeHistory != null && theTimeHistory.size() > 0) {
+    		Date lastChange = theTimeHistory.get(theTimeHistory.size()-1);
+    		return System.currentTimeMillis() - lastChange.getTime();
+    	} else {
+    		return getElapsedTime();
+    	}
     }
     
     public boolean isWedged() {
-    	// Assume the match is wedged/completed after time sufficient for 256+ moves has passed.
-    	// Later on, this can be refined to look at the average step count in the game being played.
+    	// Assume the match is wedged after time sufficient for the start phase and ten moves
+    	// has passed without any updates to the match state, and the match isn't completed.
     	// Only matches with computer players can be considered wedged, since computer players are
     	// the only players that are negatively impacted by long-running matches.
-    	return hasComputerPlayers() && getElapsedTime() > 1000L*theMatch.getStartClock() + 256L*1000L*theMatch.getPlayClock();
+    	return hasComputerPlayers() && !isCompleted() && getTimeSinceLastChange() > 1000L*(theMatch.getStartClock() + 10*theMatch.getPlayClock());
     }
     
     public GdlScrambler getScrambler() {
