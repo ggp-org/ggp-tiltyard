@@ -36,7 +36,7 @@ public class Scheduling {
 	private static final String[] safeGames = {
 		"2pffa", "2pffa_zerosum", "2pttc", "3pffa", "3pttc", "3pConnectFour", "4pttc", "4pffa", "beatMania",
 		"biddingTicTacToe", "biddingTicTacToe_10coins",  "blocker", "bomberman2p", "breakthrough",
-		"breakthroughHoles", "breakthroughSmall", "breakthroughSmallHoles",
+		"breakthroughHoles", "breakthroughSmall",
 		"breakthroughSuicide", "breakthroughWalls", "cephalopodMicro", "checkers", "checkersSmall",
 		"checkersTiny", "chickentictactoe", "chineseCheckers1", "chineseCheckers2",
 		"chineseCheckers3", "chineseCheckers4", "chineseCheckers6", "cittaceot", "connect5",
