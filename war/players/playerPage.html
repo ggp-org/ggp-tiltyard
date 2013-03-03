@@ -54,7 +54,7 @@
               </div>              
               <div class="control-group">
                 <label class="control-label" for="form_upload_image">Player Image</label>
-                <div class="controls"><input type="file" name="myFile"><input type="submit" value="Submit"></div>
+                <div class="controls"><input type="file" name="myFile"><input type="submit" value="Upload"></div>
               </div>              
               <div class="control-group">
                 <label class="control-label" for="input_player_active">Player active?</label>
@@ -62,10 +62,10 @@
               </div>
               <div class="control-group">
                 <label class="control-label" for="input_player_pingable">Player pingable?</label>
-                <div class="controls"><input type="checkbox" id="input_player_pingable"></div>                
+                <div class="controls"><input type="checkbox" id="input_player_pingable"></div>
               </div>
             </fieldset>
-            <button class="btn btn-primary" type="button" onclick="submitPlayerData();">Submit</button>
+            <button class="btn btn-primary" type="button" onclick="submitPlayerData();">Save</button>
           </form>
         </div>
       </div>
@@ -93,7 +93,7 @@
           playerThumbURL = aPlayer.thumbURL;
         }
 
-        $('#form_player_name')[0].innerHTML = '<a href="//tiltyard.ggp.org/players/"><img src="//tiltyard.ggp.org/static/images/back_icon.png" width=20 height=20></img></a> &nbsp;&nbsp; Player Configuration for ' + aPlayer.name + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="' + playerThumbURL + '" width=25 height=25></img>';
+        $('#form_player_name')[0].innerHTML = '<a href="//tiltyard.ggp.org/players/"><img src="//tiltyard.ggp.org/static/images/back_icon.png" title="Back to player list" width=20 height=20></img></a> &nbsp;&nbsp; Player Configuration for ' + aPlayer.name + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="' + playerThumbURL + '" title="Player icon" width=25 height=25></img>';
         $('#input_player_url')[0].value        = withDefaultValue(aPlayer.theURL, "");
         $('#input_gdl_version')[0].value       = withDefaultValue(aPlayer.gdlVersion, "GDLv1");
         $('#input_contact_email')[0].value     = withDefaultValue(aPlayer.visibleEmail, "");
