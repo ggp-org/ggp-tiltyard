@@ -1,42 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
   <head>
     <title>GGP.org - Tiltyard Gaming Server</title>
-    <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />  
-    <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:bold">
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto">
-    <link rel="stylesheet" type="text/css" href="/tiltyard.css" />
-    <link rel="canonical" href="http://tiltyard.ggp.org/about/"/>
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />    
+    <link href="//fonts.googleapis.com/css?family=Roboto:300,700" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />    
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+    <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
+    <link rel="canonical" href="http://tiltyard.ggp.org/about/"/>
     <style>
-      h1 {
-          font-size: 48px;
-          text-shadow: 2px 2px 2px #aaa;
-          text-align: center;
-      }
-      h2 {
-          font-size: 24px;
-          text-shadow: 1px 1px 1px #aaa;
-          text-align: justify;
-      }
-      h3 {
-          font-size: 24px;
-          text-shadow: 1px 1px 1px #aaa;     
-          text-align: center;        
-      }
-      p {
-	      font-size: 20px;
-          text-indent: 2em;
-      }
-    </style>   
+div.content h1 {
+  font-size: 48px;
+  text-shadow: 2px 2px 2px #aaa;
+  text-align: center;
+}
+div.content h2 {
+  font-size: 24px;
+  text-shadow: 1px 1px 1px #aaa;
+  text-align: justify;
+}
+div.content h3 {
+  font-size: 24px;
+  text-shadow: 1px 1px 1px #aaa;     
+  text-align: center;        
+}      
+div.content p {
+  font-size: 20px;
+  text-indent: 2em;
+}
+div.content {
+  margin: 15%;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+    </style>
   </head>
   <body>
-    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
-    <script type="text/javascript" src="/tiltyardHeader.js"></script>
-    
-    <!-- <div id='header'></div> -->
-    <div style="margin-left: 15%; margin-right: 15%; font-family: 'Roboto', serif;">
+    <div class="header" id="header"></div>
+    <div class="content">
+    <br>
+
     <h1>About the Tiltyard Gaming Server</h1>
     
     <h2>General Game Playing</h2>
@@ -83,8 +86,8 @@
     I'll respond as soon as I can. For urgent issues, please email <b>action@ggp.org</b>.
     </div>
 
-    <script type='text/javascript'>
-      //generateHeader(document.getElementById('header'));    
+    <script>
+      generateHeader(document.getElementById('header'), "About Tiltyard", "");
     </script>
-  </body>  
+  </body>
 </html>
