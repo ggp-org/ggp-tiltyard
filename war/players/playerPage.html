@@ -81,12 +81,12 @@
       $('#input_exponent_url').popover({'title':'Log Service', 'content':'Optional URL for the log aggregation service associated with this player. Please note: currently, all log contents and the log-related URLs will be publicly visible. Use at your own risk.'});
       $('#input_exponent_viz_url').popover({'title':'Log Visualization', 'content':'Optional URL for the log visualization page associated with this player. Please note: currently, all log contents and the log-related URLs will be publicly visible. Use at your own risk.'});
       $('#input_player_active').popover({'title':'Player Active', 'content':'Automatically assign this player matches in the GGP Tiltyard?'});
-      $('#input_player_pingable').popover({'title':'Player Pingable', 'content':'Only assign this player matches after pinging to make sure it\'s available?'});
+      $('#input_player_pingable').popover({'title':'Player Pingable', 'content':'Only assign this player matches after sending an info request to make sure it\'s available?'});
 
       withDefaultValue = function (x,y) { if (x) { return x; } else { return y; } }; 
       
       function showPlayerData(aPlayer) {
-        // TODO: Show aPlayer.pingStatus
+        // TODO: Show aPlayer.infoStatus
 
         var playerThumbURL = "http://placekitten.com/25/25";
         if ("thumbURL" in aPlayer) {

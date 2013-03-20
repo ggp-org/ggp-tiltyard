@@ -33,8 +33,9 @@ public class Player {
     @Persistent private String gdlVersion;    
     @Persistent private String theURL;
     @Persistent private Integer nStrikes;
-    @Persistent private String pingStatus;
-    @Persistent private String pingError;    
+    @Persistent private String infoStatus;
+    @Persistent private String infoError;
+    @Persistent private String infoJSON;
 
     // Optional fields.
     @Persistent private String visibleEmail;
@@ -111,11 +112,11 @@ public class Player {
         this.isEnabled = isEnabled;
         this.nStrikes = 0;
         if (isEnabled == false) {
-            this.pingStatus = null;
-            this.pingError = null;
+            this.infoStatus = null;
+            this.infoError = null;
         } else if (isEnabled == true) {
-            this.pingStatus = "waiting";
-            this.pingError = null;
+            this.infoStatus = "waiting";
+            this.infoError = null;
         }
     }
 
@@ -182,22 +183,34 @@ public class Player {
         nStrikes = 0;
     }
     
-    public void setPingStatus(String theNewStatus, String theError) {
-    	if (theNewStatus.length() > 100) {
+    public void setInfo(String theJSON, String theError) {
+    	String status = "";
+   		try {
+   			if (!theJSON.isEmpty()) {
+   				JSONObject info = new JSONObject(theJSON);
+   				if (info.has("status")) {
+   					status = info.getString("status");
+   				}
+   			}
+   		} catch (JSONException je) {
+   			status = "error";
+   		}
+    	if (status.length() > 100) {
     		// Ping status should be either "busy" or "available", so we should feel free
     		// to trim any status that's longer than 100 characters.
-    		theNewStatus = theNewStatus.substring(0, 100);
+    		status = status.substring(0, 100);
     	}
-        pingStatus = theNewStatus;
-        pingError = theError;
+        infoStatus = status;        
+        infoError = theError;
+        infoJSON = theJSON;
     }
     
-    public String getPingStatus() {
-        return pingStatus;
+    public String getInfoStatus() {
+        return infoStatus;
     }
     
-    public String getPingError() {
-        return pingError;
+    public String getInfoError() {
+        return infoError;
     }
     
     public JSONObject asJSON(boolean includePrivate) throws IOException {
@@ -211,7 +224,7 @@ public class Player {
             theJSON.put("visibleWebsite", visibleWebsite);
             theJSON.put("exponentURL", exponentURL);
             theJSON.put("exponentVizURL", exponentVizURL);
-            theJSON.put("pingStatus", pingStatus);
+            theJSON.put("infoStatus", infoStatus);
             if (imageBlobKey != null && !imageBlobKey.isEmpty()) {
             	theJSON.put("imageURL", imageLargeURL);
             	theJSON.put("thumbURL", imageThumbURL);
@@ -219,9 +232,10 @@ public class Player {
             if (includePrivate) {
                 // Not sure if we want to expose the userID information,
                 // even to the owners themselves.
-                //theJSON.put("theOwners", theOwners);
+                //theJSON.put("theOwners", theOwners);                
+                theJSON.put("infoError", infoError);
+                theJSON.put("infoJSON", infoJSON);
                 theJSON.put("theURL", theURL);
-                theJSON.put("pingError", pingError);
             }
             return theJSON;
         } catch (JSONException e) {

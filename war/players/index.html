@@ -133,9 +133,9 @@
           }
         }
         
-        pingStatusIcon = function(aPlayer) {
-          var z = aPlayer.pingStatus;
-          if (!aPlayer.isEnabled || z == null) {
+        statusIcon = function(aPlayer) {
+          var z = aPlayer.infoStatus;
+          if (!aPlayer.isEnabled || z == null || z.length == 0) {
             return '<img src="/static/images/StatusGrey.png" title="Player is inactive."></img>';
           }
           if (z == "available") return '<img src="/static/images/StatusGreen.png" title="Player is listed as active, and is currently ready for new matches."></img>';
@@ -145,7 +145,7 @@
           return '<img src="/static/images/StatusError.png" title="Player is listed as active, but its current status is unrecognizable: ' + z + '."></img>';
         }
         
-        theHTML += renderCell(pingStatusIcon(aPlayer));
+        theHTML += renderCell(statusIcon(aPlayer));
         theHTML += renderCell('<a href="/players/' + aPlayer.name + '">' + aPlayer.name + '</a>');
         theHTML += renderCell(aPlayer.visibleEmail);
         theHTML += "<td width=10px></td>";

@@ -17,6 +17,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
+import org.ggp.galaxy.shared.server.request.RequestBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -89,20 +90,18 @@ public class Scheduling {
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                 Player p = theAvailablePlayers.get(i);
                 if (p.isEnabled() && p.isPingable()) {
-                    String thePingError = null;
-                    String thePingStatus = null;                    
+                    String theInfoError = "";
+                    String theInfoJSON = "";                    
                     try {
                         String theProperURL = p.getURL();
                         if (!theProperURL.startsWith("http://")) {
                             theProperURL = "http://" + theProperURL;
                         }
-                        thePingStatus = RemoteResourceLoader.postRawWithTimeout(theProperURL, "( ping )", 2500);
-                        thePingError = "";
+                        theInfoJSON = RemoteResourceLoader.postRawWithTimeout(theProperURL, RequestBuilder.getInfoRequest(), 2500);
                     } catch (IOException e) {
-                        thePingStatus = "error";
-                        thePingError = e.toString();
+                    	theInfoError = e.toString();
                     }
-                    p.setPingStatus(thePingStatus, thePingError);
+                    p.setInfo(theInfoJSON, theInfoError);
                     p.save();
                 }
             }
@@ -112,7 +111,7 @@ public class Scheduling {
             // they're disabled.
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                 Player p = theAvailablePlayers.get(i);                
-                if (!p.isEnabled() || (p.isPingable() && !("available".equals(p.getPingStatus().toLowerCase()))) || busyPlayerNames.contains(p.getName())) {
+                if (!p.isEnabled() || (p.isPingable() && !("available".equals(p.getInfoStatus().toLowerCase()))) || busyPlayerNames.contains(p.getName())) {
                     theAvailablePlayers.remove(i);
                 }
             }
