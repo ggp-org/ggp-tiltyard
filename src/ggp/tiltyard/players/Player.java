@@ -15,6 +15,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.appengine.api.blobstore.BlobKey;
+import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.ServingUrlOptions;
 import com.google.appengine.api.users.User;
@@ -35,7 +36,7 @@ public class Player {
     @Persistent private Integer nStrikes;
     @Persistent private String infoStatus;
     @Persistent private String infoError;
-    @Persistent private String infoJSON;
+    @Persistent private Text infoFull;
 
     // Optional fields.
     @Persistent private String visibleEmail;
@@ -202,7 +203,7 @@ public class Player {
     	}
         infoStatus = status;        
         infoError = theError;
-        infoJSON = theJSON;
+        infoFull = new Text(theJSON);
     }
     
     public String getInfoStatus() {
@@ -234,7 +235,7 @@ public class Player {
                 // even to the owners themselves.
                 //theJSON.put("theOwners", theOwners);                
                 theJSON.put("infoError", infoError);
-                theJSON.put("infoJSON", infoJSON);
+                theJSON.put("infoFull", infoFull.getValue());
                 theJSON.put("theURL", theURL);
             }
             return theJSON;
