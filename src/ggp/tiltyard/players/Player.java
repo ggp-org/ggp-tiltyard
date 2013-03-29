@@ -115,9 +115,11 @@ public class Player {
         if (isEnabled == false) {
             this.infoStatus = null;
             this.infoError = null;
+            this.infoFull = null;
         } else if (isEnabled == true) {
             this.infoStatus = "waiting";
             this.infoError = null;
+            this.infoFull = null;
         }
     }
 
@@ -235,7 +237,7 @@ public class Player {
                 // even to the owners themselves.
                 //theJSON.put("theOwners", theOwners);                
                 theJSON.put("infoError", infoError);
-                theJSON.put("infoFull", infoFull.getValue());
+                theJSON.put("infoFull", infoFull == null ? null : infoFull.getValue());
                 theJSON.put("theURL", theURL);
             }
             return theJSON;
