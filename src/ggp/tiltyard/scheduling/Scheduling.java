@@ -91,17 +91,17 @@ public class Scheduling {
                 Player p = theAvailablePlayers.get(i);
                 if (p.isEnabled() && p.isPingable()) {
                     String theInfoError = "";
-                    String theInfoJSON = "";                    
+                    String theInfoResponse = "";                    
                     try {
                         String theProperURL = p.getURL();
                         if (!theProperURL.startsWith("http://")) {
                             theProperURL = "http://" + theProperURL;
                         }
-                        theInfoJSON = RemoteResourceLoader.postRawWithTimeout(theProperURL, RequestBuilder.getInfoRequest(), 2500);
+                        theInfoResponse = RemoteResourceLoader.postRawWithTimeout(theProperURL, RequestBuilder.getInfoRequest(), 2500);
                     } catch (IOException e) {
                     	theInfoError = e.toString();
                     }
-                    p.setInfo(theInfoJSON, theInfoError);
+                    p.setInfo(theInfoResponse, theInfoError);
                     p.save();
                 }
             }

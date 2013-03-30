@@ -11,6 +11,7 @@ import javax.jdo.Query;
 import javax.jdo.annotations.*;
 
 import org.ggp.galaxy.shared.persistence.Persistence;
+import org.ggp.galaxy.shared.presence.InfoResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -186,26 +187,22 @@ public class Player {
         nStrikes = 0;
     }
     
-    public void setInfo(String theJSON, String theError) {
-    	String status = "";
-   		try {
-   			if (!theJSON.isEmpty()) {
-   				JSONObject info = new JSONObject(theJSON);
-   				if (info.has("status")) {
-   					status = info.getString("status");
-   				}
-   			}
-   		} catch (JSONException je) {
-   			status = "error";
-   		}
+    public void setInfo(String theInfoResponse, String theError) {
+    	InfoResponse info = InfoResponse.create(theInfoResponse);
+    	
+    	String status = "error";
+    	if (info.getStatus() != null) {
+    		status = info.getStatus();
+    	}
     	if (status.length() > 100) {
     		// Ping status should be either "busy" or "available", so we should feel free
-    		// to trim any status that's longer than 100 characters.
-    		status = status.substring(0, 100);
+    		// to trim any status that's longer than 20 characters.
+    		status = status.substring(0, 20);
     	}
+    	
         infoStatus = status;        
         infoError = theError;
-        infoFull = new Text(theJSON);
+        infoFull = new Text(theInfoResponse);
     }
     
     public String getInfoStatus() {
