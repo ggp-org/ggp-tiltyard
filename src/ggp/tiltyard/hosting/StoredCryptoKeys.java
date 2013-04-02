@@ -1,7 +1,5 @@
 package ggp.tiltyard.hosting;
 
-import java.io.IOException;
-
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
@@ -29,7 +27,7 @@ public class StoredCryptoKeys {
     }
     
     /* Static accessor methods */
-    public static EncodedKeyPair loadCryptoKeys(String keyName) throws IOException {
+    public static EncodedKeyPair loadCryptoKeys(String keyName) {
     	StoredCryptoKeys theKeys = Persistence.loadSpecific(keyName, StoredCryptoKeys.class);
     	if (theKeys == null) {
     		return null;

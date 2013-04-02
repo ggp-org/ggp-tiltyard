@@ -236,11 +236,7 @@ public class Scheduling {
         int analysisClock = -1;
 
         // Start the match using the hybrid match hosting system.
-        try {
-        	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, analysisClock, startClock, playClock);        	
-        } catch (JSONException e) {
-        	throw new RuntimeException(e);
-        }
+       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, analysisClock, startClock, playClock);        	
         
         Counter.increment("Tiltyard.Scheduling.Round.Success");        
     }

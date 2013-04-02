@@ -61,7 +61,7 @@ public class MatchData {
     
     private Match theMatch;
     
-    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int analysisClock, int startClock, int playClock, Game theGame) throws IOException {        
+    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int analysisClock, int startClock, int playClock, Game theGame) {        
         try {
             JSONObject theSerializedGame = new JSONObject(theGame.serializeToJSON());            
             theSerializedGame.remove("theStylesheet");

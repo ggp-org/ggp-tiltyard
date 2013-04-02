@@ -251,7 +251,7 @@ public class Player {
 
     /* Static accessor methods */
     @SuppressWarnings("unchecked")
-    public static List<Player> loadEnabledPlayers() throws IOException {
+    public static List<Player> loadEnabledPlayers() {
         PersistenceManager pm = Persistence.getPersistenceManager();
         Query q = pm.newQuery(Player.class);
         q.setFilter("isEnabled == true");
@@ -261,11 +261,11 @@ public class Player {
         return toReturn;
     }
     
-    public static Set<Player> loadPlayers() throws IOException {
+    public static Set<Player> loadPlayers() {
         return Persistence.loadAll(Player.class);
     }
     
-    public static Player loadPlayer(String theKey) throws IOException {
+    public static Player loadPlayer(String theKey) {
         return Persistence.loadSpecific(theKey, Player.class);
     }
 }

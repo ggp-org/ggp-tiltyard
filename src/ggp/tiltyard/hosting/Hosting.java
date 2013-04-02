@@ -101,12 +101,7 @@ public class Hosting {
     }
 
     public static void selectMove(String matchName, int nRoleIndex, int forStep, String withError, String move, String source) throws MoveSelectException {
-   		EncodedKeyPair theKeys = null;
-   		try {
-   			theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
-   		} catch (IOException ie) {
-   			throw new RuntimeException(ie);
-   		}
+   		EncodedKeyPair theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
    		
    		// Attempt the transaction five times. If the transaction can't go through
    		// after five attempts, fail out and let the task queue retry: occasionally
@@ -241,7 +236,7 @@ public class Hosting {
         resp.getWriter().println(response.toString());
     }
     
-    public static String startMatch(String gameURL, List<String> playerURLs, List<String> playerNames, int analysisClock, int startClock, int playClock) throws JSONException, IOException {    	
+    public static String startMatch(String gameURL, List<String> playerURLs, List<String> playerNames, int analysisClock, int startClock, int playClock) {    	
 		if (!gameURL.startsWith("http://games.ggp.org/base/games/")) {
 			Logger.getAnonymousLogger().severe("Game URL did not start with valid prefix.");
 			return null;
