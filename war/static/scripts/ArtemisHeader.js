@@ -1,3 +1,58 @@
+function renderPendingMatchEntries(theMatchEntries, topCaption) {
+    loadBellerophonMetadataForGames();
+    
+    var theHTML = '<center><table class="matchlist">';
+    theHTML += '<tr bgcolor=#E0E0E0><th height=30px colspan=10>' + topCaption + '</th></tr>';
+    for (var i = 0; i < theMatchEntries.length; i++) {
+      theHTML += renderPendingMatchEntry(theMatchEntries[i], i%2);
+    }
+    theHTML += "</table></center>";
+    return theHTML;
+}
+
+function renderPendingMatchEntry(theMatchJSON, showShadow) {
+  getGameName = function (x) { return getGameInfo(x).bellerophonName; };
+    
+  var theMatchHTML = "<tr>";
+  if (showShadow == 1) {
+    theMatchHTML = "<tr bgcolor=#E0E0E0>";
+  } else {
+    theMatchHTML = "<tr bgcolor=#F5F5F5>";
+  }
+  
+  var minTillExpiry = Math.floor((new Date(theMatchJSON.expiresAt) - new Date()) / 60000);
+  
+  // Match start time.
+  theMatchHTML += '<td class="padded">';
+  theMatchHTML += '' + minTillExpiry + ' minutes until expiration';
+  theMatchHTML += "</td><td width=5>"
+  
+  // Match players...
+  theMatchHTML += '<td class="padded"><table class="matchlist" width=100%>';
+  
+  for (var j = 0; j < theMatchJSON.playerNames.length; j++) {
+	var playerName = theMatchJSON.playerNames[j];
+    theMatchHTML += '<tr>'
+    if (playerName.length > 0) {
+      theMatchHTML += '<td class="imageHolder" style="width:25px; padding-right:5px"><img width=25 height=25 src="http://placekitten.com/g/25/25"/></td>';
+      theMatchHTML += '<td><a href="//www.ggp.org/view/tiltyard/players/' + playerName + '">' + playerName + '</a></td>';
+    } else {
+      theMatchHTML += '<td class="imageHolder" style="width:25px; padding-right:5px"><img width=25 height=25 src="//www.ggp.org/viewer/images/hosts/Unsigned.png" title="This player is not identified." /></td>';
+      theMatchHTML += '<td>Anonymous</td>';
+    }
+    theMatchHTML += '</td></td></tr>';
+  }
+  theMatchHTML += '</table></td>';
+
+  // Match game profile.
+  theMatchHTML += '<td class="padded"><a href="//www.ggp.org/view/tiltyard/games/' + translateRepositoryIntoCodename(theMatchJSON.gameMetaURL) + '">' + UserInterface.trimTo(getGameName(theMatchJSON.gameMetaURL),20) + '</a></td>';
+  theMatchHTML += '<td width=5></td>';
+  
+  return theMatchHTML + "</tr>";
+}
+
+//==
+
 function renderMatchEntries(theMatchEntries, theOngoingMatches, topCaption, playerToHighlight) {
     loadBellerophonMetadataForGames();
     
@@ -102,7 +157,7 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
       theMatchHTML += '<td>Anonymous</td>';
     }
     theMatchHTML += '<td width=5></td><td>';
-    if (!("goalValues" in theMatchJSON) && "playerNamesFromHost" in theMatchJSON && theMatchJSON.playerNamesFromHost[j].length == 0 && "isPlayerHuman" in theMatchJSON && theMatchJSON.isPlayerHuman[j]) {
+    if (!("goalValues" in theMatchJSON) && !("isAborted" in theMatchJSON && theMatchJSON.isAborted) && "playerNamesFromHost" in theMatchJSON && theMatchJSON.playerNamesFromHost[j].length == 0 && "isPlayerHuman" in theMatchJSON && theMatchJSON.isPlayerHuman[j]) {
       theMatchHTML += '<a href="' + theMatchJSON.matchURL.replace("http://matches.ggp.org/matches/", "http://tiltyard.ggp.org/hosting/matches/") + 'player' + (j+1) + '/">(play)</a>';
     }
     theMatchHTML += '</td><td width=5></td>';
@@ -146,6 +201,10 @@ function renderMatchEntry(theMatchJSON, theOngoingMatches, playerToHighlight, sh
 
 global_gameMetadata = {};
 function loadBellerophonMetadataForGames() {
+  if (global_gameMetadata.ticTacToe) {
+	  return;
+  }
+	
   var theMetadata = ResourceLoader.load_json("//games.ggp.org/base/games/metadata");
   for (var gameKey in theMetadata) {
     global_gameMetadata["//games.ggp.org/base/games/" + gameKey + "/"] = theMetadata[gameKey];

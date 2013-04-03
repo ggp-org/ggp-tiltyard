@@ -58,6 +58,11 @@ public class GGP_TiltyardServlet extends HttpServlet {
             Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), resp);
             return;
         }
+
+        if (req.getRequestURI().startsWith("/scheduling/")) {
+        	Scheduling.doGet(req.getRequestURI().replace("/scheduling/", ""), resp);
+        	return;
+        }        
         
         if (req.getRequestURI().startsWith("/hosting/tasks/")) {
         	Hosting.doTask(req, resp);
@@ -141,9 +146,13 @@ public class GGP_TiltyardServlet extends HttpServlet {
         	// and the actual writing is done in the tasks, which will be retried until the
         	// datastore is accepting writes again.
         	Hosting.doPost(theURI.replace("/hosting/", ""), in, resp);
+        } else if (theURI.startsWith("/scheduling/")) {
+        	// TODO(schreib): Figure out a story for the scheduling servlet when the
+        	// datastore is no longer writeable.
+        	Scheduling.doPost(theURI.replace("/scheduling/", ""), in, resp);
         } else if (!isDatastoreWriteable()) {
         	// For player registration or backend registration, just drop
-        	// incoming requests when the datastore isn't writeable.
+        	// incoming requests when the datastore isn't writeable.        	
         } else if (theURI.startsWith("/backends/")) {        	
             BackendRegistration.doPost(theURI.replace("/backends/", ""), in, req.getRemoteAddr(), resp);
         } else {

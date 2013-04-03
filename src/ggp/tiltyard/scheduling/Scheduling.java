@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
 import org.ggp.galaxy.shared.server.request.RequestBuilder;
 import org.json.JSONArray;
@@ -116,24 +118,33 @@ public class Scheduling {
                 }
             }
         }
-        
+
         // At this point we've gotten everything up to date, and the only thing
         // left to do is schedule new matches. If the backends are being drained,
-        // we don't schedule any new matches.        
-        if (theConfig.isDrained()) return;
-
-        // Figure out how many players are available. If no players are available,
-        // don't bother attempting to schedule a match.
+        // we don't schedule any new matches.
+        if (theConfig.isDrained()) return;        
+        
+        // Figure out how many players are available. If no computer players are
+    	// available, don't bother attempting to automatically schedule a match.
         int readyPlayers = theAvailablePlayers.size();
         if (readyPlayers == 0) return;
         
+        // For all of the pending matches in the scheduling queue, consider
+        // running each one. These have a higher priority than the regularly
+        // scheduled automatic matches. When they schedule, they will remove
+        // the appropriate players from the list of available players.
+        Set<PendingMatch> pendingMatches = PendingMatch.loadPendingMatches();
+    	for (PendingMatch match : pendingMatches) {
+    		match.considerStarting(theAvailablePlayers);
+    	}        
+
         // When there is only a single available player, but there are busy players,
         // and we expect one of those busy players to become available within 15 minutes,
         // don't assign that player into a match vs all random opponents. Instead, wait
         // until a real opponent becomes available.
         if (theAvailablePlayers.size() == 1 && morePlayersIn < 15*60*1000) {
         	return;
-        }        
+        }
         
         Counter.increment("Tiltyard.Scheduling.Round.AvailablePlayers");
         
@@ -274,4 +285,67 @@ public class Scheduling {
             }
         }
     }
+    
+	public static void doPost(String theURI, String in, HttpServletResponse resp) throws IOException {
+		try {
+			if (theURI.equals("start_match")) {
+				JSONObject theRequest = new JSONObject(in);
+
+				List<String> playerCodes = new ArrayList<String>();
+		        JSONArray thePlayerCodes = theRequest.getJSONArray("playerCodes");
+		        for (int i = 0; i < thePlayerCodes.length(); i++) {
+		        	String playerCode = thePlayerCodes.getString(i);
+		        	playerCodes.add(playerCode);
+		        }
+
+		        String gameURL = theRequest.getString("gameURL");
+		        int analyzeClock = theRequest.getInt("analysisClock");
+		        int startClock = theRequest.getInt("startClock");
+		        int playClock = theRequest.getInt("playClock");
+		        int deadline = theRequest.getInt("deadline");
+
+			    PendingMatch pending = new PendingMatch(gameURL, playerCodes, analyzeClock, startClock, playClock, System.currentTimeMillis() + deadline);
+			    String matchKey = pending.considerStarting(new ArrayList<Player>());
+			    if (matchKey == null) {
+			    	resp.getWriter().println("queued");
+			    } else {
+			    	resp.getWriter().println(matchKey);
+			    }
+			}
+
+            resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
+            resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+            resp.setHeader("Access-Control-Allow-Headers", "*");
+            resp.setHeader("Access-Control-Allow-Age", "86400");        
+            resp.setContentType("text/plain");
+            resp.setStatus(200);			
+		} catch (JSONException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static void doGet(String reqURI, HttpServletResponse resp) {
+		if (reqURI.equals("pending")) {
+    		try {			
+				List<JSONObject> pendingMatchesJSON = new ArrayList<JSONObject>();
+		        Set<PendingMatch> pendingMatches = PendingMatch.loadPendingMatches();
+	        	for (PendingMatch match : pendingMatches) {
+	        			pendingMatchesJSON.add(match.toJSON());
+	        	}
+	        	JSONObject response = new JSONObject();
+	        	response.put("pending", pendingMatchesJSON);        	
+	        	resp.getWriter().println(response);
+	            resp.setHeader("Access-Control-Allow-Origin", "*");
+	            resp.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+	            resp.setHeader("Access-Control-Allow-Headers", "*");
+	            resp.setHeader("Access-Control-Allow-Age", "86400");        
+	            resp.setContentType("text/plain");
+	            resp.setStatus(200);
+    		} catch (JSONException je) {
+    			throw new RuntimeException(je);
+    		} catch (IOException ie) {
+    			throw new RuntimeException(ie);
+    		}
+		}
+	}
 }

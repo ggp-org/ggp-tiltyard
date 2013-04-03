@@ -91,6 +91,8 @@
   <br>
   </div>
       
+      <div id='pendingMatchesInfo'></div>
+      <br>
       <div id='recentMatchesInfo'></div>
     </center>
   </div>
@@ -100,6 +102,17 @@
     
     var selector = document.getElementById("gameChooser");      
     setTimeout("UserInterface.loadRepositoryGamesIntoMenu(repo_prefix, selector, false, true)", 1);  
+
+    function renderPendingMatches(pendingMatchesJSON) {
+      var pendingMatches = pendingMatchesJSON.pending;
+      var pendingHTML = "<table>";
+      for (var i = 0; i < pendingMatches.length; i++) {
+        var match = pendingMatches[i];
+        pendingHTML += "<tr><td>" + match.gameURL 
+      }
+      pendingHTML += "</table>";
+      return pendingHTML;
+    }
     
     function renderGameStats(statsJSON) {
         var theHTML = '<table style="width: 575px">';
@@ -135,7 +148,7 @@
         delete statsJSON.rolePlayerAverageScore; // TODO: Actually render this one.
         
         return theHTML;
-    }    
+    }
     
     var gameName;
     var numRoles;
@@ -227,7 +240,11 @@
       startMatchJSON.startClock = config_getStartClock();
       startMatchJSON.playClock = config_getPlayClock();
       startMatchJSON.playerCodes = config_getPlayerCodes();
-      ResourceLoader.post_raw('/hosting/start_match', JSON.stringify(startMatchJSON), 'text/plain');
+      startMatchJSON.deadline = 3600000;
+      var matchKey = ResourceLoader.post_raw('//tiltyard.ggp.org/scheduling/start_match', JSON.stringify(startMatchJSON), 'text/plain');
+      if (console && console.log ) {
+        console.log('Started as: ' + matchKey);
+      }
     }
 
     function updateMatchList() {
@@ -236,6 +253,16 @@
       var matchListCaption = 'Listing of the ' + recentMatches.length + ' most recently played matches, of which ' + ongoingMatches.length + ' are ongoing:';
       var recentMatchesHTML = renderMatchEntries(recentMatches, ongoingMatches, matchListCaption, null);
       document.getElementById('recentMatchesInfo').innerHTML = recentMatchesHTML;
+            
+      var pendingMatches = ResourceLoader.load_json('/scheduling/pending').pending;
+      if (pendingMatches.length > 0) {
+        var matchListCaption = 'Listing of the ' + pendingMatches.length + ' pending matches in the scheduling queue:';
+        var pendingMatchesHTML = renderPendingMatchEntries(pendingMatches, matchListCaption);
+        document.getElementById('pendingMatchesInfo').innerHTML = pendingMatchesHTML;
+        document.getElementById('pendingMatchesInfo').style.cssText = "";
+      } else {
+        document.getElementById('pendingMatchesInfo').style.cssText = "display: none";
+      }
     }
     updateMatchList();
     
