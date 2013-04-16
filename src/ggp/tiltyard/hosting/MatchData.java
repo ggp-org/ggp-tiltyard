@@ -276,7 +276,13 @@ public class MatchData {
             }
             String[] splitAddress = playerAddress.split(":");
     		theRequestJSON.put("targetHost", splitAddress[0]);
-    		theRequestJSON.put("targetPort", Integer.parseInt(splitAddress[1]));
+    		try {
+    			theRequestJSON.put("targetPort", Integer.parseInt(splitAddress[1]));
+    		} catch (ArrayIndexOutOfBoundsException e) {
+    			theRequestJSON.put("targetPort", 9147);
+    		} catch (NumberFormatException e) {
+    			theRequestJSON.put("targetPort", 9147);
+    		}
     		theRequestJSON.put("forPlayerName", "PLAYER"); //theMatch.getPlayerNamesFromHost().get(nRole));
     		
     		theRequestJSON.put("playerIndex", nRole);
