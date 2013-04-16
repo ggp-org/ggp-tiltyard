@@ -35,10 +35,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.appengine.api.taskqueue.QueueFactory;
+import com.google.appengine.api.taskqueue.RetryOptions;
 import com.google.appengine.api.taskqueue.TaskOptions.Method;
 
 public class Hosting {
 	private static final int TASK_RETRIES = 50;
+	private static RetryOptions getRetryOptions() {
+		return withTaskRetryLimit(TASK_RETRIES).minBackoffSeconds(1).maxBackoffSeconds(60).maxDoublings(4);
+	}
 
     public static void doTask(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     	String requestedTask = req.getRequestURI().replaceFirst("/hosting/tasks/", "");
@@ -189,7 +193,7 @@ public class Hosting {
 	                        } else {
 	                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), theMoves, theMatch.getScrambler());
 	                        }
-	                        QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+	                        QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest).retryOptions(getRetryOptions()));
                         }
                     }
 				} catch (MoveDefinitionException e) {
@@ -200,7 +204,7 @@ public class Hosting {
                 pm.makePersistent(theMatch);
                 
                 if (shouldPublish) {
-                	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("stepCount", "" + theMatch.getStepCount()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+                	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("stepCount", "" + theMatch.getStepCount()).retryOptions(getRetryOptions()));
                 }	                
 
 	    	    // Commit the transaction, flushing the object to the datastore
@@ -251,7 +255,7 @@ public class Hosting {
         
         MatchData m = new MatchData(matchId, playerNames, playerURLs, analysisClock, startClock, playClock, theGame);
         if (m.hasComputerPlayers()) {
-        	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+        	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(getRetryOptions()));
         }
         return m.getMatchKey();
     }
@@ -294,11 +298,11 @@ public class Hosting {
 							;
 						}
 					}
-					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot").retryOptions(getRetryOptions()));
 				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
 					MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
 	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, theMatch.getScrambler());                        
-	                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+	                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(getRetryOptions()));
 				}
 				
 				resp.getWriter().println("okay");
@@ -310,7 +314,7 @@ public class Hosting {
 				String theMove = theRequest.getString("theMove");
 				String matchKey = theRequest.getString("matchKey");
 
-				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("withError", "").param("source", "human").retryOptions(withTaskRetryLimit(TASK_RETRIES)));
+				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("withError", "").param("source", "human").retryOptions(getRetryOptions()));
 				
 				resp.getWriter().println(theMove);
 			}
