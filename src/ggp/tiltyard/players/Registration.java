@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -87,10 +88,11 @@ public class Registration {
         UserService userService = UserServiceFactory.getUserService();
         User user = userService.getCurrentUser();
 
-        try {
-            if (theURI.equals("/data/updatePlayer")) {
+        if (theURI.equals("/data/updatePlayer")) {
+        	String theName = null;
+        	try {        	
                 JSONObject playerInfo = new JSONObject(in);
-                String theName = sanitizeHarder(playerInfo.getString("name"));
+                theName = sanitizeHarder(playerInfo.getString("name"));
                 if (!theName.equals(playerInfo.getString("name"))) {
                     resp.setStatus(404);
                     return;
@@ -127,56 +129,57 @@ public class Registration {
                 p.save();
 
                 resp.getWriter().println(p.asJSON(true));
-            } else if (theURI.startsWith("/data/uploadPlayerImage/")) {
-            	String playerName = theURI.replaceFirst("/data/uploadPlayerImage/", "");
-                Player p = Player.loadPlayer(playerName);
-                
-                if (p == null) {
-                    resp.setStatus(404);
-                    return;
-                } else if (!p.isOwner(user)) {
-                    resp.setStatus(404);
-                    return;
-                }
-                
-            	BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
-            	Map<String, List<BlobKey>> blobs = blobstoreService.getUploads(req);
-            	
-            	BlobKey theBlob = null;
-            	Set<BlobKey> blobsToDelete = new HashSet<BlobKey>();
-            	for (List<BlobKey> list : blobs.values()) {
-            		for (BlobKey b : list) {
-            			if (p != null && (theBlob == null || theBlob.equals(b))) {
-            				theBlob = b;
-            			} else {
-            				blobsToDelete.add(b);
-            			}
-            		}
-            	}
-            	if (p != null) {
-            		String oldBlobKey = p.getImageBlobKey();
-            		if (oldBlobKey != null && !oldBlobKey.isEmpty() && !oldBlobKey.equals(theBlob.getKeyString())) {
-            			blobsToDelete.add(new BlobKey(p.getImageBlobKey()));
-            		}
-            	}
-            	int i = 0;
-            	BlobKey[] blobsToDeleteArr = new BlobKey[blobsToDelete.size()];
-            	for (BlobKey blobToDelete : blobsToDelete) {
-            		blobsToDeleteArr[i++] = blobToDelete;
-            	}
-				blobstoreService.delete(blobsToDeleteArr);
-            	
-                // TODO: Remove this once all of the players have up-to-date ownership info.
-                p.addOwner(user);
-                
-            	p.setImageBlobKey(theBlob.getKeyString());
-            	p.save();
-            	resp.sendRedirect("/players/" + playerName);
-            } else {
-                resp.setStatus(404);
+            } catch(JSONException e) {
+            	Logger.getAnonymousLogger().severe(in);
+                throw new RuntimeException(theName + ": " + e);
             }
-        } catch(JSONException e) {
-            throw new IOException(e);
+        } else if (theURI.startsWith("/data/uploadPlayerImage/")) {
+        	String playerName = theURI.replaceFirst("/data/uploadPlayerImage/", "");
+            Player p = Player.loadPlayer(playerName);
+            
+            if (p == null) {
+                resp.setStatus(404);
+                return;
+            } else if (!p.isOwner(user)) {
+                resp.setStatus(404);
+                return;
+            }
+            
+        	BlobstoreService blobstoreService = BlobstoreServiceFactory.getBlobstoreService();
+        	Map<String, List<BlobKey>> blobs = blobstoreService.getUploads(req);
+        	
+        	BlobKey theBlob = null;
+        	Set<BlobKey> blobsToDelete = new HashSet<BlobKey>();
+        	for (List<BlobKey> list : blobs.values()) {
+        		for (BlobKey b : list) {
+        			if (p != null && (theBlob == null || theBlob.equals(b))) {
+        				theBlob = b;
+        			} else {
+        				blobsToDelete.add(b);
+        			}
+        		}
+        	}
+        	if (p != null) {
+        		String oldBlobKey = p.getImageBlobKey();
+        		if (oldBlobKey != null && !oldBlobKey.isEmpty() && !oldBlobKey.equals(theBlob.getKeyString())) {
+        			blobsToDelete.add(new BlobKey(p.getImageBlobKey()));
+        		}
+        	}
+        	int i = 0;
+        	BlobKey[] blobsToDeleteArr = new BlobKey[blobsToDelete.size()];
+        	for (BlobKey blobToDelete : blobsToDelete) {
+        		blobsToDeleteArr[i++] = blobToDelete;
+        	}
+			blobstoreService.delete(blobsToDeleteArr);
+        	
+            // TODO: Remove this once all of the players have up-to-date ownership info.
+            p.addOwner(user);
+            
+        	p.setImageBlobKey(theBlob.getKeyString());
+        	p.save();
+        	resp.sendRedirect("/players/" + playerName);
+        } else {
+            resp.setStatus(404);
         }
     }
     
