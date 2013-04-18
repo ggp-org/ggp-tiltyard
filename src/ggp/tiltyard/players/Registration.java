@@ -84,6 +84,12 @@ public class Registration {
         }        
     }
     
+    private static void addDefaultAsNeeded(JSONObject playerInfo, String fieldName, String defaultValue) throws JSONException {
+    	if (!playerInfo.has(fieldName)) {
+    		playerInfo.put(fieldName, defaultValue);
+    	}
+    }
+    
     public static void doPost(String theURI, String in, HttpServletRequest req, HttpServletResponse resp) throws IOException {
         UserService userService = UserServiceFactory.getUserService();
         User user = userService.getCurrentUser();
@@ -101,6 +107,13 @@ public class Registration {
                 	resp.setStatus(404);
                 	return;
                 }
+                
+                // Add default values in case certain optional fields have
+                // been omitted from the JSON object.
+                addDefaultAsNeeded(playerInfo, "visibleEmail", "");
+                addDefaultAsNeeded(playerInfo, "visibleWebsite", "");
+                addDefaultAsNeeded(playerInfo, "exponentURL", "");
+                addDefaultAsNeeded(playerInfo, "exponentVizURL", "");
                 
                 Player p = Player.loadPlayer(theName);
                 if (p == null) {
