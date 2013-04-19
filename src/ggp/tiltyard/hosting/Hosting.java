@@ -35,15 +35,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.appengine.api.taskqueue.QueueFactory;
-import com.google.appengine.api.taskqueue.RetryOptions;
+import com.google.appengine.api.taskqueue.TaskOptions;
 import com.google.appengine.api.taskqueue.TaskOptions.Method;
+import com.google.appengine.api.taskqueue.TransientFailureException;
 
 public class Hosting {
-	private static final int TASK_RETRIES = 50;
-	private static RetryOptions getRetryOptions() {
-		return withTaskRetryLimit(TASK_RETRIES).minBackoffSeconds(1).maxBackoffSeconds(60).maxDoublings(4);
-	}
-
     public static void doTask(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     	String requestedTask = req.getRequestURI().replaceFirst("/hosting/tasks/", "");
        	int nRetryAttempt = Integer.parseInt(req.getHeader("X-AppEngine-TaskRetryCount"));
@@ -193,7 +189,7 @@ public class Hosting {
 	                        } else {
 	                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), theMoves, theMatch.getScrambler());
 	                        }
-	                        QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest).retryOptions(getRetryOptions()));
+	                        addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest));
                         }
                     }
 				} catch (MoveDefinitionException e) {
@@ -204,7 +200,7 @@ public class Hosting {
                 pm.makePersistent(theMatch);
                 
                 if (shouldPublish) {
-                	QueueFactory.getQueue("publication").add(withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("stepCount", "" + theMatch.getStepCount()).retryOptions(getRetryOptions()));
+                	addTaskToQueue("publication", withUrl("/hosting/tasks/publish").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("stepCount", "" + theMatch.getStepCount()));
                 }	                
 
 	    	    // Commit the transaction, flushing the object to the datastore
@@ -259,11 +255,11 @@ public class Hosting {
         
         MatchData m = new MatchData(matchId, playerNames, playerURLs, analysisClock, startClock, playClock, theGame);
         if (m.hasComputerPlayers()) {
-        	QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()).retryOptions(getRetryOptions()));
+        	addTaskToQueue(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()));
         }
         return m.getMatchKey();
     }
-
+    
 	public static void doPost(String theURI, String in, HttpServletResponse resp) {
 		try {
 			if (theURI.equals("callback")) {
@@ -302,11 +298,11 @@ public class Hosting {
 							;
 						}
 					}
-					QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot").retryOptions(getRetryOptions()));
+					addTaskToQueue(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot"));
 				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
 					MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
 	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, theMatch.getScrambler());                        
-	                QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest).retryOptions(getRetryOptions()));
+	                addTaskToQueue(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest));
 				}
 				
 				resp.getWriter().println("okay");
@@ -318,7 +314,7 @@ public class Hosting {
 				String theMove = theRequest.getString("theMove");
 				String matchKey = theRequest.getString("matchKey");
 
-				QueueFactory.getDefaultQueue().add(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("withError", "").param("source", "human").retryOptions(getRetryOptions()));
+				addTaskToQueue(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("withError", "").param("source", "human"));
 				
 				resp.getWriter().println(theMove);
 			}
@@ -335,4 +331,33 @@ public class Hosting {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	private static final int TASK_RETRIES = 50;
+    public static void addTaskToQueue(TaskOptions task) {
+    	addTaskToQueue(null, task);
+    }    
+    public static void addTaskToQueue(String queueName, TaskOptions task) {
+    	task = task.retryOptions(withTaskRetryLimit(TASK_RETRIES).minBackoffSeconds(1).maxBackoffSeconds(60).maxDoublings(4));
+    	int nAttempt = 0;    	
+    	while (true) {    		
+	    	try {
+	    		if (queueName == null) {
+	    			QueueFactory.getDefaultQueue().add(task);
+	    		} else {
+	    			QueueFactory.getQueue(queueName).add(task);
+	    		}
+	    		return;
+	    	} catch (TransientFailureException tfe) {
+	    		if (nAttempt > 10) {
+	    			throw new RuntimeException(tfe);
+	    		}	    		
+	    	}
+	    	try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				;
+			}
+	    	nAttempt++;
+    	}
+    }
 }
