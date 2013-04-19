@@ -246,6 +246,10 @@ public class Hosting {
 		String gameKey = gameURL.replace("http://games.ggp.org/base/games/","").replace("/", "");		
         String matchId = "tiltyard." + gameKey + "." + (new Date()).getTime();
         Game theGame = RemoteGameRepository.loadSingleGame(gameURL);
+        if (theGame == null) {
+        	Logger.getAnonymousLogger().severe("Game URL " + gameURL + " could not be loaded.");
+        	return null;
+        }
 
         int nRoles = Role.computeRoles(theGame.getRules()).size();
         if (nRoles != playerURLs.size() || nRoles != playerNames.size()) {
