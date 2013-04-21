@@ -291,6 +291,7 @@ public class Scheduling {
 			if (theURI.equals("start_match")) {
 				JSONObject theRequest = new JSONObject(in);
 
+				// Extract player codes from the request.
 				List<String> playerCodes = new ArrayList<String>();
 		        JSONArray thePlayerCodes = theRequest.getJSONArray("playerCodes");
 		        for (int i = 0; i < thePlayerCodes.length(); i++) {
@@ -298,12 +299,20 @@ public class Scheduling {
 		        	playerCodes.add(playerCode);
 		        }
 
+		        // Extract match parameters from the request.
 		        String gameURL = theRequest.getString("gameURL");
 		        int analyzeClock = theRequest.getInt("analysisClock");
 		        int startClock = theRequest.getInt("startClock");
 		        int playClock = theRequest.getInt("playClock");
 		        int deadline = theRequest.getInt("deadline");
+		        
+		        // All games on Tiltyard must come from the base game repository.
+		        if (!gameURL.startsWith("http://games.ggp.org/base/games/")) {
+		        	resp.setStatus(500);
+		        	return;
+		        }
 
+		        // Create the match and enqueue it (and possibly start it).
 			    PendingMatch pending = new PendingMatch(gameURL, playerCodes, analyzeClock, startClock, playClock, System.currentTimeMillis() + deadline);
 			    String matchKey = pending.considerStarting(new ArrayList<Player>());
 			    if (matchKey == null) {
@@ -318,7 +327,7 @@ public class Scheduling {
             resp.setHeader("Access-Control-Allow-Headers", "*");
             resp.setHeader("Access-Control-Allow-Age", "86400");        
             resp.setContentType("text/plain");
-            resp.setStatus(200);			
+            resp.setStatus(200);
 		} catch (JSONException e) {
 			throw new RuntimeException(e);
 		}
