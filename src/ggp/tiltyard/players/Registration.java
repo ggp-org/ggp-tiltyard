@@ -57,6 +57,15 @@ public class Registration {
                     theResponse.put("logoutURL", userService.createLogoutURL("http://tiltyard.ggp.org/REPLACEME"));
                     theResponse.put("loggedIn", true);
                     theResponse.put("isAdmin", userService.isUserAdmin());
+                    /* TODO: Sign auth tokens?
+                    theResponse.put("signedBy", "tiltyard.ggp.org");
+                    theResponse.put("signedOn", System.currentTimeMillis());
+                    EncodedKeyPair authKey = StoredCryptoKeys.loadCryptoKeys("UserAuthKey");
+                    SignableJSON.signJSON(theResponse, authKey.thePublicKey, authKey.thePrivateKey);
+                    theResponse.put("signature", theResponse.getString("matchHostSignature"));
+                    theResponse.remove("matchHostSignature");
+                    theResponse.remove("matchHostPK");
+                    */
                 } else {
                     Map<String, String> openIdProviders = new HashMap<String, String>();
                     openIdProviders = new HashMap<String, String>();
