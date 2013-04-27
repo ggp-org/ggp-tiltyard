@@ -236,7 +236,7 @@
     function startNewGame() {
       var startMatchJSON = {};      
       startMatchJSON.gameURL = repo_prefix + 'games/' + gameName + '/';
-      startMatchJSON.analysisClock = -1;
+      startMatchJSON.previewClock = -1;
       startMatchJSON.startClock = config_getStartClock();
       startMatchJSON.playClock = config_getPlayClock();
       startMatchJSON.playerCodes = config_getPlayerCodes();

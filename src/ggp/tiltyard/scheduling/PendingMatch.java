@@ -25,17 +25,17 @@ public class PendingMatch {
 
     @Persistent private String gameURL;
     @Persistent private String[] playerCodes;    
-    @Persistent private int analysisClock;
+    @Persistent private int previewClock;
     @Persistent private int startClock;
     @Persistent private int playClock;
     @Persistent private long expiresAt;
     
-    public PendingMatch(String gameURL, List<String> playerCodes, int analysisClock, int startClock, int playClock, long expiresAt) {
+    public PendingMatch(String gameURL, List<String> playerCodes, int previewClock, int startClock, int playClock, long expiresAt) {
     	pendingKey = "pendingMatch." + System.currentTimeMillis();
     	
     	this.gameURL = gameURL;
     	this.playerCodes = playerCodes.toArray(new String[]{});
-    	this.analysisClock = analysisClock;
+    	this.previewClock = previewClock;
     	this.startClock = startClock;
     	this.playClock = playClock;
     	this.expiresAt = expiresAt;
@@ -122,7 +122,7 @@ public class PendingMatch {
         	}
         }
         
-    	String matchKey = Hosting.startMatch(gameURL, playerURLs, playerNames, analysisClock, startClock, playClock);
+    	String matchKey = Hosting.startMatch(gameURL, playerURLs, playerNames, previewClock, startClock, playClock);
     	if (matchKey != null) {
     		availablePlayers.removeAll(usedPlayers);
     		Counter.increment("Tiltyard.Scheduling.Pending.Started");

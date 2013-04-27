@@ -61,7 +61,7 @@ public class MatchData {
     
     private Match theMatch;
     
-    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int analysisClock, int startClock, int playClock, Game theGame) {        
+    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int previewClock, int startClock, int playClock, Game theGame) {        
         try {
             JSONObject theSerializedGame = new JSONObject(theGame.serializeToJSON());            
             theSerializedGame.remove("theStylesheet");
@@ -71,8 +71,8 @@ public class MatchData {
             e.printStackTrace();
         }
 
-        // TODO(schreib): Add support for the analysis clock here.
-        theMatch = new Match(matchId, analysisClock, startClock, playClock, theGame);
+        // TODO(schreib): Add support for the previewClock clock here.
+        theMatch = new Match(matchId, previewClock, startClock, playClock, theGame);
         theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Tiltyard"));        
         this.playerURLs = playerURLs.toArray(new String[]{});        
         theMatch.setPlayerNamesFromHost(playerNames);

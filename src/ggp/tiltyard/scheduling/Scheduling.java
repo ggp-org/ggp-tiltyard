@@ -245,10 +245,10 @@ public class Scheduling {
         Random theRandom = new Random();        
         int startClock = 90 + 10*theRandom.nextInt(10);
         int playClock = 15 + 5*theRandom.nextInt(7);
-        int analysisClock = -1;
+        int previewClock = -1;
 
         // Start the match using the hybrid match hosting system.
-       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, analysisClock, startClock, playClock);        	
+       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, previewClock, startClock, playClock);        	
         
         Counter.increment("Tiltyard.Scheduling.Round.Success");        
     }
@@ -302,7 +302,7 @@ public class Scheduling {
 
 		        // Extract match parameters from the request.
 		        String gameURL = theRequest.getString("gameURL");
-		        int analyzeClock = theRequest.getInt("analysisClock");
+		        int previewClock = theRequest.getInt("previewClock");
 		        int startClock = theRequest.getInt("startClock");
 		        int playClock = theRequest.getInt("playClock");
 		        int deadline = theRequest.getInt("deadline");
@@ -314,7 +314,7 @@ public class Scheduling {
 		        }
 
 		        // Create the match and enqueue it (and possibly start it).
-			    PendingMatch pending = new PendingMatch(gameURL, playerCodes, analyzeClock, startClock, playClock, System.currentTimeMillis() + deadline);
+			    PendingMatch pending = new PendingMatch(gameURL, playerCodes, previewClock, startClock, playClock, System.currentTimeMillis() + deadline);
 			    String matchKey = pending.considerStarting(new ArrayList<Player>());
 			    if (matchKey == null) {
 			    	resp.getWriter().println("queued");
