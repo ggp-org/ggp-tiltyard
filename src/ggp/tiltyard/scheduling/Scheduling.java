@@ -42,7 +42,7 @@ public class Scheduling {
 		"breakthroughHoles", "breakthroughSmall",
 		"breakthroughSuicide", "breakthroughWalls", "cephalopodMicro", "checkers", "checkersSmall",
 		"checkersTiny", "chickentictactoe", "chineseCheckers1", "chineseCheckers2",
-		"chineseCheckers3", "chineseCheckers4", "chineseCheckers6", "cittaceot", "connect5",
+		"chineseCheckers3", "chineseCheckers4", "chineseCheckers6", "chinook", "cittaceot", "connect5",
 		"connectFour", "connectFourLarge", "connectFourLarger", "connectFourSimultaneous",
 		"connectFourSuicide", "dotsAndBoxes", "dotsAndBoxesSuicide", "dualConnect4",
 		"eightPuzzle", "englishDraughts", "escortLatch", "ghostMaze2p",
