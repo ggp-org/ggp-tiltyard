@@ -6,28 +6,24 @@
   <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
   <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:700,300" />
   <link rel="stylesheet" type="text/css" href="/artemis.css" />
-  <link rel="canonical" href="http://tiltyard.ggp.org/hosting/" />
+  <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />
+  <link rel="canonical" href="http://tiltyard.ggp.org/hosting/" />  
   <script type='text/javascript' src='/_ah/channel/jsapi'></script>
   <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+  <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
 </head>
 <body style="font-family: 'Roboto';">
   <script type="text/javascript" src="//www.ggp.org/scripts/common/ResourceLoader.js"></script>
   <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>  
   <script type='text/javascript' src='//database.ggp.org/subscribe/channel.js'></script>
   <script type="text/javascript" src="/static/scripts/ArtemisHeader.js"></script>
+  
+  <div class="header" id="header"></div>
+  <br>
 
-  <div style="float: left; margin: 0; height: 90%; width: 20%">
-    <div id="sidePanel" style="padding: 10px; width: 100%; height: 100%">
-      <h1>GGP.org</h1>
-      <h2>Tiltyard Hosting</h2>
+    <center style="width: 100%; height: 100%">    
+      <b>Games you've never seen before. </b> Play over 100 different games against humans or intelligent computers.<br>
       <br>
-      <b>Games you've never seen before.</b>
-      <br><br>
-      Play over 100 different games against humans or intelligent computers. 
-    </div>
-  </div>
-  <div style="float: left; margin-left: 1%; margin-top: 1%; height: 89%; width:79%;">
-    <center style="width: 100%; height: 100%">
       <div id='new_game_div'>
         Would you like to start a <select id='gameChooser'></select> match?    
         <button onclick="showGamePanel();">Yes!</button>
@@ -95,9 +91,10 @@
       <br>
       <div id='recentMatchesInfo'></div>
     </center>
-  </div>
 
   <script type='text/javascript' language='javascript'>
+    generateHeader(document.getElementById('header'), "Tiltyard Hosting", "");
+  
     var repo_prefix = 'http://games.ggp.org/base/';
     
     var selector = document.getElementById("gameChooser");      

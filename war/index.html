@@ -1,46 +1,39 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
   <head>
-    <title>GGP.org - Tiltyard Gaming Server</title>
-    <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />  
-    <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">  
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:bold">
+    <title>GGP.org - Tiltyard Gaming Server</title>    
+    <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />
+    <link href="//fonts.googleapis.com/css?family=Roboto:300,700" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/tiltyard.css" />
+    <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />
+    <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
     <link rel="canonical" href="http://tiltyard.ggp.org/"/>
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+    <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
     <style>
-      /* Huge hack to center things. This is surprisingly hard to do.
-       * Credit to: http://brunildo.org/test/shrink_center_4.html
-       */
-      html, body {
-	    margin: 0;
-        padding: 0;
+      body {
+        background-image: none;
       }
-      html, body, .swc0, .swc1 {
-	    height: 100%;
-      }
-      .swc0 {
-        margin: 0 auto;
-        display: table;
-      }
-      .swc1 {
-        display: table-cell;
-        vertical-align: middle;
-        white-space: nowrap;
-      }
-      .swc2:after {
-        position: absolute;
-        height: 0%;
-        content: "";
-      }
-      html {
-        position: relative;
+      #centered {
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        margin:auto;
+        height:70%;
+        width:100%;
       }
     </style>
-    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
   </head>
   <body>
-    <div class="swc0"><div class="swc1"><div class="swc2">
-    <table width=614px>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>
+
+    <div class="header" id="header"></div>
+    <div id="centered">
+      <center>
+      <table width=614px>
       <tr>
         <td>
 	      <img width=362 height=512 src="/static/images/TiltyardLarge.jpg"></img>
@@ -54,7 +47,12 @@
 	      <a class="hugelink" href="/players/">Register</a><br>
 	    </td>
       </tr>    
-    </table>
-    </div><span class="swc3"></span></div></div> 
+      </table>
+      </center>
+    </div>
+
+    <script type="text/javascript" language="javascript">
+      generateHeader(document.getElementById('header'), "Tiltyard", "");  
+    </script>
   </body>
 </html>
