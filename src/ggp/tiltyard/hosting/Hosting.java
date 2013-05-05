@@ -100,11 +100,11 @@ public class Hosting {
     public static void selectMove(String matchName, int nRoleIndex, int forStep, String withError, String move, String source) throws MoveSelectException {
    		EncodedKeyPair theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
    		
-   		// Attempt the transaction five times. If the transaction can't go through
-   		// after five attempts, fail out and let the task queue retry: occasionally
+   		// Attempt the transaction a few times. If the transaction can't go through
+   		// after twenty attempts, fail out and let the task queue retry: occasionally
    		// this will get stuck and failing out to the task queue fixes things.
    		int nAttempt = 0;
-    	for (; nAttempt < 5; nAttempt++) {
+    	for (; nAttempt < 20; nAttempt++) {
 	    	PersistenceManager pm = Persistence.getPersistenceManager();
 	    	Transaction tx = pm.currentTransaction();
 
