@@ -81,7 +81,9 @@ public class Scheduling {
             		activeMatch.abort();
             		activeMatch.publish();
             		activeMatch.delete();
-            	} else {
+            	} else if (activeMatch.hasComputerPlayers()) {
+            		// Otherwise, if the match has computer players, mark those players as busy and
+            		// note when they'll be available for new matches.
             		busyPlayerNames.addAll(matchPlayers);
             		morePlayersIn = Math.min(activeMatch.getExpectedTimeToCompletion(), morePlayersIn);
             	}
@@ -101,8 +103,10 @@ public class Scheduling {
                             theProperURL = "http://" + theProperURL;
                         }
                         theInfoResponse = RemoteResourceLoader.postRawWithTimeout(theProperURL, RequestBuilder.getInfoRequest(), 2500);
+                        p.resetPingStrikes();
                     } catch (IOException e) {
                     	theInfoError = e.toString();
+                    	p.addPingStrike();
                     }
                     p.setInfo(theInfoResponse, theInfoError);
                     p.save();

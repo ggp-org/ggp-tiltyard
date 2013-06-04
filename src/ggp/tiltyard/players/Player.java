@@ -25,6 +25,9 @@ import com.google.appengine.api.users.User;
 public class Player {
     @PrimaryKey @Persistent private String theName;
 
+    private static final int STRIKES_BEFORE_DISABLING = 3;
+    private static final int PING_STRIKES_BEFORE_DISABLING = 60;
+    
     // Ownership information.
     @Persistent private Set<String> theOwners;
     @Persistent private Set<String> theOwnerEmails;
@@ -35,6 +38,7 @@ public class Player {
     @Persistent private String gdlVersion;    
     @Persistent private String theURL;
     @Persistent private Integer nStrikes;
+    @Persistent private Integer nPingStrikes;
     @Persistent private String infoStatus;
     @Persistent private String infoError;
     @Persistent private Text infoFull;
@@ -74,6 +78,7 @@ public class Player {
         this.setExponentVizURL("");
         
         this.nStrikes = 0;
+        this.nPingStrikes = 0;
         
         save();
     }
@@ -113,6 +118,7 @@ public class Player {
     public void setEnabled(boolean isEnabled) {
         this.isEnabled = isEnabled;
         this.nStrikes = 0;
+        this.nPingStrikes = 0;
         if (isEnabled == false) {
             this.infoStatus = null;
             this.infoError = null;
@@ -173,18 +179,37 @@ public class Player {
         if (nStrikes == null) {
             nStrikes = 0;
         }
-        if (nStrikes > 2) {
+        if (nStrikes >= STRIKES_BEFORE_DISABLING) {
             setEnabled(false);
         } else {
             nStrikes++;
         }
     }
     
+    public void addPingStrike() {
+    	if (nPingStrikes == null) {
+    		nPingStrikes = 0;
+    	}
+    	if (nPingStrikes >= PING_STRIKES_BEFORE_DISABLING) {
+    		setEnabled(false);
+    	} else {
+    		nPingStrikes++;
+    	}
+    }
+    
     public void resetStrikes() {
         if (nStrikes == null) {
             nStrikes = 0;
-        }        
+        }
         nStrikes = 0;
+        resetPingStrikes();
+    }
+    
+    public void resetPingStrikes() {
+        if (nPingStrikes == null) {
+        	nPingStrikes = 0;
+        }
+        nPingStrikes = 0;    	
     }
     
     public void setInfo(String theInfoResponse, String theError) {
