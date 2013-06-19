@@ -38,15 +38,16 @@ public class Scheduling {
 	// few legit games that should be in the rotation (since whitelisting is a bad approach).
 	private static final String[] safeGames = {
 		"2pffa", "2pffa_zerosum", "2pttc", "3pffa", "3pttc", "3pConnectFour", "4pttc", "4pffa", "beatMania",
-		"biddingTicTacToe", "biddingTicTacToe_10coins",  "blocker", "bomberman2p", "breakthrough",
-		"breakthroughHoles", "breakthroughSmall",
-		"breakthroughSuicide", "breakthroughWalls", "cephalopodMicro", "checkers", "checkersSmall",
+		"biddingTicTacToe", "biddingTicTacToe_10coins",  "blocker", "bomberman2p",
+		// TODO: Fix the breakthrough-family games in the event that one player runs out of pieces
+		// "breakthrough", "breakthroughHoles", "breakthroughSmall", "breakthroughSuicide", "breakthroughWalls", "knightThrough",
+		"cephalopodMicro", "checkers", "checkersSmall",
 		"checkersTiny", "chickentictactoe", "chineseCheckers1", "chineseCheckers2",
 		"chineseCheckers3", "chineseCheckers4", "chineseCheckers6", "chinook", "cittaceot", "connect5",
 		"connectFour", "connectFourLarge", "connectFourLarger", "connectFourSimultaneous",
 		"connectFourSuicide", "dotsAndBoxes", "dotsAndBoxesSuicide", "dualConnect4",
 		"eightPuzzle", "englishDraughts", "escortLatch", "ghostMaze2p",
-		"god", "golden_rectangle", "knightThrough", "knightsTour",
+		"god", "golden_rectangle", "knightsTour",
 		"lightsOut", "max_knights", "maze", "nineBoardTicTacToe", "numberTicTacToe", "pacman2p", "pacman3p",
 		"pawnToQueen", "pawnWhopping", "peg", "pegEuro", "pentago", "pentagoSuicide",
 		"qyshinsu", "reversi", "sheepAndWolf", "snake2p", "snakeParallel",
