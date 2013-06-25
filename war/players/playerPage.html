@@ -1,26 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
   <head>
     <title>GGP.org - Tiltyard Gaming Server</title>
     <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />  
     <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:bold">
+    <link href="//fonts.googleapis.com/css?family=Roboto:300,700" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />
     <link rel="stylesheet" type="text/css" href="/tiltyard.css" />
     <link rel="stylesheet" type="text/css" href="//www.ggp.org/scripts/external/bootstrap/bootstrap.min.css" />
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/external/bootstrap/bootstrap.min.js'></script>
+    <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>    
   </head>
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
-    <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>
-    <script type="text/javascript" src="/tiltyardHeader.js"></script>    
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>    
 
-    <div id='login'></div>
+    <div class="header" id="header"></div>
     <br>
     <div id='playerDiv'></div>
-    
-    <br>
     
     <div class="container">
       <div class="row">
@@ -71,9 +70,22 @@
       </div>
     </div>
     
-    <script type='text/javascript'>    
-      generateLoginPanel(document.getElementById('login'));
-      
+    <script type='text/javascript'>
+      var loginState = ResourceLoader.load_json('/data/login');
+      var loginStatusHTML = "";
+      if (!loginState.loggedIn) {
+        window.location = "//tiltyard.ggp.org/players/";
+      } else {
+        loginStatusHTML = "<td>";
+        if (loginState.nickname.length > 0) {
+          loginStatusHTML += "<b>" + loginState.nickname + "</b>";
+        } else {
+          loginStatusHTML += "signed in via OpenID";
+        }
+        loginStatusHTML += " [<a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">x</a>]</td>";
+      }    
+      generateHeader(document.getElementById('header'), "Tiltyard Registration", loginStatusHTML);    
+
       $('#input_player_url').popover({'title':'Player URL', 'content':'What is the URL for communicating with your player? This is usually your IP address with port 9147.'});
       $('#input_gdl_version').popover({'title':'GDL Version', 'content':'GDL version that this player can handle.'});
       $('#input_contact_email').popover({'title':'Contact Email', 'content':'Optional email address shown with your player, so fans can contact you.'});

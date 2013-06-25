@@ -1,78 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
   <head>
     <title>GGP.org - Tiltyard Gaming Server</title>
     <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />  
     <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:bold">
     <link rel="stylesheet" type="text/css" href="/tiltyard.css" />
+    <link href="//fonts.googleapis.com/css?family=Roboto:300,700" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />
     <link rel="canonical" href="http://tiltyard.ggp.org/players/"/>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+    <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
     <style>
-      /* Huge hack to center things. This is surprisingly hard to do.
-       * Credit to: http://brunildo.org/test/shrink_center_4.html
-       */
-      html, body {
-	    margin: 0;
-        padding: 0;
-      }
-      html, body, .swc0, .swc1 {
-	    height: 100%;
-      }
-      .swc0 {
-        margin: 0 auto;
-        display: table;
-      }
-      .swc1 {
-        display: table-cell;
-        vertical-align: middle;
-        white-space: nowrap;
-      }
-      .swc2:after {
-        position: absolute;
-        height: 0%;
-        content: "";
-      }
-      html {
-        position: relative;
-      }
-      a {
-        text-decoration:none;
+      body {
+        background-image: none;
       }      
+      #centered {
+        position:absolute;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        margin:auto;
+        height:70%;
+        width:100%;
+      }    
     </style>
   </head>
   <body>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>
-    
-    <div class="swc0"><div class="swc1"><div class="swc2">
+
+    <div class="header" id="header"></div>
+    <div id="centered">
+      <center>
       <div id='loginView'>
-        <table width=614px>
-          <tr>
-            <td>
-	          <img width=362 height=512 src="/static/images/TiltyardLarge.jpg"></img>
-	        </td>
-	        <td width=20px></td>
-	        <td valign="middle">
-	          <center>
-	            <a class="hugelink">Register</a>
-	            <div style="height: 15px"></div>
-	            Register your players to participate in the Tiltyard tournament! Sign in using OpenID.
-	            <div style="height: 25px"></div>
+      	<table width=614px>
+      	<tr>
+        	<td>
+	      	<img width=362 height=512 src="/static/images/TiltyardLarge.jpg"></img>
+	    	</td>
+        	<td width=20px></td>
+        	<td valign="middle">
+          	<center>
+            	<a class="hugelink">Register</a>
+            	<div style="height: 15px"></div>
+        	    Register your players to participate in the Tiltyard tournament! Sign in using OpenID.
+    	        <div style="height: 25px"></div>
 	            <div id='loginLogos'></div>
-	          </center>
-	        </td>
-          </tr>
-        </table>      
-      </div>
-      <div id='loggedInView' hidden=true>
-        <center>Welcome, <span id='loginStatus'></span>.</center>
+          	</center>
+        	</td>
+    	  </tr>    
+	      </table>
+	  </div>
+	  <div id='loggedInView' hidden=true>
         <div id='playerList'></div>
       </div>
-    </div><span class="swc3"></span></div></div> 
+      </center>
+    </div>
 
     <script type='text/javascript'>    
       var loginState = ResourceLoader.load_json('/data/login');
+      var loginStatusHTML = "";
       if (!loginState.loggedIn) {
         var loginLogosDiv = document.getElementById('loginLogos');
         var loginLogosHTML = "";
@@ -85,15 +74,13 @@
         document.getElementById('loginView').hidden=true;
         document.getElementById('loggedInView').hidden=false;
 
-        var loginStatusDiv = document.getElementById('loginStatus');
-        var loginStatusHTML = "";
+        loginStatusHTML = "<td>";
         if (loginState.nickname.length > 0) {
           loginStatusHTML += "<b>" + loginState.nickname + "</b>";
         } else {
-          loginStatusHTML += "Tiltyard user";
+          loginStatusHTML += "signed in via OpenID";
         }
-        loginStatusHTML += " <sup><a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">(sign out)</a></sup>";
-        loginStatusDiv.innerHTML = loginStatusHTML;
+        loginStatusHTML += " [<a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">x</a>]</td>";
       }
       
       function add_new_player() {
@@ -145,8 +132,17 @@
           return '<img src="/static/images/StatusError.png" title="Player is listed as active, but its current status is unrecognizable: ' + z + '."></img>';
         }
         
+        playerIcon = function(aPlayer) {
+          if ("thumbURL" in aPlayer) {
+            return '<img width=25 height=25 title="' + aPlayer.name + '" src="' + aPlayer.thumbURL + '"/>';
+          } else {
+            return '<img width=25 height=25 title="' + aPlayer.name + '" src="http://placekitten.com/25/25"/>';
+          }
+        }
+        
+        theHTML += renderCell(playerIcon(aPlayer));
         theHTML += renderCell(statusIcon(aPlayer));
-        theHTML += renderCell('<a href="/players/' + aPlayer.name + '">' + aPlayer.name + '</a>');
+        theHTML += renderCell('<a href="/players/' + aPlayer.name + '">' + aPlayer.name + '</a>');        
         theHTML += renderCell(aPlayer.visibleEmail);
         theHTML += "<td width=10px></td>";
         
@@ -201,6 +197,8 @@
       if (loginState.loggedIn) {
       	drawPlayerList();
       }
+      
+      generateHeader(document.getElementById('header'), "Tiltyard Registration", loginStatusHTML);      
     </script>
   </body>  
 </html>
