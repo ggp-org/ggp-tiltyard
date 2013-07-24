@@ -274,6 +274,12 @@ public class Hosting {
                 	throw new RuntimeException("Got callback response whose signature didn't validate.");
                 }
 				JSONObject theRequestJSON = new JSONObject(theResponseJSON.getString("originalRequest"));
+				if (!theRequestJSON.has("matchId")) {
+					throw new RuntimeException("Could not get match ID from callback: " + theRequestJSON.toString());
+				}
+				if (!theRequestJSON.has("matchKey")) {
+					throw new RuntimeException("Could not get match key from callback: " + theRequestJSON.toString());
+				}				
 				if (theRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
 					String theMove = "";
 					String theError = "";
@@ -299,10 +305,14 @@ public class Hosting {
 						}
 					}
 					addTaskToQueue(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot"));
-				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {				
+				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {
 					MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
-	                String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, theMatch.getScrambler());                        
-	                addTaskToQueue(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest));
+					if (theMatch == null) {
+						Logger.getAnonymousLogger().severe("Could not find match referenced by callback: " + theRequestJSON.toString());
+					} else {
+						String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, theMatch.getScrambler());                        
+						addTaskToQueue(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest));
+					}
 				}
 				
 				resp.getWriter().println("okay");
