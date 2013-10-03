@@ -90,20 +90,14 @@ public class Hosting {
 		return;
     }
     
-    @SuppressWarnings("serial")
-	static class MoveSelectException extends Exception {
-		public MoveSelectException(String x) {
-    		super(x);
-    	}
-    }
-
-    public static void selectMove(String matchName, int nRoleIndex, int forStep, String withError, String move, String source) throws MoveSelectException {
+    public static void selectMove(String matchName, int nRoleIndex, int forStep, String withError, String move, String source) {
    		EncodedKeyPair theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
    		
    		// Attempt the transaction a few times. If the transaction can't go through
    		// after twenty attempts, fail out and let the task queue retry: occasionally
    		// this will get stuck and failing out to the task queue fixes things.
    		int nAttempt = 0;
+   		Exception lastException = null;
     	for (; nAttempt < 20; nAttempt++) {
 	    	PersistenceManager pm = Persistence.getPersistenceManager();
 	    	Transaction tx = pm.currentTransaction();
@@ -208,7 +202,7 @@ public class Hosting {
 	    	    pm.close();
 	    	    return;
 	    	} catch (javax.jdo.JDOException e) {
-	    		;
+	    		lastException = e;
 	    	} finally {
 	    	    if (tx.isActive()) {
 	    	        // Error occurred so rollback the transaction and try again
@@ -216,7 +210,8 @@ public class Hosting {
 	    	    }
 	    	}
     	}
-    	throw new MoveSelectException("Could not select a move in " + nAttempt + " attempts.");
+    	Logger.getAnonymousLogger().severe("Could not select a move in " + nAttempt + " attempts. Last exception was: " + lastException.getMessage());
+    	throw new RuntimeException(lastException);
     }
     
     public static void writeStaticPage (HttpServletResponse resp, String rootFile) throws IOException {
