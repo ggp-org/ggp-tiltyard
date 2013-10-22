@@ -74,6 +74,7 @@ public class Registration {
                     openIdProviders.put("myspace", "myspace.com");
                     openIdProviders.put("aol", "aol.com");
                     openIdProviders.put("myopenid", "myopenid.com");
+                    openIdProviders.put("stackexchange", "https://openid.stackexchange.com");
 
                     JSONObject theProviders = new JSONObject();
                     for (String providerName : openIdProviders.keySet()) {
@@ -81,7 +82,7 @@ public class Registration {
                         theProviders.put(providerName, userService.createLoginURL("http://tiltyard.ggp.org/REPLACEME", null, providerUrl, new HashSet<String>()));
                     }
                     theResponse.put("providers", theProviders);
-                    theResponse.put("preferredOrder", new String[] {"google", "yahoo", "aol", "myspace", "myopenid"} );
+                    theResponse.put("preferredOrder", new String[] {"google", "yahoo", "aol", "myspace", "stackexchange", "myopenid"} );
                     theResponse.put("loggedIn", false);
                 }
                 resp.getWriter().println(theResponse.toString());
