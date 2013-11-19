@@ -36,6 +36,7 @@ public class Scheduling {
 	// to get rid of this at some point. This eliminates chess-like games and other large games
 	// (e.g. Amazons, Knight Fight) and some games which aren't fully debugged, and probably a
 	// few legit games that should be in the rotation (since whitelisting is a bad approach).
+	/*
 	private static final String[] safeGames = {
 		"2pffa", "2pffa_zerosum", "2pttc", "3pffa", "3pttc", "3pConnectFour", "4pttc", "4pffa", "beatMania",
 		"biddingTicTacToe", "biddingTicTacToe_10coins",  "blocker", "bomberman2p",
@@ -52,7 +53,19 @@ public class Scheduling {
 		"qyshinsu", "reversi", "sheepAndWolf", "snake2p", "snakeParallel",
 		"ttcc4_2player", "tictactoe_3player", "ticTacToe", "ticTacToeLarge", "ticTacToeLargeSuicide",
 		"ticTacToeParallel", "ticTacToeSerial", "ticTicToe",
-	};
+	};	
+	*/
+	// Also, for now, only use games which have valid base/input propositions
+	private static final String[] safeGames = {
+		"3pConnectFour", "englishDraughts", "dotsAndBoxes", "knightThrough",
+		"breakthroughWalls", "reversi", "cephalopodMicro", "breakthrough",
+		"nineBoardTicTacToe", "pentagoSuicide", "checkersSmall", "checkersTiny",
+		"dotsAndBoxesSuicide", "maze", "ticTacToe", "ttcc4_2player", "connectFourLarge",
+		"pegEuro", "eightPuzzle", "knightsTour", "chinook", "connectFourLarger",
+		"connectFour", "breakthroughSmall", "peg", "connectFourSimultaneous",
+		"escortLatch", "qyshinsu", "connectFourSuicide", "pentago", "blocker",
+		"checkers", "2pffa_zerosum",
+	};	
 
     public static void runSchedulingRound() throws IOException {
     	SchedulerConfig theConfig = SchedulerConfig.loadConfig();
