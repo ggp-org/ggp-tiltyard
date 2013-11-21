@@ -64,7 +64,7 @@ public class Scheduling {
 		"pegEuro", "eightPuzzle", "knightsTour", "chinook", "connectFourLarger",
 		"connectFour", "breakthroughSmall", "peg", "connectFourSimultaneous",
 		"escortLatch", "qyshinsu", "connectFourSuicide", "pentago", "blocker",
-		"checkers", "2pffa_zerosum",
+		"checkers", "2pffa_zerosum", "2pffa", "3pffa", "4pffa"
 	};	
 
     public static void runSchedulingRound() throws IOException {
