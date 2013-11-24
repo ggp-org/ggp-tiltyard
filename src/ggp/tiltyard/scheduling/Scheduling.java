@@ -270,31 +270,33 @@ public class Scheduling {
         Counter.increment("Tiltyard.Scheduling.Round.Success");        
     }
 
-    private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {
-        if (!theMatchInfo.has("errors")) return;
-        boolean[] hasLegalMove = new boolean[players.size()];
-        for (int i = 0; i < hasLegalMove.length; i++) {
-            hasLegalMove[i] = false;
+    private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {    	
+        if (!theMatchInfo.has("errors")) return;        
+        int[] numLegalMoves = new int[players.size()];
+        for (int i = 0; i < numLegalMoves.length; i++) {
+        	numLegalMoves[i] = 0;
         }
         
+        int numTotalMoves;
         try {
             JSONArray theErrors = theMatchInfo.getJSONArray("errors");
+            numTotalMoves = theErrors.length();
             for (int i = 0; i < theErrors.length(); i++) {
                 JSONArray moveErrors = theErrors.getJSONArray(i);
                 for (int j = 0; j < moveErrors.length(); j++) {
                     if (moveErrors.getString(j).isEmpty()) {
-                        hasLegalMove[j] = true;
+                    	numLegalMoves[j]++;
                     }
                 }
             }
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-        
-        for (int i = 0; i < thePlayers.size(); i++) {            
+
+        for (int i = 0; i < thePlayers.size(); i++) {
             int nPlayerIndex = players.indexOf(thePlayers.get(i).getName());
             if (nPlayerIndex > -1) {
-                if (hasLegalMove[nPlayerIndex]) {
+            	if (numLegalMoves[nPlayerIndex] >= numTotalMoves/2) {
                     thePlayers.get(i).resetStrikes();
                 } else {
                     thePlayers.get(i).addStrike();

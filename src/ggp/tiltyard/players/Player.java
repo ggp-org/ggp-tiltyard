@@ -25,7 +25,7 @@ import com.google.appengine.api.users.User;
 public class Player {
     @PrimaryKey @Persistent private String theName;
 
-    private static final int STRIKES_BEFORE_DISABLING = 3;
+    private static final int STRIKES_BEFORE_DISABLING = 2;
     private static final int PING_STRIKES_BEFORE_DISABLING = 60;
     
     // Ownership information.
