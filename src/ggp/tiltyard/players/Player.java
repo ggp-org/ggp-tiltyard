@@ -157,7 +157,15 @@ public class Player {
 
     public void setExponentVizURL(String exponentVizURL) {
     	this.exponentVizURL = exponentVizURL;
-    }    
+    }
+    
+    public static final String REGION_US = "US";
+    public static final String REGION_EU = "EU";
+    public static final String REGION_ANY = "ANY";
+    public String getRegion() {
+    	// TODO: Make this user-configurable.
+    	return REGION_US;
+    }
     
     public void addOwner(User anOwner) {
     	if (theOwnerEmails == null) {

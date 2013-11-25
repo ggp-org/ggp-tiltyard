@@ -98,19 +98,23 @@ public class PendingMatch {
     	Set<Player> usedPlayers = new HashSet<Player>();
         List<String> playerURLs = new ArrayList<String>();
         List<String> playerNames = new ArrayList<String>();
+        List<String> playerRegions = new ArrayList<String>();
         for (String code : playerCodes) {
         	if (code.isEmpty()) {
         		playerNames.add("");
         		playerURLs.add(null);
+        		playerRegions.add(Player.REGION_ANY);
         	} else if (code.toLowerCase().equals("random")) {
         		playerNames.add("Random");
         		playerURLs.add(null);
+        		playerRegions.add(Player.REGION_ANY);
         	} else if (code.startsWith("tiltyard://")) {
         		code = code.substring("tiltyard://".length());
         		if (playersByName.containsKey(code)) {
         			Player p = playersByName.get(code);
         			playerNames.add(p.getName());
         			playerURLs.add(p.getURL());
+        			playerRegions.add(Player.REGION_ANY);
         			usedPlayers.add(p);
         		} else {
         			Counter.increment("Tiltyard.Scheduling.Pending.Abandoned.BadPlayer");
@@ -119,10 +123,11 @@ public class PendingMatch {
         	} else {
         		playerNames.add("");
         		playerURLs.add(code);
+        		playerRegions.add(Player.REGION_ANY);
         	}
         }
         
-    	String matchKey = Hosting.startMatch(gameURL, playerURLs, playerNames, previewClock, startClock, playClock);
+    	String matchKey = Hosting.startMatch(gameURL, playerURLs, playerNames, playerRegions, previewClock, startClock, playClock);
     	if (matchKey != null) {
     		availablePlayers.removeAll(usedPlayers);
     		Counter.increment("Tiltyard.Scheduling.Pending.Started");

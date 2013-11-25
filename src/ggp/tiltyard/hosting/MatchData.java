@@ -52,6 +52,7 @@ public class MatchData {
     @PrimaryKey @Persistent private String matchKey;
 
 	@Persistent private String[] playerURLs;
+	@Persistent private String[] playerRegions;
 	@Persistent private boolean[] playsRandomly;
     @Persistent private String[] pendingMoves;
     @Persistent private String[] pendingErrors;
@@ -61,7 +62,7 @@ public class MatchData {
     
     private Match theMatch;
     
-    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, int previewClock, int startClock, int playClock, Game theGame) {        
+    public MatchData(String matchId, List<String> playerNames, List<String> playerURLs, List<String> playerRegions, int previewClock, int startClock, int playClock, Game theGame) {        
         try {
             JSONObject theSerializedGame = new JSONObject(theGame.serializeToJSON());            
             theSerializedGame.remove("theStylesheet");
@@ -74,7 +75,8 @@ public class MatchData {
         // TODO(schreib): Add support for the previewClock clock here.
         theMatch = new Match(matchId, previewClock, startClock, playClock, theGame);
         theMatch.setCryptographicKeys(StoredCryptoKeys.loadCryptoKeys("Tiltyard"));        
-        this.playerURLs = playerURLs.toArray(new String[]{});        
+        this.playerURLs = playerURLs.toArray(new String[]{});
+        this.playerRegions = playerRegions.toArray(new String[]{});
         theMatch.setPlayerNamesFromHost(playerNames);
         // Players named Random will play randomly; all others will not.
         playsRandomly = new boolean[playerNames.size()];
@@ -287,9 +289,9 @@ public class MatchData {
     		
     		theRequestJSON.put("playerIndex", nRole);
     		theRequestJSON.put("forStep", getStepCount());
-    		theRequestJSON.put("fastReturn", false);
+    		theRequestJSON.put("fastReturn", true);
 	    	
-	    	issueRequest(theRequestJSON);
+	    	issueRequest(theRequestJSON, playerRegions[nRole]);
     	} catch (JSONException je) {
     		throw new RuntimeException(je);
     	}
@@ -317,14 +319,14 @@ public class MatchData {
     	}
     }
 
-    private static void issueRequest(JSONObject requestJSON) throws IOException {
+    private static void issueRequest(JSONObject requestJSON, String forRegion) throws IOException {
         // Find a backend server to run the request. As part of this process,
         // ping all of the registered backend servers to verify that they're
         // still available, and deregister those that aren't. Lastly choose
         // randomly from the remaining ones.
         Backends theBackends = Backends.loadBackends();
         List<String> validBackends = new ArrayList<String>();
-        for (String theBackendAddress : theBackends.getFarmBackendAddresses()) {
+        for (String theBackendAddress : theBackends.getFarmBackendAddresses(forRegion)) {
             try {
                 URL url = new URL("http://" + theBackendAddress + ":9125/" + URLEncoder.encode("ping", "UTF-8"));
                 BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
@@ -339,7 +341,7 @@ public class MatchData {
         }
         if (validBackends.size() == 0) {            
             //Counter.increment("Tiltyard.Scheduling.Backend.Errors");
-            theBackends.getFarmBackendAddresses().clear();
+            theBackends.getFarmBackendAddresses(forRegion).clear();
             theBackends.save();
             return;
         }
@@ -349,7 +351,7 @@ public class MatchData {
         // for rate-limiting logic to avoid overloading backends: we can always just
         // not issue new requests if all of the backends are overloaded.
         String theBackendAddress = validBackends.get(new Random().nextInt(validBackends.size()));
-        theBackends.getFarmBackendAddresses().retainAll(validBackends);
+        theBackends.getFarmBackendAddresses(forRegion).retainAll(validBackends);
         theBackends.save();
         
         // Send the match request to the request farm backend. Repeat until we can confirm

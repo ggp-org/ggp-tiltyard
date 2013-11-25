@@ -246,13 +246,16 @@ public class Scheduling {
         // will appear in the match creation request.
         List<String> playerURLsForMatch = new ArrayList<String>();
         List<String> playerNamesForMatch = new ArrayList<String>();
+        List<String> playerRegionsForMatch = new ArrayList<String>();
         for (Player p : theChosenPlayers) {        	
         	if (p == null) {
         		playerURLsForMatch.add(null);
         		playerNamesForMatch.add("Random");
+        		playerRegionsForMatch.add(Player.REGION_ANY);
         	} else {
         		playerURLsForMatch.add(p.getURL());
         		playerNamesForMatch.add(p.getName());
+        		playerRegionsForMatch.add(p.getRegion());
         	}
         }
         
@@ -265,7 +268,7 @@ public class Scheduling {
         int previewClock = -1;
 
         // Start the match using the hybrid match hosting system.
-       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, previewClock, startClock, playClock);        	
+       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, playerRegionsForMatch, previewClock, startClock, playClock);        	
         
         Counter.increment("Tiltyard.Scheduling.Round.Success");        
     }
