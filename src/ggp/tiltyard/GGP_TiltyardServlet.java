@@ -7,7 +7,6 @@ import ggp.tiltyard.hosting.Hosting;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -43,6 +42,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
         setAccessControlHeader(resp);
+        resp.setCharacterEncoding("utf-8");
 
         if (req.getRequestURI().equals("/cron/scheduling_round")) {
             if (isDatastoreWriteable()) {
@@ -81,6 +81,9 @@ public class GGP_TiltyardServlet extends HttpServlet {
         // well-constrained URL structure.
         if (reqURI.startsWith("/players/") && !reqURI.equals("/players/index.html")) {
             reqURI = "/players/playerPage.html";
+        }
+        if (reqURI.startsWith("/players-test/")) {
+            reqURI = "/players/playerPageTest.html";
         }
         if (reqURI.startsWith("/hosting/") && !reqURI.equals("/hosting/index.html")) {
         	reqURI = "/hosting/humanUI.html";
@@ -167,14 +170,15 @@ public class GGP_TiltyardServlet extends HttpServlet {
     /* --- */
 
     public static void writeStaticTextPage(HttpServletResponse resp, String theURI) throws IOException {
-        FileReader fr = new FileReader(theURI);
-        BufferedReader br = new BufferedReader(fr);
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(theURI), "utf-8"));
         StringBuffer response = new StringBuffer();
 
         String line;
         while( (line = br.readLine()) != null ) {
             response.append(line + "\n");
         }
+        
+        br.close();        
 
         resp.getWriter().println(response.toString());
     }

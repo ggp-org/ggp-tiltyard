@@ -49,6 +49,7 @@ public class Player {
     @Persistent private Boolean isPingable;
     @Persistent private String exponentURL;
     @Persistent private String exponentVizURL;
+    @Persistent private String theCountryCode;
     
     // Optional image-related fields.
     @Persistent private String imageBlobKey;
@@ -76,6 +77,7 @@ public class Player {
         this.setImageBlobKey("");
         this.setExponentURL("");
         this.setExponentVizURL("");
+        this.setCountryCode("");
         
         this.nStrikes = 0;
         this.nPingStrikes = 0;
@@ -163,10 +165,29 @@ public class Player {
     public static final String REGION_EU = "EU";
     public static final String REGION_ANY = "ANY";
     public String getRegion() {
-    	// TODO: Make this user-configurable.
-    	return REGION_US;
+    	if (theCountryCode == null || theCountryCode.isEmpty()) {
+    		return REGION_US;
+    	} else {
+    		String continent = Geography.countryCodesToContinents.get(theCountryCode);
+    		if (continent.equals("AF")) return REGION_EU;
+    		if (continent.equals("NA")) return REGION_US;
+    		if (continent.equals("OC")) return REGION_US;
+    		if (continent.equals("AN")) return REGION_US;
+    		if (continent.equals("AS")) return REGION_US;
+    		if (continent.equals("EU")) return REGION_EU;
+    		if (continent.equals("SA")) return REGION_US;
+    		return REGION_US;
+    	}
     }
     
+    public String getCountryCode() {
+    	return theCountryCode;
+    }
+    
+    public void setCountryCode(String newCountryCode) {
+    	theCountryCode = newCountryCode;
+    }
+
     public void addOwner(User anOwner) {
     	if (theOwnerEmails == null) {
     		theOwnerEmails = new HashSet<String>();
@@ -268,6 +289,7 @@ public class Player {
                 //theJSON.put("theOwners", theOwners);                
                 theJSON.put("infoError", infoError);
                 theJSON.put("infoFull", infoFull == null ? null : infoFull.getValue());
+                theJSON.put("countryCode", theCountryCode);
                 theJSON.put("theURL", theURL);
             }
             return theJSON;

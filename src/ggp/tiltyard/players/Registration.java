@@ -107,7 +107,7 @@ public class Registration {
 
         if (theURI.equals("/data/updatePlayer")) {
         	String theName = null;
-        	try {        	
+        	try {
                 JSONObject playerInfo = new JSONObject(in);
                 theName = sanitizeHarder(playerInfo.getString("name"));
                 if (!theName.equals(playerInfo.getString("name"))) {
@@ -125,6 +125,7 @@ public class Registration {
                 addDefaultAsNeeded(playerInfo, "visibleWebsite", "");
                 addDefaultAsNeeded(playerInfo, "exponentURL", "");
                 addDefaultAsNeeded(playerInfo, "exponentVizURL", "");
+                addDefaultAsNeeded(playerInfo, "countryCode", "");
                 
                 Player p = Player.loadPlayer(theName);
                 if (p == null) {
@@ -134,6 +135,12 @@ public class Registration {
                     return;
                 }
                 
+                // Clear the country code field unless the country code is part of the ISO 3166 list of country codes.
+                if (playerInfo.has("countryCode") && !playerInfo.getString("countryCode").isEmpty() && !Geography.countryCodesToContinents.containsKey(playerInfo.getString("countryCode"))) {
+                	Logger.getAnonymousLogger().severe("Could not find country code " + playerInfo.getString("countryCode") + "; ignoring...");
+                	playerInfo.put("countryCode", "");
+                }
+
                 // TODO: Remove this once all of the players have up-to-date ownership info.
                 p.addOwner(user);
 
@@ -150,6 +157,7 @@ public class Registration {
                 p.setVisibleWebsite(sanitize(playerInfo.getString("visibleWebsite")));
                 p.setExponentURL(sanitize(playerInfo.getString("exponentURL")));
                 p.setExponentVizURL(sanitize(playerInfo.getString("exponentVizURL")));
+                p.setCountryCode(playerInfo.getString("countryCode"));
                 p.save();
 
                 resp.getWriter().println(p.asJSON(true));
