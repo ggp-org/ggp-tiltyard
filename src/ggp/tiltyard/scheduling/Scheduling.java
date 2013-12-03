@@ -47,7 +47,7 @@ public class Scheduling {
 		"connectFour", "connectFourLarge", "connectFourLarger", "connectFourSimultaneous",
 		"connectFourSuicide", "dotsAndBoxes", "dotsAndBoxesSuicide", "dualConnect4",
 		"eightPuzzle", "englishDraughts", "ghostMaze2p",
-		"god", "golden_rectangle", "knightsTour",
+		"god", "golden_rectangle", "knightsTour", "knightsTourLarge",
 		"lightsOut", "max_knights", "maze", "nineBoardTicTacToe", "numberTicTacToe", "pacman2p", "pacman3p",
 		"pawnToQueen", "pawnWhopping", "peg", "pegEuro", "pentago", "pentagoSuicide",
 		"qyshinsu", "reversi", "sheepAndWolf", "snake2p", "snakeParallel",
@@ -66,7 +66,7 @@ public class Scheduling {
 		"escortLatch", "qyshinsu", "connectFourSuicide", "pentago", "blocker",
 		"checkers", "2pffa_zerosum", "2pffa", "3pffa", "4pffa", "ticTacToe",
 		"2pttc", "3pttc", "4pttc", "cittaceot", "sheepAndWolf", "ticTacToeLarge",
-		"ticTacToeLargeSuicide", "connect5", "max_knights"
+		"ticTacToeLargeSuicide", "connect5", "max_knights", "knightsTourLarge",
 	};	
 
     public static void runSchedulingRound() throws IOException {
