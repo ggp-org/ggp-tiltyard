@@ -119,7 +119,7 @@
           var theWidth = (70/statsJSON.agonScaledDifficulty.length);
           for (var i = 0; i < statsJSON.agonScaledDifficulty.length; i++) {
             theHTML += "<td width=10px></td>";          
-            theHTML += "<td style='text-align: center; width: " + theWidth + "%; background-color: " + UserInterface.generateAgonViewColor(1-statsJSON.agonScaledDifficulty[i]) + "'>" + UserInterface.cleanFloat(statsJSON.agonDifficulty[i]) + "</td>";
+            theHTML += "<td style='text-align: center; width: " + theWidth + "%; background-color: " + UserInterface.generateRedGreenColor(1-statsJSON.agonScaledDifficulty[i]) + "'>" + UserInterface.cleanFloat(statsJSON.agonDifficulty[i]) + "</td>";
           }
           theHTML += "</tr>";
           delete statsJSON.agonScaledDifficulty;
@@ -127,11 +127,11 @@
         }        
         
         if ("roleCorrelationWithSkill" in statsJSON && statsJSON.roleCorrelationWithSkill) {
-          theHTML += "<tr><th>Score/Skill PCC</th>";
+          theHTML += "<tr><th>Skill Correlation</th>";
           var theWidth = (70/statsJSON.roleCorrelationWithSkill.length);
           for (var i = 0; i < statsJSON.roleCorrelationWithSkill.length; i++) {
             theHTML += "<td width=10px></td>";
-            theHTML += "<td style='text-align: center; width: " + theWidth + "%; background-color: " + UserInterface.generateAgonViewColor((1+statsJSON.roleCorrelationWithSkill[i])/2.0) + "'>" + UserInterface.cleanFloat(statsJSON.roleCorrelationWithSkill[i]) + "</td>";
+            theHTML += "<td style='text-align: center; width: " + theWidth + "%; background-color: " + UserInterface.generateRedGreenColor((1+statsJSON.roleCorrelationWithSkill[i])/2.0) + "'>" + UserInterface.cleanFloat(statsJSON.roleCorrelationWithSkill[i]) + "</td>";
           }
           theHTML += "</tr>";
           delete statsJSON.roleCorrelationWithSkill;
