@@ -110,7 +110,7 @@ public class Registration {
         	try {
                 JSONObject playerInfo = new JSONObject(in);
                 theName = sanitizeHarder(playerInfo.getString("name"));
-                if (!theName.equals(playerInfo.getString("name"))) {
+                if (!theName.equals(playerInfo.getString("name")) || theName.length() >= 50) {
                     resp.setStatus(404);
                     return;
                 }
