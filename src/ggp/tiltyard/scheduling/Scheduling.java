@@ -68,6 +68,8 @@ public class Scheduling {
 		"2pttc", "3pttc", "4pttc", "cittaceot", "sheepAndWolf", "ticTacToeLarge",
 		"ticTacToeLargeSuicide", "connect5", "max_knights", "knightsTourLarge",
 		"quarto", "quartoSuicide", "biddingTicTacToe", "biddingTicTacToe_10coins",
+		"chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
+		"chineseCheckers4", "chineseCheckers6",
 	};	
 
     public static void runSchedulingRound() throws IOException {
