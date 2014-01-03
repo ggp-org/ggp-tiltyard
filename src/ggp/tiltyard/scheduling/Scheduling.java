@@ -69,7 +69,8 @@ public class Scheduling {
 		"ticTacToeLargeSuicide", "connect5", "max_knights", "knightsTourLarge",
 		"quarto", "quartoSuicide", "biddingTicTacToe", "biddingTicTacToe_10coins",
 		"chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
-		"chineseCheckers4", "chineseCheckers6",
+		"chineseCheckers4", "chineseCheckers6", "gt_attrition", "gt_centipede",
+		"gt_chicken", "gt_dollar", "gt_prisoner", "gt_ultimatum",
 	};	
 
     public static void runSchedulingRound() throws IOException {
@@ -192,9 +193,7 @@ public class Scheduling {
 			}	        
         }        
 
-        // Collect all of the games which have visualizations, which we'll call the
-        // set of "proper" games that will be played on Tiltyard. Also only allow games
-        // on a whitelist of "safe" games that the backend can handle.
+        // Only allow games on a whitelist of "safe" games that the backend can handle.
         Set<String> theSafeGames = new HashSet<String>(Arrays.asList(safeGames));
         List<String> properGameKeys = new ArrayList<String>();
         Map<String, JSONObject> properGames = new HashMap<String, JSONObject>();        
@@ -205,10 +204,8 @@ public class Scheduling {
         		continue;
         	try {
 	        	JSONObject gameMetadata = metadataForGames.getJSONObject(key);
-	        	if (gameMetadata.has("stylesheet")) {
-	        		properGames.put(key, gameMetadata);
-	        		properGameKeys.add(key);
-	        	}
+        		properGames.put(key, gameMetadata);
+        		properGameKeys.add(key);
         	} catch (JSONException e) {
         		throw new RuntimeException(e);
         	}
