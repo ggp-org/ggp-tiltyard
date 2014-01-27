@@ -27,14 +27,15 @@ public class Backends {
     }
 
     public Set<String> getFarmBackendAddresses(String forRegion) {
-    	if (forRegion.equals(Player.REGION_EU)) {
+    	// When a region is requested, return the set of backends from that region;
+    	// if there are no backends registered for that region, fall back to any
+    	// available backend for any region.
+    	if (forRegion.equals(Player.REGION_EU) && theFarmBackendAddressesEurope.size() > 0) {
     		return theFarmBackendAddressesEurope;
-    	} else if (forRegion.equals(Player.REGION_US)) {
+    	} else if (forRegion.equals(Player.REGION_US) && theFarmBackendAddressesUS.size() > 0) {
     		return theFarmBackendAddressesUS;
-    	} else if (forRegion.equals(Player.REGION_ANY)) {
-    		return theFarmBackendAddresses;
     	} else {
-    		return null;
+    		return theFarmBackendAddresses;
     	}
     }
 
