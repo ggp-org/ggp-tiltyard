@@ -1,6 +1,7 @@
 package ggp.tiltyard.scheduling;
 
 import ggp.tiltyard.players.Player;
+import ggp.tiltyard.backends.Backends;
 import ggp.tiltyard.hosting.Hosting;
 import ggp.tiltyard.hosting.MatchData;
 
@@ -32,30 +33,20 @@ public class Scheduling {
     // inject arbitrary javascript into the visualizations).	
 	private static final String GAME_REPO_URL = "http://games.ggp.org/base/";
 	
-	// This is a whitelist of games that the backend server can handle. Ideally we'll be able
-	// to get rid of this at some point. This eliminates chess-like games and other large games
-	// (e.g. Amazons, Knight Fight) and some games which aren't fully debugged, and probably a
-	// few legit games that should be in the rotation (since whitelisting is a bad approach).
-	/*
-	private static final String[] safeGames = {
-		"2pffa", "2pffa_zerosum", "2pttc", "3pffa", "3pttc", "3pConnectFour", "4pttc", "4pffa", "beatMania",
-		"biddingTicTacToe", "biddingTicTacToe_10coins",  "blocker", "bomberman2p",
-		"breakthrough", "breakthroughHoles", "breakthroughSmall", "breakthroughSuicide", "breakthroughWalls", "knightThrough", "escortLatch",
-		"cephalopodMicro", "checkers", "checkersSmall",
-		"checkersTiny", "chickentictactoe", "chineseCheckers1", "chineseCheckers2",
-		"chineseCheckers3", "chineseCheckers4", "chineseCheckers6", "chinook", "cittaceot", "connect5",
-		"connectFour", "connectFourLarge", "connectFourLarger", "connectFourSimultaneous",
-		"connectFourSuicide", "dotsAndBoxes", "dotsAndBoxesSuicide", "dualConnect4",
-		"eightPuzzle", "englishDraughts", "ghostMaze2p",
-		"god", "golden_rectangle", "knightsTour", "knightsTourLarge",
-		"lightsOut", "max_knights", "maze", "nineBoardTicTacToe", "numberTicTacToe", "pacman2p", "pacman3p",
-		"pawnToQueen", "pawnWhopping", "peg", "pegEuro", "pentago", "pentagoSuicide",
-		"quarto", "quartoSuicide", "qyshinsu", "reversi", "sheepAndWolf", "snake2p", "snakeParallel",
-		"ttcc4_2player", "tictactoe_3player", "ticTacToe", "ticTacToeLarge", "ticTacToeLargeSuicide",
-		"ticTacToeParallel", "ticTacToeSerial", "ticTicToe",
-	};	
-	*/
-	// Also, for now, only use games which have valid base/input propositions
+	// This is a whitelist of games that the Tiltyard server can handle.
+	// This eliminates the following classes of games:
+	//
+	// * Large complex games (e.g. Chess, Amazons, Knight Fight)
+	// * Games with known problems (e.g. Chess)
+	// * Games without base/input propositions, like:
+	//
+	// "beatMania", "bomberman2p", "breakthroughHoles", "breakthroughSuicide",
+	// "chickentictactoe", "dualConnect4", "ghostMaze2p", "god", "golden_rectangle",
+	// "lightsOut", "numberTicTacToe", "pacman2p", "pacman3p", "pawnToQueen", "pawnWhopping",
+	// "snake2p", "snakeParallel", "tictactoe_3player", "ticTacToeParallel", "ticTacToeSerial", "ticTicToe",
+	//
+	// Ideally we'll be able to get rid of this whitelist at some point and
+	// just use all of the games in the base repository.	
 	private static final String[] safeGames = {
 		"3pConnectFour", "englishDraughts", "dotsAndBoxes", "knightThrough",
 		"breakthroughWalls", "reversi", "cephalopodMicro", "breakthrough",
@@ -64,7 +55,7 @@ public class Scheduling {
 		"pegEuro", "eightPuzzle", "knightsTour", "chinook", "connectFourLarger",
 		"connectFour", "breakthroughSmall", "peg", "connectFourSimultaneous",
 		"escortLatch", "qyshinsu", "connectFourSuicide", "pentago", "blocker",
-		"checkers", "2pffa_zerosum", "2pffa", "3pffa", "4pffa", "ticTacToe",
+		"checkers", "2pffa_zerosum", "2pffa", "3pffa", "4pffa",
 		"2pttc", "3pttc", "4pttc", "cittaceot", "sheepAndWolf", "ticTacToeLarge",
 		"ticTacToeLargeSuicide", "connect5", "max_knights", "knightsTourLarge",
 		"quarto", "quartoSuicide", "biddingTicTacToe", "biddingTicTacToe_10coins",
@@ -146,12 +137,14 @@ public class Scheduling {
         // At this point we've gotten everything up to date, and the only thing
         // left to do is schedule new matches. If the backends are being drained,
         // we don't schedule any new matches.
-        if (theConfig.isDrained()) return;        
+        if (theConfig.isDrained()) return;
+        
+        // If there are no backends available, don't schedule any new matches.
+        if (Backends.loadBackends().getFarmBackendAddresses(Player.REGION_ANY).isEmpty()) return;
         
         // Figure out how many players are available. If no computer players are
     	// available, don't bother attempting to automatically schedule a match.
-        int readyPlayers = theAvailablePlayers.size();
-        if (readyPlayers == 0) return;
+        if (theAvailablePlayers.isEmpty()) return;
         
         // For all of the pending matches in the scheduling queue, consider
         // running each one. These have a higher priority than the regularly
