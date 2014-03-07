@@ -20,7 +20,6 @@ import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 
 import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
-import org.ggp.galaxy.shared.server.request.RequestBuilder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -105,21 +104,7 @@ public class Scheduling {
             for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                 Player p = theAvailablePlayers.get(i);
                 if (p.isEnabled() && p.isPingable()) {
-                    String theInfoError = "";
-                    String theInfoResponse = "";                    
-                    try {
-                        String theProperURL = p.getURL();
-                        if (!theProperURL.startsWith("http://")) {
-                            theProperURL = "http://" + theProperURL;
-                        }
-                        theInfoResponse = RemoteResourceLoader.postRawWithTimeout(theProperURL, RequestBuilder.getInfoRequest(), 2500);
-                        p.resetPingStrikes();
-                    } catch (IOException e) {
-                    	theInfoError = e.toString();
-                    	p.addPingStrike();
-                    }
-                    p.setInfo(theInfoResponse, theInfoError);
-                    p.save();
+                	p.doPing();
                 }
             }
 

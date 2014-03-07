@@ -57,7 +57,7 @@
               <legend id="form_player_name">Player Configuration</legend>
               <div class="control-group">
                 <label class="control-label" for="input_player_url">Player URL</label>
-                <div class="controls"><input type="text" id="input_player_url"></div>
+                <div class="controls"><input type="text" id="input_player_url"><span id="player_status"></span></div>
               </div>
               <div class="control-group">
                 <label class="control-label" for="input_gdl_version">GDL Version</label>
@@ -356,6 +356,22 @@
     </div>
     
     <script type='text/javascript' charset="utf-8">
+        var statusIcon = function(aPlayer) {          
+          if (!aPlayer.isEnabled) {
+            return '<img src="//www.ggp.org/viewer/images/presence/StatusGrey.png" title="Player is inactive."></img>';
+          }
+          var z = aPlayer.infoStatus;
+          if (z == null) return '<img src="//www.ggp.org/viewer/images/presence/StatusGrey.png" title="Player status is unknown."></img>';
+          if (z.length == 0) return '<img src="//www.ggp.org/viewer/images/presence/StatusGrey.png" title="Player status is unknown."></img>';
+          z = z.toLowerCase();
+          if (z == "unknown") return '<img src="//www.ggp.org/viewer/images/presence/StatusGrey.png" title="Player status is unknown."></img>';
+          if (z == "available") return '<img src="//www.ggp.org/viewer/images/presence/StatusGreen.png" title="Player is listed as active, and is currently ready for new matches."></img>';          
+          if (z == "waiting") return '<img src="//www.ggp.org/viewer/images/presence/StatusWhite.png" title="Player was just activated: waiting to get its status..."></img>';
+          if (z == "error") return '<img src="//www.ggp.org/viewer/images/presence/StatusError.png" title="Player is listed as active, but is being unresponsive, so its current status is unknown."></img>';          
+          if (z == "busy") return '<img src="//www.ggp.org/viewer/images/presence/StatusOrange.png" title="Player is listed as active, and is currently busy playing a match."></img>';
+          return '<img src="//www.ggp.org/viewer/images/presence/StatusError.png" title="Player is listed as active, but its current status is unrecognizable: ' + z.replace(/\"/g,"'") + '."></img>';
+        }    
+    
       var loginState = ResourceLoader.load_json('/data/login');
       var loginStatusHTML = "";
       if (!loginState.loggedIn) {
@@ -373,13 +389,12 @@
 
       var withDefaultValue = function (x,y) { if (x) { return x; } else { return y; } };       
       function showPlayerData(aPlayer) {
-        // TODO: Show aPlayer.infoStatus
-
         var playerThumbURL = "http://placekitten.com/25/25";
         if ("thumbURL" in aPlayer) {
           playerThumbURL = aPlayer.thumbURL;
         }
 
+        $('#player_status')[0].innerHTML    = statusIcon(aPlayer);
         $('#form_player_name')[0].innerHTML = '<a href="//tiltyard.ggp.org/players/"><img src="//tiltyard.ggp.org/static/images/back_icon.png" title="Back to player list" width=20 height=20></img></a> &nbsp;&nbsp; Player Configuration for ' + aPlayer.name + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="' + playerThumbURL + '" title="Player icon" width=25 height=25></img>';
         $('#input_player_url')[0].value        = withDefaultValue(aPlayer.theURL, "");
         $('#input_gdl_version')[0].value       = withDefaultValue(aPlayer.gdlVersion, "GDLv1");

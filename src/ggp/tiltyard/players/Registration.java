@@ -134,7 +134,7 @@ public class Registration {
                     resp.setStatus(404);
                     return;
                 }
-                
+
                 // Clear the country code field unless the country code is part of the ISO 3166 list of country codes.
                 if (playerInfo.has("countryCode") && !playerInfo.getString("countryCode").isEmpty() && !Geography.countryCodesToContinents.containsKey(playerInfo.getString("countryCode"))) {
                 	Logger.getAnonymousLogger().severe("Could not find country code " + playerInfo.getString("countryCode") + "; ignoring...");
@@ -158,6 +158,9 @@ public class Registration {
                 p.setExponentURL(sanitize(playerInfo.getString("exponentURL")));
                 p.setExponentVizURL(sanitize(playerInfo.getString("exponentVizURL")));
                 p.setCountryCode(playerInfo.getString("countryCode"));
+                
+                p.doPing();
+                
                 p.save();
 
                 resp.getWriter().println(p.asJSON(true));

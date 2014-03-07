@@ -10,8 +10,10 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.annotations.*;
 
+import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
 import org.ggp.galaxy.shared.persistence.Persistence;
 import org.ggp.galaxy.shared.presence.InfoResponse;
+import org.ggp.galaxy.shared.server.request.RequestBuilder;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -265,6 +267,24 @@ public class Player {
     
     public String getInfoError() {
         return infoError;
+    }
+    
+    public void doPing() {
+        String theInfoError = "";
+        String theInfoResponse = "";                    
+        try {
+            String theProperURL = getURL();
+            if (!theProperURL.startsWith("http://")) {
+                theProperURL = "http://" + theProperURL;
+            }
+            theInfoResponse = RemoteResourceLoader.postRawWithTimeout(theProperURL, RequestBuilder.getInfoRequest(), 2500);
+            resetPingStrikes();
+        } catch (IOException e) {
+        	theInfoError = e.toString();
+        	addPingStrike();
+        }
+        setInfo(theInfoResponse, theInfoError);
+        save();
     }
     
     public JSONObject asJSON(boolean includePrivate) throws IOException {
