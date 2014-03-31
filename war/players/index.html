@@ -105,12 +105,7 @@
       }
 
       function renderPlayerListEntry(aPlayer, nPlayer) {
-        var theHTML = '';
-        if (nPlayer % 2 == 0) {
-          theHTML += "<tr bgcolor=#F5F5F5>";
-        } else {
-          theHTML += "<tr bgcolor=#E0E0E0>";
-        }
+        var theHTML = '<tr class="zebra">';
         
         function renderCell(x) {
           if (x) {

@@ -72,6 +72,12 @@ th.padded {
 td.padded {
   padding-left: 10px;
 }
+tr.zebra:nth-child(odd) {
+	background-color: #E0E0E0;
+}
+tr.zebra:nth-child(even) {
+	background-color: #F5F5F5;
+}
 tr.navbarTop {
   background-image: -webkit-gradient(
     linear,
