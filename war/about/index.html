@@ -69,9 +69,18 @@ div.content {
     and other active players on the server.</p>
     
     <p>You are responsible for hosting your player: it must be connected to the Internet and
-    available at a URL (which can be an IP address and port). Since matches are played continuously,
-    you should run your player on a system that will be able to stay up for long periods of time
-    (or you should make sure to disable your player when the system hosting it is shut down).</p>
+    available at a URL (which can be an IP address and port). Please make sure that the port
+    is <a href="http://www.yougetsignal.com/tools/open-ports/">open to the outside world</a>.    
+    Since matches are played continuously, you should run your player on a system that will
+    be able to stay up for long periods of time (or you should make sure to disable your player
+    when the system hosting it is shut down).</p>
+    
+    <p>To avoid scheduling matches for players that are
+    not in a good state, Tiltyard will automatically disable players that play errors for more
+    than 50% of their moves in three sequential matches or don't respond to sixty sequential
+    ping requests. If this happens to your player, don't worry! Just fix whatever is wrong,
+    and then go to the player registration page and check the "Player active?" box to
+    re-enable your player.</p>
     
     <h2>GGP Galaxy and Friends</h2>
     <p>This server is open source, and is part of a larger open source effort called
@@ -79,7 +88,8 @@ div.content {
     federated web-based general game playing ecosystem. This server also draws on the
     <a href="http://code.google.com/p/ggp-base/">GGP Base</a> open source project, which
     provides a Java-based backend system for running general game playing matches.
-    The frontend server for Tiltyard runs on Google App Engine.</p>
+    The frontend server for Tiltyard runs on Google App Engine, and the backend server
+    runs on Google Compute Engine.</p>
     
     <h2>Contact Information</h2>
     <p>Questions? Feedback? Thoughts? Feel free to email <b>webmaster@ggp.org</b> and
