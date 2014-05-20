@@ -266,7 +266,7 @@ public class Hosting {
                 	throw new RuntimeException("Got callback response that was signed but not by request farm.");
                 }
                 if (!SignableJSON.verifySignedJSON(theResponseJSON)) {
-                	throw new RuntimeException("Got callback response whose signature didn't validate.");
+                	throw new RuntimeException("Got callback response whose signature didn't validate: " + theResponseJSON);
                 }
 				JSONObject theRequestJSON = new JSONObject(theResponseJSON.getString("originalRequest"));
 				if (!theRequestJSON.has("matchId")) {
