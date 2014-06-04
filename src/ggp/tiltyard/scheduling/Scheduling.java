@@ -61,7 +61,7 @@ public class Scheduling {
 		"chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
 		"chineseCheckers4", "chineseCheckers6", "gt_attrition", "gt_centipede",
 		"gt_chicken", "gt_dollar", "gt_prisoner", "gt_ultimatum", "gt_staghunt",
-		"gt_coordination"
+		"gt_coordination", "speedChess"
 	};	
 
     public static void runSchedulingRound() throws IOException {
