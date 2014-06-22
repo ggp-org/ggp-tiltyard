@@ -382,14 +382,22 @@ public class MatchData {
 	            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {	            	
 	                break;
 	            } else {
-	                // Server returned HTTP error code.
+	                // Server returned HTTP error code.	            	
+	            	Logger.getAnonymousLogger().severe("Got error response from request farm: " + connection.getResponseCode() + " " + connection.getResponseMessage());
 	            }
 	        } catch (Exception e) {
-	        	if (nIssueRequestAttempt > 9) {
+	        	if (nIssueRequestAttempt > 19) {
+	        		Logger.getAnonymousLogger().severe("Gave up after " + nIssueRequestAttempt + " attempts to contact request farm.");
 	        		throw new RuntimeException(e);
 	        	}
 	        }
 	        nIssueRequestAttempt++;
+	        try {
+	        	// Sleep for a few milliseconds to give the request farm a chance to come back.
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
         }
         //Counter.increment("Tiltyard.Scheduling.Round.Success");
     }
