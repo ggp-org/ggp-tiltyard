@@ -386,7 +386,7 @@ public class MatchData {
 	            	Logger.getAnonymousLogger().severe("Got error response from request farm: " + connection.getResponseCode() + " " + connection.getResponseMessage());
 	            }
 	        } catch (Exception e) {
-	        	if (nIssueRequestAttempt > 19) {
+	        	if (nIssueRequestAttempt > 59) {
 	        		Logger.getAnonymousLogger().severe("Gave up after " + nIssueRequestAttempt + " attempts to contact request farm.");
 	        		throw new RuntimeException(e);
 	        	}
