@@ -17,8 +17,6 @@ import org.ggp.galaxy.shared.persistence.Persistence;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.prodeagle.java.counters.Counter;
-
 @PersistenceCapable
 public class PendingMatch {	
     @PrimaryKey @Persistent private String pendingKey;
@@ -65,11 +63,8 @@ public class PendingMatch {
     }
     
     public String considerStarting(List<Player> availablePlayers) {
-    	Counter.increment("Tiltyard.Scheduling.Pending.Considered");
-    	
     	// First, abandon the match immediately if it has expired.
     	if (System.currentTimeMillis() > expiresAt) {
-    		Counter.increment("Tiltyard.Scheduling.Pending.Expired");
     		delete();
     		return null;
     	}
@@ -117,7 +112,6 @@ public class PendingMatch {
         			playerRegions.add(Player.REGION_ANY);
         			usedPlayers.add(p);
         		} else {
-        			Counter.increment("Tiltyard.Scheduling.Pending.Abandoned.BadPlayer");
         			return null;
         		}
         	} else {
@@ -130,9 +124,6 @@ public class PendingMatch {
     	String matchKey = Hosting.startMatch(gameURL, playerURLs, playerNames, playerRegions, previewClock, startClock, playClock);
     	if (matchKey != null) {
     		availablePlayers.removeAll(usedPlayers);
-    		Counter.increment("Tiltyard.Scheduling.Pending.Started");
-    	} else {
-    		Counter.increment("Tiltyard.Scheduling.Pending.Abandoned.BadGame");
     	}
     	delete();
     	return matchKey;

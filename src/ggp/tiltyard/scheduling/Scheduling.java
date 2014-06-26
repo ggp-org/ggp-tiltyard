@@ -24,8 +24,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.prodeagle.java.counters.Counter;
-
 public class Scheduling {
     // Eventually we should support other repository servers. Figure out how
     // to do this in a safe, secure fashion (since the repository server can
@@ -69,8 +67,6 @@ public class Scheduling {
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
         long morePlayersIn = Long.MAX_VALUE;
         
-        Counter.increment("Tiltyard.Scheduling.Round.Started");
-
         {
             // Find and clear all of the completed or wedged matches. For matches
             // which are still ongoing, mark the players in those matches as busy.
@@ -148,8 +144,6 @@ public class Scheduling {
         if (theAvailablePlayers.size() == 1 && morePlayersIn < 15*60*1000) {
         	return;
         }
-        
-        Counter.increment("Tiltyard.Scheduling.Round.AvailablePlayers");
         
         // Load the aggregated game metadata from the base repository server.
         int nGamesLookupAttempt = 0;
@@ -250,8 +244,6 @@ public class Scheduling {
 
         // Start the match using the hybrid match hosting system.
        	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, playerRegionsForMatch, previewClock, startClock, playClock);        	
-        
-        Counter.increment("Tiltyard.Scheduling.Round.Success");        
     }
 
     private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {    	

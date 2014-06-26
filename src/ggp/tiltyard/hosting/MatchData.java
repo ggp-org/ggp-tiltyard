@@ -22,7 +22,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
 import com.google.appengine.api.datastore.Text;
-import com.prodeagle.java.counters.Counter;
 
 import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
 import org.ggp.galaxy.shared.game.Game;
@@ -341,7 +340,6 @@ public class MatchData {
             validBackends.add(theBackendAddress);
         }
         if (validBackends.size() == 0) {            
-            Counter.increment("Tiltyard.Scheduling.Backend.Errors");
             theBackends.getFarmBackendAddresses(forRegion).clear();
             theBackends.save();
             return;
