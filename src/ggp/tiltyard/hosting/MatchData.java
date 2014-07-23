@@ -497,6 +497,7 @@ public class MatchData {
     public static MatchData loadMatchData(String matchKey) throws IOException {
         MatchData m = Persistence.loadSpecific(matchKey, MatchData.class);
         if (m != null) m.inflateAfterLoading();
+        if (m == null) Logger.getAnonymousLogger().severe("Could not load match: " + matchKey);
         return m;
     }    
 }
