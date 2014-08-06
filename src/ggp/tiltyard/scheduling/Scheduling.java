@@ -60,8 +60,53 @@ public class Scheduling {
 		"chineseCheckers4", "chineseCheckers6", "gt_attrition", "gt_centipede",
 		"gt_chicken", "gt_dollar", "gt_prisoner", "gt_ultimatum", "gt_staghunt",
 		"gt_coordination", "speedChess", "sudokuGrade1", "sudokuGrade6H"
-	};	
-
+	};
+	
+	private static final String[][] safeGamesByCategory = {
+		// Game theory games
+		new String[] { "gt_attrition", "gt_centipede",
+				"gt_chicken", "gt_dollar", "gt_prisoner", "gt_ultimatum", "gt_staghunt",
+				"gt_coordination" },
+		// Chinese checkers variants
+		new String[] { "chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
+				"chineseCheckers4", "chineseCheckers6" },
+		// Sudoku variants
+		new String[] { "sudokuGrade1", "sudokuGrade2", "sudokuGrade3", "sudokuGrade4",
+				"sudokuGrade5", "sudokuGrade6E", "sudokuGrade6H" },
+		// FFA/TTC variants
+		new String[] { "2pffa_zerosum", "2pffa", "3pffa", "4pffa",
+				"2pttc", "3pttc", "4pttc", "ttcc4_2player", },
+		// Checkers variants
+		new String[] { "englishDraughts", "checkersSmall", "checkersTiny", "checkers",
+				"chinook" },
+		// Connect Four variants
+		new String[] { "3pConnectFour", "connectFourLarger", "connectFourLarge",
+				"connectFour", "connectFourSuicide", "connectFourSimultaneous" },
+		// Tic-Tac-Toe variants
+		new String[] { "ticTacToe", "nineBoardTicTacToe", "cittaceot", "ticTacToeLarge",
+				"connect5", "biddingTicTacToe", "ticTacToeLargeSuicide",
+				"biddingTicTacToe_10coins" },
+		// Breakthrough variants
+		new String[] { "knightThrough", "breakthroughWalls", "breakthrough",  "breakthroughSmall",
+				"escortLatch" },
+		// Dots-and-Boxes variants
+		new String[] { "dotsAndBoxes", "dotsAndBoxesSuicide" },				
+		// Pentago variants
+		new String[] { "pentago", "pentagoSuicide" },
+		// Quarto variants
+		new String[] { "quarto", "quartoSuicide" },
+		// Knight's Tour variants
+		new String[] { "knightsTour", "knightsTourLarge" },
+		// Chess variants
+		new String[] { "speedChess" },
+		// Peg Jumping variants
+		new String[] { "peg", "pegEuro" },
+		// Games that fell into no other category, but didn't seem to be
+		// significant enough to deserve their own individual categories.
+		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
+				"qyshinsu", "blocker", "sheepAndWolf", "max_knights" },
+	};
+	
     public static void runSchedulingRound() throws IOException {
     	SchedulerConfig theConfig = SchedulerConfig.loadConfig();
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
@@ -165,9 +210,10 @@ public class Scheduling {
 				;
 			}	        
         }        
-
+        
         // Only allow games on a whitelist of "safe" games that the backend can handle.
-        Set<String> theSafeGames = new HashSet<String>(Arrays.asList(safeGames));
+        // Set<String> theSafeGames = new HashSet<String>(Arrays.asList(safeGames));
+        Set<String> theSafeGames = new HashSet<String>(Arrays.asList(safeGamesByCategory[new Random().nextInt(safeGamesByCategory.length)]));
         List<String> properGameKeys = new ArrayList<String>();
         Map<String, JSONObject> properGames = new HashMap<String, JSONObject>();        
         Iterator<?> itr = metadataForGames.keys();
@@ -183,7 +229,7 @@ public class Scheduling {
         		throw new RuntimeException(e);
         	}
         }
-        
+
         // Shuffle the list of known proper games, draw a game, and get ready to play.
         Collections.shuffle(properGameKeys);
         String gameKey = properGameKeys.get(0);        
