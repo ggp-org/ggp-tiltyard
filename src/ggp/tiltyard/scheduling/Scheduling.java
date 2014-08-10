@@ -59,7 +59,9 @@ public class Scheduling {
 		"chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
 		"chineseCheckers4", "chineseCheckers6", "gt_attrition", "gt_centipede",
 		"gt_chicken", "gt_dollar", "gt_prisoner", "gt_ultimatum", "gt_staghunt",
-		"gt_coordination", "speedChess", "sudokuGrade1", "sudokuGrade6H"
+		"gt_coordination", "speedChess", "sudokuGrade1", "sudokuGrade6H",
+		"untwistycomplex2", "sudokuGrade2", "sudokuGrade3", "sudokuGrade4",
+		"sudokuGrade5", "sudokuGrade6E",
 	};
 	
 	private static final String[][] safeGamesByCategory = {
@@ -104,7 +106,7 @@ public class Scheduling {
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
-				"qyshinsu", "blocker", "sheepAndWolf", "max_knights" },
+				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
