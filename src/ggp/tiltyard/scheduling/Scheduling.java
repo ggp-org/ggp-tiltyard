@@ -87,7 +87,7 @@ public class Scheduling {
 		// Tic-Tac-Toe variants
 		new String[] { "ticTacToe", "nineBoardTicTacToe", "cittaceot", "ticTacToeLarge",
 				"connect5", "biddingTicTacToe", "ticTacToeLargeSuicide",
-				"biddingTicTacToe_10coins" },
+				"biddingTicTacToe_10coins", "nineBoardTicTacToePie" },
 		// Breakthrough variants
 		new String[] { "knightThrough", "breakthroughWalls", "breakthrough",  "breakthroughSmall",
 				"escortLatch" },
