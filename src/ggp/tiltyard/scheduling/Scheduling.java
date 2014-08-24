@@ -287,10 +287,10 @@ public class Scheduling {
         }
         
         // Choose randomized start clocks and play clocks for the match.
-        // Start clocks vary between 90 seconds and 180 seconds.
+        // Start clocks vary between 150 seconds and 240 seconds.
         // Play clocks vary between 15 seconds and 45 seconds.
         Random theRandom = new Random();        
-        int startClock = 90 + 10*theRandom.nextInt(10);
+        int startClock = 150 + 10*theRandom.nextInt(10);
         int playClock = 15 + 5*theRandom.nextInt(7);
         int previewClock = -1;
 
