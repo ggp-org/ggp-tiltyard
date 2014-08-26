@@ -100,7 +100,7 @@ public class Scheduling {
 		// Knight's Tour variants
 		new String[] { "knightsTour", "knightsTourLarge" },
 		// Chess variants
-		new String[] { "speedChess" },
+		new String[] { "speedChess", "skirmishNew" },
 		// Peg Jumping variants
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
@@ -110,7 +110,7 @@ public class Scheduling {
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
 				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2", },
 		// New games, that get an extra promotional boost because they're new
-		new String[] { "nineBoardTicTacToePie", "hexPie" },
+		new String[] { "nineBoardTicTacToePie", "hexPie", "skirmishNew" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
