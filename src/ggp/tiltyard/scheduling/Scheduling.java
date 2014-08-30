@@ -30,11 +30,11 @@ public class Scheduling {
     // inject arbitrary javascript into the visualizations).	
 	private static final String GAME_REPO_URL = "http://games.ggp.org/base/";
 	
-	// This is a whitelist of games that the Tiltyard server can handle.
+	// This is a whitelist of games that run on Tiltyard, organized by category.
 	// This eliminates the following classes of games:
 	//
-	// * Large complex games (e.g. Chess, Amazons, Knight Fight)
-	// * Games with known problems (e.g. Chess)
+	// * Large complex games (e.g. Amazons, Knight Fight)
+	// * Game rulesheets with known bugs (e.g. Chess)
 	// * Games without base/input propositions, like:
 	//
 	// "beatMania", "bomberman2p", "breakthroughHoles", "breakthroughSuicide",
@@ -43,27 +43,7 @@ public class Scheduling {
 	// "snake2p", "snakeParallel", "tictactoe_3player", "ticTacToeParallel", "ticTacToeSerial", "ticTicToe",
 	//
 	// Ideally we'll be able to get rid of this whitelist at some point and
-	// just use all of the games in the base repository.	
-	private static final String[] safeGames = {
-		"3pConnectFour", "englishDraughts", "dotsAndBoxes", "knightThrough",
-		"breakthroughWalls", "reversi", "cephalopodMicro", "breakthrough",
-		"nineBoardTicTacToe", "pentagoSuicide", "checkersSmall", "checkersTiny",
-		"dotsAndBoxesSuicide", "maze", "ticTacToe", "ttcc4_2player", "connectFourLarge",
-		"pegEuro", "eightPuzzle", "knightsTour", "chinook", "connectFourLarger",
-		"connectFour", "breakthroughSmall", "peg", "connectFourSimultaneous",
-		"escortLatch", "qyshinsu", "connectFourSuicide", "pentago", "blocker",
-		"checkers", "2pffa_zerosum", "2pffa", "3pffa", "4pffa",
-		"2pttc", "3pttc", "4pttc", "cittaceot", "sheepAndWolf", "ticTacToeLarge",
-		"ticTacToeLargeSuicide", "connect5", "max_knights", "knightsTourLarge",
-		"quarto", "quartoSuicide", "biddingTicTacToe", "biddingTicTacToe_10coins",
-		"chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
-		"chineseCheckers4", "chineseCheckers6", "gt_attrition", "gt_centipede",
-		"gt_chicken", "gt_dollar", "gt_prisoner", "gt_ultimatum", "gt_staghunt",
-		"gt_coordination", "speedChess", "sudokuGrade1", "sudokuGrade6H",
-		"untwistycomplex2", "sudokuGrade2", "sudokuGrade3", "sudokuGrade4",
-		"sudokuGrade5", "sudokuGrade6E", "hex", "nineBoardTicTacToePie"
-	};
-	
+	// just use all of the games in the base repository.
 	private static final String[][] safeGamesByCategory = {
 		// Game theory games
 		new String[] { "gt_attrition", "gt_centipede",
@@ -100,7 +80,7 @@ public class Scheduling {
 		// Knight's Tour variants
 		new String[] { "knightsTour", "knightsTourLarge" },
 		// Chess variants
-		new String[] { "speedChess", "skirmishNew" },
+		new String[] { "speedChess", "skirmishNew", "skirmishZeroSum" },
 		// Peg Jumping variants
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
@@ -110,7 +90,7 @@ public class Scheduling {
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
 				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2", },
 		// New games, that get an extra promotional boost because they're new
-		new String[] { "nineBoardTicTacToePie", "hexPie", "skirmishNew" },
+		new String[] { "skirmishNew", "skirmishZeroSum" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
