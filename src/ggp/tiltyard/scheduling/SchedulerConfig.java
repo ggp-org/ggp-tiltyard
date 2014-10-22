@@ -10,7 +10,6 @@ import org.ggp.galaxy.shared.persistence.Persistence;
 
 @PersistenceCapable
 public class SchedulerConfig {
-    @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
     @Persistent private boolean isDrained;
 

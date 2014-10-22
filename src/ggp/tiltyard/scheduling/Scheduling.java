@@ -1,5 +1,8 @@
 package ggp.tiltyard.scheduling;
 
+import external.JSON.JSONArray;
+import external.JSON.JSONException;
+import external.JSON.JSONObject;
 import ggp.tiltyard.players.Player;
 import ggp.tiltyard.backends.Backends;
 import ggp.tiltyard.hosting.Hosting;
@@ -19,10 +22,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.ggp.base.util.loader.RemoteResourceLoader;
 
 public class Scheduling {
     // Eventually we should support other repository servers. Figure out how

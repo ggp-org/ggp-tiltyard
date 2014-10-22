@@ -1,5 +1,7 @@
 package ggp.tiltyard.hosting;
 
+import external.JSON.JSONException;
+import external.JSON.JSONObject;
 import ggp.tiltyard.backends.BackendRegistration;
 import ggp.tiltyard.backends.Backends;
 
@@ -23,25 +25,23 @@ import javax.jdo.annotations.*;
 
 import com.google.appengine.api.datastore.Text;
 
-import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
-import org.ggp.galaxy.shared.game.Game;
-import org.ggp.galaxy.shared.gdl.factory.GdlFactory;
-import org.ggp.galaxy.shared.gdl.scrambler.GdlScrambler;
-import org.ggp.galaxy.shared.match.Match;
-import org.ggp.galaxy.shared.match.MatchPublisher;
+import org.ggp.base.server.request.RequestBuilder;
+import org.ggp.base.util.crypto.BaseCryptography.EncodedKeyPair;
+import org.ggp.base.util.game.Game;
+import org.ggp.base.util.gdl.factory.GdlFactory;
+import org.ggp.base.util.gdl.scrambler.GdlScrambler;
+import org.ggp.base.util.match.Match;
+import org.ggp.base.util.match.MatchPublisher;
+import org.ggp.base.util.statemachine.MachineState;
+import org.ggp.base.util.statemachine.Move;
+import org.ggp.base.util.statemachine.Role;
+import org.ggp.base.util.statemachine.StateMachine;
+import org.ggp.base.util.statemachine.exceptions.GoalDefinitionException;
+import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
+import org.ggp.base.util.statemachine.exceptions.TransitionDefinitionException;
+import org.ggp.base.util.statemachine.implementation.prover.ProverStateMachine;
+import org.ggp.base.util.symbol.factory.exceptions.SymbolFormatException;
 import org.ggp.galaxy.shared.persistence.Persistence;
-import org.ggp.galaxy.shared.server.request.RequestBuilder;
-import org.ggp.galaxy.shared.statemachine.MachineState;
-import org.ggp.galaxy.shared.statemachine.Move;
-import org.ggp.galaxy.shared.statemachine.Role;
-import org.ggp.galaxy.shared.statemachine.StateMachine;
-import org.ggp.galaxy.shared.statemachine.exceptions.GoalDefinitionException;
-import org.ggp.galaxy.shared.statemachine.exceptions.MoveDefinitionException;
-import org.ggp.galaxy.shared.statemachine.exceptions.TransitionDefinitionException;
-import org.ggp.galaxy.shared.statemachine.implementation.prover.ProverStateMachine;
-import org.ggp.galaxy.shared.symbol.factory.exceptions.SymbolFormatException;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 @PersistenceCapable
 public class MatchData {	

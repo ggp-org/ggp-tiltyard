@@ -10,18 +10,19 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.annotations.*;
 
-import org.ggp.galaxy.shared.loader.RemoteResourceLoader;
+import org.ggp.base.server.request.RequestBuilder;
+import org.ggp.base.util.loader.RemoteResourceLoader;
+import org.ggp.base.util.presence.InfoResponse;
 import org.ggp.galaxy.shared.persistence.Persistence;
-import org.ggp.galaxy.shared.presence.InfoResponse;
-import org.ggp.galaxy.shared.server.request.RequestBuilder;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.google.appengine.api.blobstore.BlobKey;
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.ServingUrlOptions;
 import com.google.appengine.api.users.User;
+
+import external.JSON.JSONException;
+import external.JSON.JSONObject;
 
 @PersistenceCapable
 public class Player {

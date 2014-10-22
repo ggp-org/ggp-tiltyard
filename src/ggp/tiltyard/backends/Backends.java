@@ -13,7 +13,6 @@ import org.ggp.galaxy.shared.persistence.Persistence;
 
 @PersistenceCapable
 public class Backends {
-    @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
     @Persistent private Set<String> theFarmBackendAddresses;
     @Persistent private Set<String> theFarmBackendAddressesUS;

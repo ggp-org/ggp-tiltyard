@@ -18,8 +18,8 @@ import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import external.JSON.JSONException;
+import external.JSON.JSONObject;
 
 public class Registration {
     public static void doGet(String theRPC, HttpServletResponse resp) throws IOException {

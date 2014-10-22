@@ -1,5 +1,7 @@
 package ggp.tiltyard.scheduling;
 
+import external.JSON.JSONException;
+import external.JSON.JSONObject;
 import ggp.tiltyard.hosting.Hosting;
 import ggp.tiltyard.players.Player;
 
@@ -14,8 +16,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
 import org.ggp.galaxy.shared.persistence.Persistence;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 @PersistenceCapable
 public class PendingMatch {	

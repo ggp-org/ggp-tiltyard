@@ -1,15 +1,15 @@
 package ggp.tiltyard.backends;
 
 
+import external.JSON.JSONException;
+import external.JSON.JSONObject;
 import ggp.tiltyard.players.Player;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.ggp.galaxy.shared.crypto.SignableJSON;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.ggp.base.util.crypto.SignableJSON;
 
 public class BackendRegistration {
     public static long getTimeBlock() {

@@ -5,13 +5,13 @@ import javax.jdo.annotations.*;
 
 import com.google.appengine.api.datastore.Text;
 
-import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
+import external.JSON.JSONException;
+
+import org.ggp.base.util.crypto.BaseCryptography.EncodedKeyPair;
 import org.ggp.galaxy.shared.persistence.Persistence;
-import org.json.JSONException;
 
 @PersistenceCapable
 public class StoredCryptoKeys {
-    @SuppressWarnings("unused")
     @PrimaryKey @Persistent private String thePrimaryKey;
     @Persistent private Text theCryptoKeys;
 

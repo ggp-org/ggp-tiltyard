@@ -3,6 +3,8 @@ package ggp.tiltyard.hosting;
 import static com.google.appengine.api.taskqueue.RetryOptions.Builder.withTaskRetryLimit;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.withUrl;
 
+import external.JSON.JSONException;
+import external.JSON.JSONObject;
 import ggp.tiltyard.backends.BackendPublicKey;
 
 import java.io.BufferedReader;
@@ -17,22 +19,20 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
 import javax.servlet.http.*;
 
-import org.ggp.galaxy.shared.crypto.SignableJSON;
-import org.ggp.galaxy.shared.crypto.BaseCryptography.EncodedKeyPair;
-import org.ggp.galaxy.shared.game.Game;
-import org.ggp.galaxy.shared.game.RemoteGameRepository;
-import org.ggp.galaxy.shared.gdl.factory.GdlFactory;
-import org.ggp.galaxy.shared.gdl.factory.exceptions.GdlFormatException;
+import org.ggp.base.server.request.RequestBuilder;
+import org.ggp.base.util.crypto.BaseCryptography.EncodedKeyPair;
+import org.ggp.base.util.crypto.SignableJSON;
+import org.ggp.base.util.game.Game;
+import org.ggp.base.util.game.RemoteGameRepository;
+import org.ggp.base.util.gdl.factory.GdlFactory;
+import org.ggp.base.util.gdl.factory.exceptions.GdlFormatException;
+import org.ggp.base.util.statemachine.MachineState;
+import org.ggp.base.util.statemachine.Move;
+import org.ggp.base.util.statemachine.Role;
+import org.ggp.base.util.statemachine.StateMachine;
+import org.ggp.base.util.statemachine.exceptions.MoveDefinitionException;
+import org.ggp.base.util.symbol.factory.exceptions.SymbolFormatException;
 import org.ggp.galaxy.shared.persistence.Persistence;
-import org.ggp.galaxy.shared.server.request.RequestBuilder;
-import org.ggp.galaxy.shared.statemachine.MachineState;
-import org.ggp.galaxy.shared.statemachine.Move;
-import org.ggp.galaxy.shared.statemachine.Role;
-import org.ggp.galaxy.shared.statemachine.StateMachine;
-import org.ggp.galaxy.shared.statemachine.exceptions.MoveDefinitionException;
-import org.ggp.galaxy.shared.symbol.factory.exceptions.SymbolFormatException;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.google.appengine.api.taskqueue.QueueFactory;
 import com.google.appengine.api.taskqueue.TaskOptions;
@@ -223,9 +223,10 @@ public class Hosting {
         while( (line = br.readLine()) != null ) {
             response.append(line + "\n");
         }
+        br.close();
 
         resp.setContentType("text/html");
-        resp.getWriter().println(response.toString());
+        resp.getWriter().println(response.toString());        
     }
     
     public static String startMatch(String gameURL, List<String> playerURLs, List<String> playerNames, List<String> playerRegions, int previewClock, int startClock, int playClock) {    	
