@@ -1,9 +1,11 @@
 package ggp.tiltyard.hosting;
 
+import external.JSON.JSONArray;
 import external.JSON.JSONException;
 import external.JSON.JSONObject;
 import ggp.tiltyard.backends.BackendRegistration;
 import ggp.tiltyard.backends.Backends;
+import ggp.tiltyard.players.Player;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -259,67 +261,74 @@ public class MatchData {
     	theMatch.markAborted();
     }
     
-    public void issueRequestTo(int nRole, String requestContent, boolean isStart) throws IOException {
+    private void issueRequests(String requestContent, boolean isStart) throws IOException {
+    	List<Role> theRoles = Role.computeRoles(theMatch.getGame().getRules());
+    	String requestRegion = Player.REGION_ANY;
+    	
     	try {
-	    	JSONObject theRequestJSON = new JSONObject();
-	    	theRequestJSON.put("requestContent", requestContent);
-	    	theRequestJSON.put("timeoutClock", 5000 + (isStart ? theMatch.getStartClock()*1000 : theMatch.getPlayClock()*1000));
-	    	theRequestJSON.put("callbackURL", "http://tiltyard.ggp.org/hosting/callback");
-	    	theRequestJSON.put("matchId", theMatch.getMatchId());	    	
-	    	theRequestJSON.put("matchKey", matchKey);
-	    	if (playerURLs[nRole] == null) return;
+    		JSONArray theRequests = new JSONArray();
+    		for (int nRole = 0; nRole< playerURLs.length; nRole++) {
+    			if (playerURLs[nRole] == null) continue;
+    			JSONObject theRequestJSON = new JSONObject();
 
-            String playerAddress = playerURLs[nRole];
-            if (playerAddress.startsWith("http://")) {
-                playerAddress = playerAddress.replace("http://", "");
-            }
-            if (playerAddress.endsWith("/")) {
-                playerAddress = playerAddress.substring(0, playerAddress.length()-1);
-            }
-            String[] splitAddress = playerAddress.split(":");
-    		theRequestJSON.put("targetHost", splitAddress[0]);
-    		try {
-    			theRequestJSON.put("targetPort", Integer.parseInt(splitAddress[1]));
-    		} catch (ArrayIndexOutOfBoundsException e) {
-    			theRequestJSON.put("targetPort", 9147);
-    		} catch (NumberFormatException e) {
-    			theRequestJSON.put("targetPort", 9147);
+    	    	theRequestJSON.put("requestContent", (isStart ? RequestBuilder.getStartRequest(theMatch.getMatchId(), theRoles.get(nRole), theMatch.getGame().getRules(), theMatch.getStartClock(), theMatch.getPlayClock(), theMatch.getGdlScrambler()) : requestContent));
+    	    	theRequestJSON.put("timeoutClock", 5000 + (isStart ? theMatch.getStartClock()*1000 : theMatch.getPlayClock()*1000));    	    	
+    	    	theRequestJSON.put("matchId", theMatch.getMatchId());	    	
+    	    	theRequestJSON.put("matchKey", matchKey);
+
+                String playerAddress = playerURLs[nRole];
+                if (playerAddress.startsWith("http://")) {
+                    playerAddress = playerAddress.replace("http://", "");
+                }
+                if (playerAddress.endsWith("/")) {
+                    playerAddress = playerAddress.substring(0, playerAddress.length()-1);
+                }
+                String[] splitAddress = playerAddress.split(":");
+        		theRequestJSON.put("targetHost", splitAddress[0]);
+        		try {
+        			theRequestJSON.put("targetPort", Integer.parseInt(splitAddress[1]));
+        		} catch (ArrayIndexOutOfBoundsException e) {
+        			theRequestJSON.put("targetPort", 9147);
+        		} catch (NumberFormatException e) {
+        			theRequestJSON.put("targetPort", 9147);
+        		}
+        		theRequestJSON.put("forPlayerName", "PLAYER"); //theMatch.getPlayerNamesFromHost().get(nRole));
+        		
+        		theRequestJSON.put("playerIndex", nRole);
+        		theRequestJSON.put("source", "robot");
+        		theRequestJSON.put("forStep", getStepCount());
+        		theRequestJSON.put("fastReturn", true);
+        		
+        		theRequests.put(theRequestJSON);
+        		requestRegion = playerRegions[nRole];
     		}
-    		theRequestJSON.put("forPlayerName", "PLAYER"); //theMatch.getPlayerNamesFromHost().get(nRole));
+    		if (theRequests.length() == 0) {
+    			return;
+    		}
+    		JSONObject theBatchRequest = new JSONObject();
+    		theBatchRequest.put("requests", theRequests);
+    		theBatchRequest.put("callbackURL", "http://tiltyard.ggp.org/hosting/callback");
     		
-    		theRequestJSON.put("playerIndex", nRole);
-    		theRequestJSON.put("forStep", getStepCount());
-    		theRequestJSON.put("fastReturn", true);
-	    	
-	    	issueRequest(theRequestJSON, playerRegions[nRole]);
+    		// TODO: Come up with a better approach for choosing request region.
+    		issueRequestToFarm(theBatchRequest, requestRegion);
     	} catch (JSONException je) {
     		throw new RuntimeException(je);
     	}
     }
     
     public void issueStartRequests() throws IOException {
-    	List<Role> theRoles = Role.computeRoles(theMatch.getGame().getRules());
-    	for (int i = 0; i < playerURLs.length; i++) {
-    		if (playerURLs[i] == null) continue;
-    		issueRequestTo(i, RequestBuilder.getStartRequest(theMatch.getMatchId(), theRoles.get(i), theMatch.getGame().getRules(), theMatch.getStartClock(), theMatch.getPlayClock(), theMatch.getGdlScrambler()), true);
-    	}
+    	issueRequests(null, true);
     }
     
     private void issueAbortRequests() throws IOException {
-    	for (int i = 0; i < playerURLs.length; i++) {
-    		if (playerURLs[i] == null) continue;
-    		issueRequestTo(i, RequestBuilder.getAbortRequest(theMatch.getMatchId()), false);
-    	}
+    	issueRequests(RequestBuilder.getAbortRequest(theMatch.getMatchId()), false);
     }    
     
     public void issueRequestForAll(String requestContent) throws IOException {
-    	for (int i = 0; i < playerURLs.length; i++) {
-    		if (playerURLs[i] == null) continue;
-    		issueRequestTo(i, requestContent, false);
-    	}
+    	issueRequests(requestContent, false);
     }
 
-    private static void issueRequest(JSONObject requestJSON, String forRegion) throws IOException {
+    private static void issueRequestToFarm(JSONObject requestJSON, String forRegion) throws IOException {
         // Find a backend server to run the request. As part of this process,
         // ping all of the registered backend servers to verify that they're
         // still available, and deregister those that aren't. Lastly choose

@@ -2,7 +2,7 @@ package ggp.tiltyard.hosting;
 
 import static com.google.appengine.api.taskqueue.RetryOptions.Builder.withTaskRetryLimit;
 import static com.google.appengine.api.taskqueue.TaskOptions.Builder.withUrl;
-
+import external.JSON.JSONArray;
 import external.JSON.JSONException;
 import external.JSON.JSONObject;
 import ggp.tiltyard.backends.BackendPublicKey;
@@ -10,6 +10,8 @@ import ggp.tiltyard.backends.BackendPublicKey;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -63,12 +65,10 @@ public class Hosting {
        				Logger.getAnonymousLogger().severe("Was supposed to publish step " + stepCountToPublish + " for match, but match is already at step " + m.getStepCount());
        			}
            		m.publish();
-       		} else if (requestedTask.equals("select_move")) {
-           		selectMove(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("playerIndex")), Integer.parseInt(req.getParameter("forStep")), req.getParameter("withError"), req.getParameter("theMove").replace("%20", " ").replace("+", " "), req.getParameter("source"));
+       		} else if (requestedTask.equals("select_moves")) {
+           		selectMoves(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("forStep")), new JSONObject(req.getParameter("moveBatchJSON").replace("%20", " ").replace("+", " ")));
        		} else if (requestedTask.equals("request")) {
        			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
-       		} else if (requestedTask.equals("request_to")) {
-       			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestTo(Integer.parseInt(req.getParameter("playerIndex")), req.getParameter("requestContent"), false);
        		} else if (requestedTask.equals("request_start")) {
        			MatchData.loadMatchData(req.getParameter("matchKey")).issueStartRequests();           			
        		} else {
@@ -85,12 +85,19 @@ public class Hosting {
            	if (nRetryAttempt > TASK_RETRIES - 3) {
            		throw new RuntimeException(e);
            	}
-           	Logger.getAnonymousLogger().severe("Exception caught during task: " + e.toString() + " ... " + e.getCause());
+           	Logger.getAnonymousLogger().severe("During task, caught " + convertExceptionToString(e));
         }            
 		return;
     }
     
-    public static void selectMove(String matchName, int nRoleIndex, int forStep, String withError, String move, String source) {
+    public static String convertExceptionToString(Exception e) {
+       	StringWriter traceWriter = new StringWriter();
+       	e.printStackTrace(new PrintWriter(traceWriter));
+    	return "exception [" + e.toString() + "] with cause [" + e.getCause() + "] with trace: " + traceWriter.toString(); 
+    }
+
+    public static final int SELECT_MOVES_ATTEMPTS = 20;
+    public static void selectMoves(String matchKey, int forStep, JSONObject moveBatchJSON) {
    		EncodedKeyPair theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
    		
    		// Attempt the transaction a few times. If the transaction can't go through
@@ -98,7 +105,7 @@ public class Hosting {
    		// this will get stuck and failing out to the task queue fixes things.
    		int nAttempt = 0;
    		Exception lastException = null;
-    	for (; nAttempt < 20; nAttempt++) {
+    	for (; nAttempt < SELECT_MOVES_ATTEMPTS; nAttempt++) {
 	    	PersistenceManager pm = Persistence.getPersistenceManager();
 	    	Transaction tx = pm.currentTransaction();
 
@@ -106,7 +113,7 @@ public class Hosting {
 		    	// Start the transaction
 	    	    tx.begin();
 	
-	    	    MatchData oldMatch = pm.getObjectById(MatchData.class, matchName);
+	    	    MatchData oldMatch = pm.getObjectById(MatchData.class, matchKey);
 	        	if (oldMatch == null) {
 	        		throw new RuntimeException("Could not find match!");
 	        	}
@@ -114,20 +121,11 @@ public class Hosting {
 	        	MatchData theMatch = pm.detachCopy(oldMatch);
 	        	theMatch.inflateAfterLoading(theKeys);
 
-	        	if (source.equals("human") && theMatch.isPlayerHuman(nRoleIndex)) {
-	        		// Okay -- move by a human, for a human role
-	        	} else if (source.equals("robot") && !theMatch.isPlayerHuman(nRoleIndex)) {
-	        		// Okay -- move by a robot, for a robot role
-	        	} else {
-	        		Logger.getAnonymousLogger().severe("Got move from source " + source + " for player " + nRoleIndex + " which " + (theMatch.isPlayerHuman(nRoleIndex) ? "is" : "is not") + " human");
-	        		return;
-	        	}	        	
-	        	
 	        	if (forStep != theMatch.getStepCount()) {
-	        		Logger.getAnonymousLogger().severe("Got misaligned move for " + nRoleIndex + "; got move for step " + forStep + " but match is actually at step " + theMatch.getStepCount());
+	        		Logger.getAnonymousLogger().severe("Got misaligned move batch; got move for step " + forStep + " but match is actually at step " + theMatch.getStepCount());
 	        		return;
-	        	}
-	        	
+	        	}		        		        	
+
 	        	boolean shouldPublish = false;
 		        StateMachine theMachine = theMatch.getMyStateMachine();
 		        MachineState theState = theMatch.getState(theMachine);
@@ -137,11 +135,61 @@ public class Hosting {
 	            }
 	            
 	            try {
-	            	// First, parse the move, check its validity, and include
-	            	// it in the match description.
-	            	{
-			            Move theMove = null;
-			            if (withError.isEmpty()) {		            
+	            	JSONArray moveArray = moveBatchJSON.getJSONArray("responses");
+	            	// First, go through all of the incoming move requests, parse them,
+	            	// check their validity, and include them in the match description.
+	            	for (int i = 0; i < moveArray.length(); i++) {
+	            		JSONObject moveResponse = moveArray.getJSONObject(i);
+	            		JSONObject moveRequest = moveResponse.getJSONObject("originalRequest");
+	            		
+	            		int nRoleIndex = moveRequest.getInt("playerIndex");	            		
+	            		String source = moveRequest.getString("source");
+	            		String matchId = moveRequest.getString("matchId");	            		
+	            		String move = moveResponse.getString("response");  // .replace("%20", " ").replace("+", " ")
+	            		
+	            		if (!matchId.equals(theMatch.getMatchId())) {
+	            			Logger.getAnonymousLogger().severe("Got inconsistency between match id in batch for element " + i + ": " + matchId + " vs " + theMatch.getMatchId());
+	            			continue;	            			
+	            		}
+	            		if (!matchKey.equals(moveRequest.getString("matchKey"))) {
+	            			Logger.getAnonymousLogger().severe("Got inconsistency between match keys in batch for element " + i + ": " + matchKey + " vs " + moveRequest.getString("matchKey"));
+	            			continue;
+	            		}
+	            		if (forStep != moveRequest.getInt("forStep")) {
+	            			Logger.getAnonymousLogger().severe("Got inconsistency between for-steps in batch for element " + i + ": " + forStep + " vs " + moveRequest.getInt("forStep"));
+	            			continue;	            			
+	            		}
+	            		
+    		        	if (source.equals("human") && theMatch.isPlayerHuman(nRoleIndex)) {
+    		        		// Okay -- move by a human, for a human role
+    		        	} else if (source.equals("robot") && !theMatch.isPlayerHuman(nRoleIndex)) {
+    		        		// Okay -- move by a robot, for a robot role
+    		        	} else {
+    		        		Logger.getAnonymousLogger().severe("Got move from source " + source + " for player " + nRoleIndex + " which " + (theMatch.isPlayerHuman(nRoleIndex) ? "is" : "is not") + " human");
+    		        		continue;
+    		        	}
+    		        	
+    		        	Move theMove = null;
+    		        	String theError = "";
+    		        	
+    		        	// Extract any error-related information from the request response
+    					if (moveResponse.has("responseType")) {
+    						String type = moveResponse.getString("responseType");
+    						if (type.equals("TO") || type.equals("CE")) {
+    							theError = type;
+    						}
+    					}
+	            		
+			            if (theError.isEmpty()) {
+			            	try {
+			            		if (source.equals("robot")) {
+			            			move = theMatch.getScrambler().unscramble(move).toString();
+			            		}
+			            	} catch (GdlFormatException e) {
+			            		;
+			            	} catch (SymbolFormatException e) {
+			            		;
+			            	}
 			            	try {
 			            		theMove = theMachine.getMoveFromTerm(GdlFactory.createTerm(move));
 							} catch (SymbolFormatException e) {
@@ -154,7 +202,7 @@ public class Hosting {
 							}
 			            	if (theMove == null) {
 			            		// Move isn't valid? Set an error.
-			            		withError = "IL " + move;
+			            		theError = "IL " + move;
 			            	}
 			            }
 			            if (theMove == null) {
@@ -165,7 +213,7 @@ public class Hosting {
 			            }
 		            	
 		            	theMatch.setPendingMove(nRoleIndex, theMove.toString());
-		            	theMatch.setPendingError(nRoleIndex, withError);
+		            	theMatch.setPendingError(nRoleIndex, theError);
 	            	}
 
 	            	// Once the move has been set as pending, check to see if the match can
@@ -188,6 +236,8 @@ public class Hosting {
                     }
 				} catch (MoveDefinitionException e) {
 					throw new RuntimeException(e);
+				} catch (JSONException e) {
+					throw new RuntimeException(e);
 				}
                 
                 theMatch.deflateForSaving();
@@ -201,6 +251,9 @@ public class Hosting {
 	    	    tx.commit();
 	    	    pm.close();
 	    	    return;
+	    	} catch (javax.jdo.JDOObjectNotFoundException e) {
+	    		Logger.getAnonymousLogger().severe("Could not load match " + matchKey);
+	    		break;
 	    	} catch (javax.jdo.JDOException e) {
 	    		lastException = e;
 	    	} finally {
@@ -210,7 +263,7 @@ public class Hosting {
 	    	    }
 	    	}
     	}
-    	Logger.getAnonymousLogger().severe("Could not select a move in " + nAttempt + " attempts. Last exception was: " + lastException.getMessage());
+    	Logger.getAnonymousLogger().severe("Could not select a move in " + nAttempt + " attempts. Last exception was " + convertExceptionToString(lastException));
     	throw new RuntimeException(lastException);
     }
     
@@ -259,68 +312,78 @@ public class Hosting {
 	public static void doPost(String theURI, String in, HttpServletResponse resp) {
 		try {
 			if (theURI.equals("callback")) {
-				JSONObject theResponseJSON = new JSONObject(in);
-                if (!SignableJSON.isSignedJSON(theResponseJSON)) {
+				JSONObject theBatchResponseJSON = new JSONObject(in);
+                if (!SignableJSON.isSignedJSON(theBatchResponseJSON)) {
                     throw new RuntimeException("Got callback response that wasn't signed.");
                 }
-                if (!theResponseJSON.getString("matchHostPK").equals(BackendPublicKey.theKey)) {
+                if (!theBatchResponseJSON.getString("matchHostPK").equals(BackendPublicKey.theKey)) {
                 	throw new RuntimeException("Got callback response that was signed but not by request farm.");
                 }
-                if (!SignableJSON.verifySignedJSON(theResponseJSON)) {
-                	throw new RuntimeException("Got callback response whose signature didn't validate: " + theResponseJSON);
+                if (!SignableJSON.verifySignedJSON(theBatchResponseJSON)) {
+                	throw new RuntimeException("Got callback response whose signature didn't validate: " + theBatchResponseJSON);
                 }
-				JSONObject theRequestJSON = new JSONObject(theResponseJSON.getString("originalRequest"));
-				if (!theRequestJSON.has("matchId")) {
-					throw new RuntimeException("Could not get match ID from callback: " + theRequestJSON.toString());
+                if (!theBatchResponseJSON.has("responses")) {
+                	throw new RuntimeException("Got callback response that did not contain batch responses.");
+                }
+
+                JSONArray responseArrayJSON = theBatchResponseJSON.getJSONArray("responses");
+                if (responseArrayJSON.length() < 1) {
+                	throw new RuntimeException("Got callback response that contains zero batch responses.");
+                }
+				JSONObject aRequestJSON = new JSONObject(responseArrayJSON.getJSONObject(0).getString("originalRequest"));
+				if (!aRequestJSON.has("matchId")) {
+					throw new RuntimeException("Could not get match ID from callback: " + aRequestJSON.toString());
 				}
-				if (!theRequestJSON.has("matchKey")) {
-					throw new RuntimeException("Could not get match key from callback: " + theRequestJSON.toString());
-				}				
-				if (theRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
-					String theMove = "";
-					String theError = "";
-					if (theResponseJSON.has("response")) {
-						theMove = theResponseJSON.getString("response");
-					}
-					if (theResponseJSON.has("responseType")) {
-						String type = theResponseJSON.getString("responseType");
-						if (type.equals("TO") || type.equals("CE")) {
-							theError = type;
-						} 
-					}					
-					if (!theMove.isEmpty()) {
-						try {
-							MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
-							theMove = theMatch.getScrambler().unscramble(theMove).toString();
-						} catch (GdlFormatException ge) {
-							;
-						} catch (SymbolFormatException e) {
-							;
-						} catch (RuntimeException re) {
-							;
-						}
-					}
-					addTaskToQueue(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", "" + theRequestJSON.getInt("playerIndex")).param("forStep", "" + theRequestJSON.getInt("forStep")).param("theMove", theMove).param("withError", theError).param("source", "robot"));
-				} else if (theRequestJSON.getString("requestContent").startsWith("( START ")) {
-					MatchData theMatch = MatchData.loadMatchData(theRequestJSON.getString("matchKey"));
+				if (!aRequestJSON.has("matchKey")) {
+					throw new RuntimeException("Could not get match key from callback: " + aRequestJSON.toString());
+				}
+				String matchId = aRequestJSON.getString("matchId");
+				String matchKey = aRequestJSON.getString("matchKey");
+				int forStep = aRequestJSON.getInt("forStep");
+				if (aRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
+					addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.GET).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponseJSON.toString()));
+				} else if (aRequestJSON.getString("requestContent").startsWith("( START ")) {
+					MatchData theMatch = MatchData.loadMatchData(matchKey);
 					if (theMatch == null) {
-						Logger.getAnonymousLogger().severe("Could not find match referenced by callback: " + theRequestJSON.toString());
+						Logger.getAnonymousLogger().severe("Could not find match referenced by callback: " + aRequestJSON.toString());
 					} else {
-						String theFirstPlayRequest = RequestBuilder.getPlayRequest(theRequestJSON.getString("matchId"), null, theMatch.getScrambler());                        
-						addTaskToQueue(withUrl("/hosting/tasks/request_to").method(Method.GET).param("matchKey", theRequestJSON.getString("matchKey")).param("playerIndex", theRequestJSON.getString("playerIndex")).param("requestContent", theFirstPlayRequest));
+						String theFirstPlayRequest = RequestBuilder.getPlayRequest(matchId, null, theMatch.getScrambler());
+						addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", matchKey).param("requestContent", theFirstPlayRequest));
 					}
+				} else if (aRequestJSON.getString("requestContent").startsWith("( STOP ") ||
+						   aRequestJSON.getString("requestContent").startsWith("( ABORT ")) {
+					;
+				} else {
+					throw new RuntimeException("Got callback for unexpected request type: " + aRequestJSON.getString("requestContent"));
 				}
 				
 				resp.getWriter().println("okay");
 			} else if(theURI.equals("select_move")) {
-				JSONObject theRequest = new JSONObject(in);
+				JSONObject theUserRequest = new JSONObject(in);
 
-				int playerIndex = theRequest.getInt("roleIndex");
-				int forStep = theRequest.getInt("forStep");
-				String theMove = theRequest.getString("theMove");
-				String matchKey = theRequest.getString("matchKey");
+				int roleIndex = theUserRequest.getInt("roleIndex");                                                            
+				int forStep = theUserRequest.getInt("forStep");
+				String theMove = theUserRequest.getString("theMove");
+				String matchKey = theUserRequest.getString("matchKey");
+				
+				// Forge a batch response from the request farm, based on the incoming
+				// request from a user. This can be passed to "select_moves" and decoded
+				// in the same way as ordinary batch responses from the request farm.
+				JSONObject theOriginalRequest = new JSONObject();
+				theOriginalRequest.put("matchKey", matchKey);
+				theOriginalRequest.put("roleIndex", roleIndex);
+				theOriginalRequest.put("forStep", forStep);
+				theOriginalRequest.put("source", "human");
+				JSONObject theResponse = new JSONObject();
+				theResponse.put("response", theMove);
+				theResponse.put("responseType", "OK");
+				theResponse.put("originalRequest", theOriginalRequest);
+				JSONArray theResponses = new JSONArray();
+				theResponses.put(theResponse);
+				JSONObject theBatchResponse = new JSONObject();
+				theBatchResponse.put("responses", theResponses);
 
-				addTaskToQueue(withUrl("/hosting/tasks/select_move").method(Method.GET).param("matchKey", matchKey).param("playerIndex", "" + playerIndex).param("forStep", "" + forStep).param("theMove", theMove).param("withError", "").param("source", "human"));
+				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.GET).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponse.toString()));
 				
 				resp.getWriter().println(theMove);
 			}
