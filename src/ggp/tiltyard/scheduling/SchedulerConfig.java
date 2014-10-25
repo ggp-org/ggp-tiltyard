@@ -1,6 +1,5 @@
 package ggp.tiltyard.scheduling;
 
-import java.io.IOException;
 import java.util.Set;
 
 import javax.jdo.PersistenceManager;
@@ -23,7 +22,7 @@ public class SchedulerConfig {
     }
 
     /* Static accessor methods */
-    public static SchedulerConfig loadConfig() throws IOException {
+    public static SchedulerConfig loadConfig() {
         Set<SchedulerConfig> theConfigs = Persistence.loadAll(SchedulerConfig.class);
         if (theConfigs.size() > 0) {
             return theConfigs.iterator().next();
