@@ -65,11 +65,13 @@ public class Hosting {
        				Logger.getAnonymousLogger().severe("Was supposed to publish step " + stepCountToPublish + " for match, but match is already at step " + m.getStepCount());
        			}
            		m.publish();
-       		} else if (requestedTask.equals("select_moves")) {
+       		} else if (requestedTask.equals("select_moves")) {				
            		selectMoves(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("forStep")), new JSONObject(req.getParameter("moveBatchJSON").replace("%20", " ").replace("+", " ")));
        		} else if (requestedTask.equals("request")) {
+       			if (AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(req.getParameter("matchKey"))) return;
        			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
        		} else if (requestedTask.equals("request_start")) {
+       			if (AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(req.getParameter("matchKey"))) return;
        			MatchData.loadMatchData(req.getParameter("matchKey")).issueStartRequests();           			
        		} else {
        			Logger.getAnonymousLogger().severe("Could not identify task associated with task queue URL: " + requestedTask);
@@ -112,7 +114,7 @@ public class Hosting {
 	    	try {
 		    	// Start the transaction
 	    	    tx.begin();
-	
+
 	    	    MatchData oldMatch = pm.getObjectById(MatchData.class, matchKey);
 	        	if (oldMatch == null) {
 	        		throw new RuntimeException("Could not find match!");
@@ -252,8 +254,13 @@ public class Hosting {
 	    	    pm.close();
 	    	    return;
 	    	} catch (javax.jdo.JDOObjectNotFoundException e) {
-	    		Logger.getAnonymousLogger().severe("Could not load match " + matchKey);
-	    		break;
+	    		lastException = e;
+    			if (AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(matchKey)) {
+    				return;
+    			} else {
+    				Logger.getAnonymousLogger().severe("Could not load match " + matchKey + " but was not recently aborted");
+    				break;
+    			}	    		
 	    	} catch (javax.jdo.JDOException e) {
 	    		lastException = e;
 	    	} finally {
@@ -340,21 +347,23 @@ public class Hosting {
 				String matchId = aRequestJSON.getString("matchId");
 				String matchKey = aRequestJSON.getString("matchKey");
 				int forStep = aRequestJSON.getInt("forStep");
-				if (aRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
-					addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.GET).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponseJSON.toString()));
-				} else if (aRequestJSON.getString("requestContent").startsWith("( START ")) {
-					MatchData theMatch = MatchData.loadMatchData(matchKey);
-					if (theMatch == null) {
-						Logger.getAnonymousLogger().severe("Could not find match referenced by callback: " + aRequestJSON.toString());
+				if (!AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(matchKey)) {
+					if (aRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
+						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.GET).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponseJSON.toString()));
+					} else if (aRequestJSON.getString("requestContent").startsWith("( START ")) {
+						MatchData theMatch = MatchData.loadMatchData(matchKey);
+						if (theMatch == null) {
+							Logger.getAnonymousLogger().severe("Could not find match referenced by callback: " + aRequestJSON.toString());
+						} else {
+							String theFirstPlayRequest = RequestBuilder.getPlayRequest(matchId, null, theMatch.getScrambler());
+							addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", matchKey).param("requestContent", theFirstPlayRequest));
+						}
+					} else if (aRequestJSON.getString("requestContent").startsWith("( STOP ") ||
+							   aRequestJSON.getString("requestContent").startsWith("( ABORT ")) {
+						;
 					} else {
-						String theFirstPlayRequest = RequestBuilder.getPlayRequest(matchId, null, theMatch.getScrambler());
-						addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", matchKey).param("requestContent", theFirstPlayRequest));
+						throw new RuntimeException("Got callback for unexpected request type: " + aRequestJSON.getString("requestContent"));
 					}
-				} else if (aRequestJSON.getString("requestContent").startsWith("( STOP ") ||
-						   aRequestJSON.getString("requestContent").startsWith("( ABORT ")) {
-					;
-				} else {
-					throw new RuntimeException("Got callback for unexpected request type: " + aRequestJSON.getString("requestContent"));
 				}
 				
 				resp.getWriter().println("okay");
@@ -382,6 +391,10 @@ public class Hosting {
 				theResponses.put(theResponse);
 				JSONObject theBatchResponse = new JSONObject();
 				theBatchResponse.put("responses", theResponses);
+				
+				if (AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(matchKey)) {
+					return;
+				}
 
 				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.GET).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponse.toString()));
 				

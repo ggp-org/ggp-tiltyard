@@ -258,6 +258,7 @@ public class MatchData {
 	    		;
 	    	}
     	}
+    	AbortedMatchKeys.loadAbortedMatchKeys().addRecentlyAborted(matchKey);
     	theMatch.markAborted();
     }
     
