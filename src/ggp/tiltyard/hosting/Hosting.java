@@ -147,7 +147,6 @@ public class Hosting {
 	            		int nRoleIndex = moveRequest.getInt("playerIndex");	            		
 	            		String source = moveRequest.getString("source");
 	            		String matchId = moveRequest.getString("matchId");	            		
-	            		String move = moveResponse.getString("response");  // .replace("%20", " ").replace("+", " ")
 	            		
 	            		if (!matchId.equals(theMatch.getMatchId())) {
 	            			Logger.getAnonymousLogger().severe("Got inconsistency between match id in batch for element " + i + ": " + matchId + " vs " + theMatch.getMatchId());
@@ -183,6 +182,7 @@ public class Hosting {
     					}
 	            		
 			            if (theError.isEmpty()) {
+			            	String move = moveResponse.getString("response");  // .replace("%20", " ").replace("+", " ")
 			            	try {
 			            		if (source.equals("robot")) {
 			            			move = theMatch.getScrambler().unscramble(move).toString();
