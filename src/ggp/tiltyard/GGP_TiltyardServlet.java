@@ -123,21 +123,30 @@ public class GGP_TiltyardServlet extends HttpServlet {
             resp.setStatus(404);
         }
     }
+    
+    public static final String readDataFromRequest(HttpServletRequest req) throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
+        int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
+        StringBuilder theInput = new StringBuilder();
+        for (int i = 0; i < contentLength; i++) {
+            theInput.append((char)br.read());
+        }
+        return theInput.toString().trim();
+    }
 
     public void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {        
         setAccessControlHeader(resp);
         resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
 
+        if (req.getRequestURI().startsWith("/hosting/tasks/")) {
+        	Hosting.doTask(req, resp);
+        	return;
+        }
+        
         String theURI = req.getRequestURI();
         String in = null;
         if (!theURI.contains("/data/uploadPlayerImage/")) {
-	        BufferedReader br = new BufferedReader(new InputStreamReader(req.getInputStream()));
-	        int contentLength = Integer.parseInt(req.getHeader("Content-Length").trim());
-	        StringBuilder theInput = new StringBuilder();
-	        for (int i = 0; i < contentLength; i++) {
-	            theInput.append((char)br.read());
-	        }
-	        in = theInput.toString().trim();
+        	in = readDataFromRequest(req);
         }
         
         if (!isDatastoreReadable()) {

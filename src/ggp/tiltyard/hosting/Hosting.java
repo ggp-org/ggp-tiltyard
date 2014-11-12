@@ -349,7 +349,7 @@ public class Hosting {
 				int forStep = aRequestJSON.getInt("forStep");
 				if (!AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(matchKey)) {
 					if (aRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
-						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.GET).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponseJSON.toString()));
+						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponseJSON.toString()));
 					} else if (aRequestJSON.getString("requestContent").startsWith("( START ")) {
 						MatchData theMatch = MatchData.loadMatchData(matchKey);
 						if (theMatch == null) {
@@ -396,7 +396,7 @@ public class Hosting {
 					return;
 				}
 
-				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.GET).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponse.toString()));
+				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponse.toString()));
 				
 				resp.getWriter().println(theMove);
 			}
