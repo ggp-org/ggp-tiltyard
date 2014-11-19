@@ -370,17 +370,19 @@ public class Hosting {
 			} else if(theURI.equals("select_move")) {
 				JSONObject theUserRequest = new JSONObject(in);
 
-				int roleIndex = theUserRequest.getInt("roleIndex");                                                            
+				int playerIndex = theUserRequest.getInt("playerIndex");                                                            
 				int forStep = theUserRequest.getInt("forStep");
 				String theMove = theUserRequest.getString("theMove");
 				String matchKey = theUserRequest.getString("matchKey");
+				String matchId = theUserRequest.getString("matchId");
 				
 				// Forge a batch response from the request farm, based on the incoming
 				// request from a user. This can be passed to "select_moves" and decoded
 				// in the same way as ordinary batch responses from the request farm.
 				JSONObject theOriginalRequest = new JSONObject();
+				theOriginalRequest.put("matchId", matchId);
 				theOriginalRequest.put("matchKey", matchKey);
-				theOriginalRequest.put("roleIndex", roleIndex);
+				theOriginalRequest.put("playerIndex", playerIndex);				
 				theOriginalRequest.put("forStep", forStep);
 				theOriginalRequest.put("source", "human");
 				JSONObject theResponse = new JSONObject();

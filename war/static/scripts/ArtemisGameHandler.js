@@ -4,7 +4,8 @@ var ArtemisGameHandler = {
   width: null,
   height: null,
   
-  matchURL: null,
+  matchId: null,
+  matchURL: null,  
   
   vizDiv: null,
   gameDiv: null,
@@ -31,6 +32,7 @@ var ArtemisGameHandler = {
     var matchData = ResourceLoader.load_json(matchURL);
     var gameURL = matchData.gameMetaURL;
     var metadata = parent.ResourceLoader.load_json(gameURL);
+    this.matchId = matchData.matchId;    
 
     if ("description" in metadata) {
         var description = ResourceLoader.load_raw(gameURL + metadata.description);
@@ -207,8 +209,9 @@ var ArtemisGameHandler = {
     var moveSelectionJSON = {};
     moveSelectionJSON.forStep = this.stepCount;
     moveSelectionJSON.theMove = this.writeGDL([this.selectedMove]);
-    moveSelectionJSON.roleIndex = this.myRole;
+    moveSelectionJSON.playerIndex = this.myRole;
     moveSelectionJSON.matchKey = this.matchURL.split('/')[4];
+    moveSelectionJSON.matchId = this.matchId;
     var moveSelection = JSON.stringify(moveSelectionJSON);
     
     if (isOnlyRoleWithLegals(this.myRole, this.machine, this.state)) {
