@@ -10,5 +10,11 @@
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/ggp-base.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/guava-14.0.1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gitkit.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/jsontoken-1.1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/json.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/gson-2.1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/joda-time-2.0.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-codec-1.6.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

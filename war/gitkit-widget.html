@@ -1,0 +1,23 @@
+<script type="text/javascript" src="//www.gstatic.com/authtoolkit/js/gitkit.js"></script>
+<link type="text/css" rel="stylesheet" href="//www.gstatic.com/authtoolkit/css/gitkit.css" />
+
+<html>
+<body>
+<div id="gitkitWidgetDiv"></div>
+</body>
+</html>
+
+<script type="text/javascript">
+  var config = {
+      apiKey: 'AIzaSyBSMZaQLM9XioPAM2r1HGFM-LxWG2hM8Ao',
+      signInSuccessUrl: 'http://tiltyard.ggp.org/players/',
+      idps: ["google", "yahoo", "microsoft", "facebook"],
+      oobActionUrl: 'http://tiltyard.ggp.org/identity/gitkit_email',
+      siteName: 'GGP.org Tiltyard'
+  };
+  // The HTTP POST body should be escaped by the server to prevent XSS
+  window.google.identitytoolkit.start(
+      '#gitkitWidgetDiv', // accepts any CSS selector
+      config,
+      'JAVASCRIPT_ESCAPED_POST_BODY');
+</script>

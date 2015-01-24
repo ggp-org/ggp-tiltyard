@@ -9,12 +9,14 @@
     <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />
     <link rel="stylesheet" type="text/css" href="/tiltyard.css" />
     <link rel="stylesheet" type="text/css" href="//www.ggp.org/scripts/external/bootstrap/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//www.gstatic.com/authtoolkit/css/gitkit.css" />
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/external/bootstrap/bootstrap.min.js'></script>
     <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
     <script type='text/javascript' src='/static/scripts/jquery-ui-autocomplete.js'></script>
     <script type='text/javascript' src='/static/scripts/jquery.select-to-autocomplete.min.js'></script>
+    <script type="text/javascript" src="//www.gstatic.com/authtoolkit/js/gitkit.js"></script>   
     <style>
     .ui-autocomplete {
       padding: 0;
@@ -47,6 +49,8 @@
 
     <div class="header" id="header"></div>
     <br>
+    <center><div id='gitkitStatus'></div></center>
+    <br>    
     <div id='playerDiv'></div>
     
     <div class="container">
@@ -373,23 +377,19 @@
         }    
     
       var loginState = ResourceLoader.load_json('/data/login');
-      var loginStatusHTML = "";
       if (!loginState.loggedIn) {
         window.location = "//tiltyard.ggp.org/players/";
-      } else {
-        loginStatusHTML = "<td>";
-        if (loginState.nickname.length > 0) {
-          loginStatusHTML += "<b>" + loginState.nickname + "</b>";
-        } else {
-          loginStatusHTML += "signed in via OpenID";
-        }
-        loginStatusHTML += " [<a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">x</a>]</td>";
-      }    
-      generateHeader(document.getElementById('header'), "Tiltyard Registration", loginStatusHTML);    
+      }
+      window.google.identitytoolkit.signInButton('#gitkitStatus', {
+        widgetUrl: "//tiltyard.ggp.org/oauth2callback",
+        signOutUrl: "//tiltyard.ggp.org/players/",
+        popupMode: true,
+      });
+      generateHeader(document.getElementById('header'), "Tiltyard Registration", '');
 
       var withDefaultValue = function (x,y) { if (x) { return x; } else { return y; } };       
       function showPlayerData(aPlayer) {
-        var playerThumbURL = "http://placekitten.com/25/25";
+        var playerThumbURL = "http://placekitten.com/g/25/25";
         if ("thumbURL" in aPlayer) {
           playerThumbURL = aPlayer.thumbURL;
         }

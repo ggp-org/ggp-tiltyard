@@ -20,6 +20,7 @@ import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.images.ImagesServiceFactory;
 import com.google.appengine.api.images.ServingUrlOptions;
 import com.google.appengine.api.users.User;
+import com.google.identitytoolkit.GitkitUser;
 
 import external.JSON.JSONException;
 import external.JSON.JSONObject;
@@ -32,9 +33,10 @@ public class Player {
     private static final int PING_STRIKES_BEFORE_DISABLING = 60;
     
     // Ownership information.
-    @Persistent private Set<String> theOwners;
+    @Persistent private Set<String> theOwners; // legacy IDs
+    @Persistent private Set<String> theOwnerLocalIds;
     @Persistent private Set<String> theOwnerEmails;
-    @Persistent private Set<User> theOwnerUsers;
+    @Persistent private Set<User> theOwnerUsers; // legacy data structures
     
     // Standard properties.
     @Persistent private boolean isEnabled;
@@ -59,7 +61,7 @@ public class Player {
     @Persistent private String imageLargeURL;
     @Persistent private String imageThumbURL;
 
-    public Player(String theName, String theURL, User anOwner) {
+    public Player(String theName, String theURL, String emailAddress, String localID) {
         this.theName = theName;
         this.setURL(theURL);
 
@@ -67,9 +69,11 @@ public class Player {
         this.theOwners = new HashSet<String>();
         this.theOwnerEmails = new HashSet<String>();
         this.theOwnerUsers = new HashSet<User>();
-        this.theOwners.add(anOwner.getUserId());
-        this.theOwnerEmails.add(anOwner.getEmail());
-        this.theOwnerUsers.add(anOwner);
+        this.theOwnerLocalIds = new HashSet<String>();
+        this.theOwnerLocalIds.add(localID);
+        if (emailAddress != null) {
+        	this.theOwnerEmails.add(emailAddress);
+        }        
         
         this.setEnabled(false);
         this.setPingable(true);
@@ -191,20 +195,19 @@ public class Player {
     	theCountryCode = newCountryCode;
     }
 
-    public void addOwner(User anOwner) {
-    	if (theOwnerEmails == null) {
-    		theOwnerEmails = new HashSet<String>();
+    public void addLocalId(String localId) {
+    	if (theOwnerLocalIds == null) {
+    		theOwnerLocalIds = new HashSet<String>();
     	}
-    	if (theOwnerUsers == null) {
-    		theOwnerUsers = new HashSet<User>();
-    	}
-    	theOwners.add(anOwner.getUserId());
-        theOwnerEmails.add(anOwner.getEmail());
-        theOwnerUsers.add(anOwner);
+    	theOwnerLocalIds.add(localId);
     }
     
     public boolean isOwner(User user) {
         return user != null && theOwners.contains(user.getUserId());
+    }
+    
+    public boolean isOwner(GitkitUser user) {
+    	return user != null && (theOwnerEmails.contains(user.getEmail()) || theOwnerLocalIds.contains(user.getLocalId()));
     }
     
     public void addStrike() {

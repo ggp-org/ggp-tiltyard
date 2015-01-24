@@ -1,7 +1,6 @@
 package ggp.tiltyard.players;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,17 +13,15 @@ import javax.servlet.http.HttpServletResponse;
 import com.google.appengine.api.blobstore.BlobKey;
 import com.google.appengine.api.blobstore.BlobstoreService;
 import com.google.appengine.api.blobstore.BlobstoreServiceFactory;
-import com.google.appengine.api.users.User;
-import com.google.appengine.api.users.UserService;
-import com.google.appengine.api.users.UserServiceFactory;
+import com.google.identitytoolkit.GitkitUser;
 
 import external.JSON.JSONException;
 import external.JSON.JSONObject;
+import ggp.tiltyard.identity.GitkitIdentity;
 
 public class Registration {
-    public static void doGet(String theRPC, HttpServletResponse resp) throws IOException {
-        UserService userService = UserServiceFactory.getUserService();
-        User user = userService.getCurrentUser();
+    public static void doGet(String theRPC, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    	GitkitUser user = GitkitIdentity.getUser(req);
 
         try {
             if (theRPC.equals("players/")) {
@@ -49,14 +46,12 @@ public class Registration {
             } else if (theRPC.equals("login")) {
                 JSONObject theResponse = new JSONObject();
                 if (user != null) {
-                    theResponse.put("nickname", user.getNickname());
-                    theResponse.put("authDomain", user.getAuthDomain());
-                    theResponse.put("federatedIdentity", user.getFederatedIdentity());
+                    theResponse.put("nickname", user.getName());
+                    theResponse.put("currentProver", user.getCurrentProvider());
                     theResponse.put("emailAddress", user.getEmail());
-                    theResponse.put("userId", user.getUserId());
-                    theResponse.put("logoutURL", userService.createLogoutURL("http://tiltyard.ggp.org/REPLACEME"));
+                    theResponse.put("userId", user.getLocalId());
                     theResponse.put("loggedIn", true);
-                    theResponse.put("isAdmin", userService.isUserAdmin());
+                    theResponse.put("isAdmin", "sam.schreiber@gmail.com".equals(user.getEmail()));
                     /* TODO: Sign auth tokens?
                     theResponse.put("signedBy", "tiltyard.ggp.org");
                     theResponse.put("signedOn", System.currentTimeMillis());
@@ -66,25 +61,6 @@ public class Registration {
                     theResponse.remove("matchHostSignature");
                     theResponse.remove("matchHostPK");
                     */
-                } else {
-                    Map<String, String> openIdProviders = new HashMap<String, String>();
-                    openIdProviders = new HashMap<String, String>();
-                    openIdProviders.put("google", "https://www.google.com/accounts/o8/id");
-                    openIdProviders.put("yahoo", "yahoo.com");
-                    openIdProviders.put("myspace", "myspace.com");
-                    openIdProviders.put("aol", "aol.com");
-                    openIdProviders.put("myopenid", "myopenid.com");
-                    openIdProviders.put("stackexchange", "https://openid.stackexchange.com");
-                    openIdProviders.put("coursera", "https://accounts.coursera.org/openid/v1");
-
-                    JSONObject theProviders = new JSONObject();
-                    for (String providerName : openIdProviders.keySet()) {
-                        String providerUrl = openIdProviders.get(providerName);
-                        theProviders.put(providerName, userService.createLoginURL("http://tiltyard.ggp.org/REPLACEME", null, providerUrl, new HashSet<String>()));
-                    }
-                    theResponse.put("providers", theProviders);
-                    theResponse.put("preferredOrder", new String[] {"google", "yahoo", "aol", "myspace", "stackexchange", "coursera", "myopenid"} );
-                    theResponse.put("loggedIn", false);
                 }
                 resp.getWriter().println(theResponse.toString());
             } else {
@@ -102,8 +78,7 @@ public class Registration {
     }
     
     public static void doPost(String theURI, String in, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        UserService userService = UserServiceFactory.getUserService();
-        User user = userService.getCurrentUser();
+    	GitkitUser user = GitkitIdentity.getUser(req);
 
         if (theURI.equals("/data/updatePlayer")) {
         	String theName = null;
@@ -129,7 +104,7 @@ public class Registration {
                 
                 Player p = Player.loadPlayer(theName);
                 if (p == null) {
-                    p = new Player(theName, sanitize(playerInfo.getString("theURL")), user);
+                    p = new Player(theName, sanitize(playerInfo.getString("theURL")), user.getEmail(), user.getLocalId());
                 } else if (!p.isOwner(user)) {
                     resp.setStatus(404);
                     return;
@@ -142,7 +117,7 @@ public class Registration {
                 }
 
                 // TODO: Remove this once all of the players have up-to-date ownership info.
-                p.addOwner(user);
+                p.addLocalId(user.getLocalId());
 
                 String gdlVersion = playerInfo.getString("gdlVersion");                
                 if (!gdlVersion.equals("GDLv1") && !gdlVersion.equals("GDLv2")) {
@@ -208,7 +183,7 @@ public class Registration {
 			blobstoreService.delete(blobsToDeleteArr);
         	
             // TODO: Remove this once all of the players have up-to-date ownership info.
-            p.addOwner(user);
+			p.addLocalId(user.getLocalId());
             
         	p.setImageBlobKey(theBlob.getKeyString());
         	p.save();

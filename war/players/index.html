@@ -8,9 +8,11 @@
     <link href="//fonts.googleapis.com/css?family=Roboto:300,700" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />
     <link rel="canonical" href="http://tiltyard.ggp.org/players/"/>
+    <link type="text/css" rel="stylesheet" href="//www.gstatic.com/authtoolkit/css/gitkit.css" />
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
     <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
     <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+    <script type="text/javascript" src="//www.gstatic.com/authtoolkit/js/gitkit.js"></script>    
     <style>
       body {
         background-image: none;
@@ -45,42 +47,38 @@
           	<center>
             	<a class="hugelink">Register</a>
             	<div style="height: 15px"></div>
-        	    Register your players to participate in the Tiltyard tournament! Sign in using OpenID.
-    	        <div style="height: 25px"></div>
-	            <div id='loginLogos'></div>
+        	    Sign in to register your players on Tiltyard.
+        	    <div style="height: 25px"></div>
+        	    <div id='gitkitLogin'></div>
           	</center>
         	</td>
     	  </tr>    
 	      </table>
 	  </div>
 	  <div id='loggedInView' hidden=true>
+	    <div id='gitkitStatus'></div>
+	    <div style="height: 15px"></div>
         <div id='playerList'></div>
       </div>
-      </center>
+      </center>      
     </div>
 
-    <script type='text/javascript'>    
+    <script type='text/javascript'>
+      window.google.identitytoolkit.signInButton('#gitkitLogin', {
+        widgetUrl: "//tiltyard.ggp.org/oauth2callback",
+        signOutUrl: "//tiltyard.ggp.org/players/",
+        popupMode: true,
+      });
+      window.google.identitytoolkit.signInButton('#gitkitStatus', {
+        widgetUrl: "//tiltyard.ggp.org/oauth2callback",
+        signOutUrl: "//tiltyard.ggp.org/players/",
+        popupMode: true,
+      });    
+
       var loginState = ResourceLoader.load_json('/data/login');
-      var loginStatusHTML = "";
-      if (!loginState.loggedIn) {
-        var loginLogosDiv = document.getElementById('loginLogos');
-        var loginLogosHTML = "";
-        for (var i in loginState.preferredOrder) {
-          var providerName = loginState.preferredOrder[i];
-          loginLogosHTML += "<a rel=\"nofollow\" href=\"" + loginState.providers[providerName].replace("/REPLACEME", window.location.pathname) + "\"><img src=\"/static/images/" + providerName + ".png\"></img></a> ";
-        }
-        loginLogosDiv.innerHTML = loginLogosHTML;
-      } else {
+      if (loginState.loggedIn) {
         document.getElementById('loginView').hidden=true;
         document.getElementById('loggedInView').hidden=false;
-
-        loginStatusHTML = "<td>";
-        if (loginState.nickname.length > 0) {
-          loginStatusHTML += "<b>" + loginState.nickname + "</b>";
-        } else {
-          loginStatusHTML += "signed in via OpenID";
-        }
-        loginStatusHTML += " [<a class=\"darklink\" style='text-decoration:none;' href=\"" + loginState.logoutURL.replace("/REPLACEME", window.location.pathname) + "\">x</a>]</td>";
       }
       
       function add_new_player() {
@@ -131,7 +129,7 @@
           if ("thumbURL" in aPlayer) {
             return '<img width=25 height=25 title="' + aPlayer.name + '" src="' + aPlayer.thumbURL + '"/>';
           } else {
-            return '<img width=25 height=25 title="' + aPlayer.name + '" src="http://placekitten.com/25/25"/>';
+            return '<img width=25 height=25 title="' + aPlayer.name + '" src="http://placekitten.com/g/25/25"/>';
           }
         }
         
@@ -193,7 +191,7 @@
       	drawPlayerList();
       }
       
-      generateHeader(document.getElementById('header'), "Tiltyard Registration", loginStatusHTML);      
+      generateHeader(document.getElementById('header'), "Tiltyard Registration", "");      
     </script>
   </body>  
 </html>

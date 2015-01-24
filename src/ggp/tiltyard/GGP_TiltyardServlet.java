@@ -4,6 +4,7 @@ import ggp.tiltyard.players.Registration;
 import ggp.tiltyard.scheduling.Scheduling;
 import ggp.tiltyard.backends.BackendRegistration;
 import ggp.tiltyard.hosting.Hosting;
+import ggp.tiltyard.identity.GitkitIdentity;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -44,6 +45,16 @@ public class GGP_TiltyardServlet extends HttpServlet {
         setAccessControlHeader(resp);
         resp.setCharacterEncoding("utf-8");
 
+        if (req.getRequestURI().equals("/oauth2callback")) {
+        	GitkitIdentity.handleOauthCallback(req, resp);
+        	return;
+        }
+        
+        if (req.getRequestURI().startsWith("/identity/")) {        	
+        	GitkitIdentity.doGet(req.getRequestURI().replaceFirst("/identity/", ""), req, resp);
+        	return;
+        }
+        
         if (req.getRequestURI().equals("/cron/scheduling_round")) {
             if (isDatastoreWriteable()) {
                 Scheduling.runSchedulingRound();            
@@ -55,7 +66,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
         }
 
         if (req.getRequestURI().startsWith("/data/")) {
-            Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), resp);
+            Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), req, resp);
             return;
         }
 
@@ -138,6 +149,11 @@ public class GGP_TiltyardServlet extends HttpServlet {
         setAccessControlHeader(resp);
         resp.setHeader("Access-Control-Allow-Origin", "tiltyard.ggp.org");
 
+        if (req.getRequestURI().equals("/oauth2callback")) {
+        	GitkitIdentity.handleOauthCallback(req, resp);
+        	return;
+        }
+        
         if (req.getRequestURI().startsWith("/hosting/tasks/")) {
         	Hosting.doTask(req, resp);
         	return;
