@@ -84,13 +84,14 @@ public class Scheduling {
 		// Peg Jumping variants
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
-		new String[] { "hex", "hexPie" },
+		new String[] { "hex", "hexPie", "majorities" },
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
 				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2", },
-		// New games, that get an extra promotional boost because they're new
-		new String[] { "skirmishNew", "skirmishZeroSum" },
+		// New games, that get an extra promotional boost because they're new or haven't
+		// been in the spotlight for a while
+		new String[] { "majorities", "nineBoardTicTacToePie", "cephalopodMicro", "blocker" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
