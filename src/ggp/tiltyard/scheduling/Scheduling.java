@@ -85,13 +85,14 @@ public class Scheduling {
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
 		new String[] { "hex", "hexPie", "majorities" },
+		// Mancala variants
+		new String[] { "kalaha6x2x4", "kalaha5x2x3" },
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
 				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2", },
-		// New games, that get an extra promotional boost because they're new or haven't
-		// been in the spotlight for a while
-		new String[] { "majorities", "nineBoardTicTacToePie", "cephalopodMicro", "blocker" },
+		// New games, that get an extra promotional boost because they're new
+		new String[] { "majorities", "kalaha6x2x4", "kalaha5x2x3" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
