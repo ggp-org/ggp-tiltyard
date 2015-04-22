@@ -48,7 +48,8 @@ public class Scheduling {
 		// Game theory games
 		new String[] { "gt_attrition", "gt_centipede",
 				"gt_chicken", "gt_dollar", "gt_prisoner", "gt_ultimatum", "gt_staghunt",
-				"gt_coordination" },
+				"gt_coordination", "gt_tinfoil", "gt_two_thirds_2p", "gt_two_thirds_4p",
+				"gt_two_thirds_6p" },
 		// Chinese checkers variants
 		new String[] { "chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
 				"chineseCheckers4", "chineseCheckers6" },
@@ -90,9 +91,11 @@ public class Scheduling {
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
-				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2", },
+				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2",
+				"tron_10x10" },
 		// New games, that get an extra promotional boost because they're new
-		new String[] { "majorities", "kalaha6x2x4", "kalaha5x2x3" },
+		new String[] { "gt_tinfoil", "gt_two_thirds_2p", "gt_two_thirds_4p", "gt_two_thirds_6p",
+				"tron_10x10" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
