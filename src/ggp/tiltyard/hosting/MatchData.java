@@ -276,7 +276,7 @@ public class MatchData {
     	    	theRequestJSON.put("timeoutClock", 5000 + (isStart ? theMatch.getStartClock()*1000 : theMatch.getPlayClock()*1000));    	    	
     	    	theRequestJSON.put("matchId", theMatch.getMatchId());	    	
     	    	theRequestJSON.put("matchKey", matchKey);
-
+    	    	
                 String playerAddress = playerURLs[nRole];
                 if (playerAddress.startsWith("http://")) {
                     playerAddress = playerAddress.replace("http://", "");
@@ -299,6 +299,14 @@ public class MatchData {
         		theRequestJSON.put("source", "robot");
         		theRequestJSON.put("forStep", getStepCount());
         		theRequestJSON.put("fastReturn", true);
+        		
+        		// Add some extra headers to the outgoing request that can be
+        		// used for debugging player networking issues.
+        		JSONObject extraHeaders = new JSONObject();        		
+        		extraHeaders.put("GGP-Match-ID", theMatch.getMatchId());
+        		extraHeaders.put("GGP-Match-Step", getStepCount());
+        		extraHeaders.put("GGP-Match-Host", "Tiltyard");
+        		theRequestJSON.put("extraHeaders", extraHeaders);
         		
         		theRequests.put(theRequestJSON);
         		requestRegion = playerRegions[nRole];
