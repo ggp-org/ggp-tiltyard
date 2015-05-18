@@ -302,10 +302,14 @@ public class MatchData {
         		
         		// Add some extra headers to the outgoing request that can be
         		// used for debugging player networking issues.
-        		JSONObject extraHeaders = new JSONObject();        		
+        		JSONObject extraHeaders = new JSONObject();
         		extraHeaders.put("GGP-Match-ID", theMatch.getMatchId());
         		extraHeaders.put("GGP-Match-Step", getStepCount());
         		extraHeaders.put("GGP-Match-Host", "Tiltyard");
+        		extraHeaders.put("GGP-Match-Player-Count", theMatch.getPlayerNamesFromHost().size());
+        		for (int i = 0; i < theMatch.getPlayerNamesFromHost().size(); i++) {
+        			extraHeaders.put("GGP-Match-Player-" + i, theMatch.getPlayerNamesFromHost().get(i));
+        		}
         		theRequestJSON.put("extraHeaders", extraHeaders);
         		
         		theRequests.put(theRequestJSON);
