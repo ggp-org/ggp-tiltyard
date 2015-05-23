@@ -29,6 +29,7 @@ import com.google.appengine.api.datastore.Text;
 
 import org.ggp.base.server.request.RequestBuilder;
 import org.ggp.base.util.crypto.BaseCryptography.EncodedKeyPair;
+import org.ggp.base.util.crypto.BaseHashing;
 import org.ggp.base.util.game.Game;
 import org.ggp.base.util.gdl.factory.GdlFactory;
 import org.ggp.base.util.gdl.scrambler.GdlScrambler;
@@ -306,10 +307,12 @@ public class MatchData {
         		extraHeaders.put("GGP-Match-ID", theMatch.getMatchId());
         		extraHeaders.put("GGP-Match-Step", getStepCount());
         		extraHeaders.put("GGP-Match-Host", "Tiltyard");
-        		extraHeaders.put("GGP-Match-Player-Count", theMatch.getPlayerNamesFromHost().size());
-        		for (int i = 0; i < theMatch.getPlayerNamesFromHost().size(); i++) {
-        			extraHeaders.put("GGP-Match-Player-" + i, theMatch.getPlayerNamesFromHost().get(i));
+        		StringBuilder sb = new StringBuilder();
+        		for (String playerName : theMatch.getPlayerNamesFromHost()) {
+        			 sb.append(BaseHashing.computeSHA1Hash(playerName) + ", ");
         		}
+        		sb.setLength(sb.length()-2);
+        		extraHeaders.put("GGP-Match-Players", sb.toString());
         		theRequestJSON.put("extraHeaders", extraHeaders);
         		
         		theRequests.put(theRequestJSON);
