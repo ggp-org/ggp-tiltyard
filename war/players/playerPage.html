@@ -61,7 +61,10 @@
               <legend id="form_player_name">Player Configuration</legend>
               <div class="control-group">
                 <label class="control-label" for="input_player_url">Player URL</label>
-                <div class="controls"><input type="text" id="input_player_url"><span id="player_status"></span></div>
+                <div class="controls">
+                  <input type="text" id="input_player_url"><span id="player_status"></span>
+                  <span id="trouble_connecting" style="display:none;">Trouble? <a href="//www.yougetsignal.com/tools/open-ports/">Make sure the port is open</a>.</span>
+                </div>                
               </div>
               <div class="control-group">
                 <label class="control-label" for="input_gdl_version">GDL Version</label>
@@ -351,7 +354,7 @@
               <div class="control-group">
                 <label class="control-label" for="input_player_pingable">Player pingable?</label>
                 <div class="controls"><input type="checkbox" id="input_player_pingable"></div>
-              </div>
+              </div>              
             </fieldset>
             <button class="btn btn-primary" type="button" onclick="submitPlayerData();">Save</button>
           </form>
@@ -360,6 +363,15 @@
     </div>
     
     <script type='text/javascript' charset="utf-8">
+        var troubleConnecting = function(aPlayer) {
+          if (!aPlayer.isEnabled) return false;
+          var z = aPlayer.infoStatus;
+          if (z == null) return true;
+          if (z.length == 0) return true;
+          z = z.toLowerCase();
+          if (z == "unknown") return true;
+          return false;
+        }
         var statusIcon = function(aPlayer) {          
           if (!aPlayer.isEnabled) {
             return '<img src="//www.ggp.org/viewer/images/presence/StatusGrey.png" title="Player is inactive."></img>';
@@ -393,8 +405,12 @@
         if ("thumbURL" in aPlayer) {
           playerThumbURL = aPlayer.thumbURL;
         }
-
         $('#player_status')[0].innerHTML    = statusIcon(aPlayer);
+        if (troubleConnecting(aPlayer)) {
+          $('#trouble_connecting')[0].style.cssText = '';
+        } else {
+          $('#trouble_connecting')[0].style.cssText = 'display:none';
+        }        
         $('#form_player_name')[0].innerHTML = '<a href="//tiltyard.ggp.org/players/"><img src="//tiltyard.ggp.org/static/images/back_icon.png" title="Back to player list" width=20 height=20></img></a> &nbsp;&nbsp; Player Configuration for ' + aPlayer.name + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <img src="' + playerThumbURL + '" title="Player icon" width=25 height=25></img>';
         $('#input_player_url')[0].value        = withDefaultValue(aPlayer.theURL, "");
         $('#input_gdl_version')[0].value       = withDefaultValue(aPlayer.gdlVersion, "GDLv1");
