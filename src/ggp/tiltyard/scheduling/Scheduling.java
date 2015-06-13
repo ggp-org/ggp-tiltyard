@@ -88,14 +88,15 @@ public class Scheduling {
 		new String[] { "hex", "hexPie", "majorities" },
 		// Mancala variants
 		new String[] { "kalaha6x2x4", "kalaha5x2x3" },
+		// Amazons variants
+		new String[] { "amazons_8x8", "amazons_10x10", "amazonsSuicide_10x10", "amazonsTorus_10x10" },
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
 				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2",
-				"tron_10x10" },
+				"tron_10x10" },		
 		// New games, that get an extra promotional boost because they're new
-		new String[] { "gt_tinfoil", "gt_two_thirds_2p", "gt_two_thirds_4p", "gt_two_thirds_6p",
-				"tron_10x10" },
+		new String[] { "amazons_8x8", "amazons_10x10", "amazonsSuicide_10x10", "amazonsTorus_10x10" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
