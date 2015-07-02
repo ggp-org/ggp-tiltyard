@@ -86,8 +86,6 @@ public class Scheduling {
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
 		new String[] { "hex", "hexPie", "majorities" },
-		// Mancala variants
-		new String[] { "kalaha6x2x4", "kalaha5x2x3" },
 		// Amazons variants
 		new String[] { "amazons_8x8", "amazons_10x10", "amazonsSuicide_10x10", "amazonsTorus_10x10" },
 		// Games that fell into no other category, but didn't seem to be
