@@ -31,15 +31,6 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <url-pattern>/appstats/*</url-pattern>
     </servlet-mapping>    
     
-    <servlet>
-        <servlet-name>ProdEagle</servlet-name>
-        <servlet-class>com.prodeagle.java.servlets.HarvestHandler</servlet-class>
-	</servlet>
-	<servlet-mapping>
-        <servlet-name>ProdEagle</servlet-name>
-        <url-pattern>/prodeagle/*</url-pattern>
-	</servlet-mapping>
-    
     <security-constraint>
         <web-resource-collection>
             <url-pattern>/cron/*</url-pattern>
