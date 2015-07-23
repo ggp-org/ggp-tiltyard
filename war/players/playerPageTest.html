@@ -399,7 +399,7 @@
       });
       generateHeader(document.getElementById('header'), "Tiltyard Registration", '');
 
-      var withDefaultValue = function (x,y) { if (x) { return x; } else { return y; } };       
+      var withDefaultValue = function (x,y) { if (x || x === false || x === "") { return x; } else { return y; } };       
       function showPlayerData(aPlayer) {
         var playerThumbURL = "http://placekitten.com/g/25/25";
         if ("thumbURL" in aPlayer) {
