@@ -101,11 +101,11 @@ public class MatchData {
         	throw new RuntimeException(e);
         } catch (GoalDefinitionException e) {
         	throw new RuntimeException(e);
-        }
-        while (!theMachine.isTerminal(theState) && allPendingMovesSubmitted()) {
-            advanceState(theMachine);
         }        
-
+        //while (!theMachine.isTerminal(theState) && allPendingMovesSubmitted()) {
+        //    advanceState(theMachine);
+        //}
+        
         matchKey = publish();
         save();
     }
@@ -203,6 +203,21 @@ public class MatchData {
 		}
     }
     
+    public void recordInitialErrors() {
+    	if (!theMatch.getErrorHistory().isEmpty()) {
+    		throw new RuntimeException("Tried to record initial errors for a match that already has errors recorded.");
+    	}
+    	if (theMatch.getStateHistory().size() > 1) {
+        	throw new RuntimeException("Tried to record initial errors for a match that's beyond the initial state.");
+    	}
+    	
+        List<String> theErrors = new ArrayList<String>();
+        for (int i = 0; i < pendingErrors.length; i++) {
+        	theErrors.add(pendingErrors[i] == null ? "" : pendingErrors[i]);
+        }
+        theMatch.appendErrors(theErrors);
+    }
+    
     private void setState(StateMachine theMachine, MachineState state, List<Move> moves) throws MoveDefinitionException, GoalDefinitionException {
         theMatch.appendState(state.getContents());
         if (moves != null) {
@@ -211,20 +226,22 @@ public class MatchData {
         if (theMachine.isTerminal(state)) {
         	theMatch.markCompleted(theMachine.getGoals(state));
         }
+
         if (pendingErrors != null) {
 	        List<String> theErrors = new ArrayList<String>();
 	        for (int i = 0; i < pendingErrors.length; i++) {
 	        	theErrors.add(pendingErrors[i] == null ? "" : pendingErrors[i]);
 	        }
 	        theMatch.appendErrors(theErrors);
+        } else if (theMatch.getStateHistory().size() > 1) {
+        	throw new RuntimeException("Could not find pendingError array for a match that's beyond the initial state.");
         } else {
-        	// TODO(schreib): Support errors in START response.
-        	theMatch.appendNoErrors();
+        	// For the initial state, the errors are added later.
         }
-
+        
         // Clear the current pending moves and errors
         pendingMoves = new String[theMachine.getRoles().size()];
-        pendingErrors = new String[theMachine.getRoles().size()];
+        pendingErrors = new String[theMachine.getRoles().size()];        
 
         // If the match isn't completed, we should fill in all of the moves
         // that are automatically forced (because the player has no other move).

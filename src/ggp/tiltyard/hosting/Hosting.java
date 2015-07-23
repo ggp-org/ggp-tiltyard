@@ -66,7 +66,7 @@ public class Hosting {
        			}
            		m.publish();
        		} else if (requestedTask.equals("select_moves")) {				
-           		selectMoves(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("forStep")), new JSONObject(req.getParameter("moveBatchJSON").replace("%20", " ").replace("+", " ")));
+           		selectMoves(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("forStep")), Boolean.parseBoolean(req.getParameter("atStart")), new JSONObject(req.getParameter("moveBatchJSON").replace("%20", " ").replace("+", " ")));
        		} else if (requestedTask.equals("request")) {
        			if (AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(req.getParameter("matchKey"))) return;
        			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
@@ -99,7 +99,7 @@ public class Hosting {
     }
 
     public static final int SELECT_MOVES_ATTEMPTS = 20;
-    public static void selectMoves(String matchKey, int forStep, JSONObject moveBatchJSON) {
+    public static void selectMoves(String matchKey, int forStep, boolean atStart, JSONObject moveBatchJSON) {
    		EncodedKeyPair theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
    		
    		// Attempt the transaction a few times. If the transaction can't go through
@@ -110,7 +110,7 @@ public class Hosting {
     	for (; nAttempt < SELECT_MOVES_ATTEMPTS; nAttempt++) {
 	    	PersistenceManager pm = Persistence.getPersistenceManager();
 	    	Transaction tx = pm.currentTransaction();
-
+	    	
 	    	try {
 		    	// Start the transaction
 	    	    tx.begin();
@@ -126,7 +126,7 @@ public class Hosting {
 	        	if (forStep != theMatch.getStepCount()) {
 	        		Logger.getAnonymousLogger().severe("Got misaligned move batch; got move for step " + forStep + " but match is actually at step " + theMatch.getStepCount());
 	        		return;
-	        	}		        		        	
+	        	}
 
 	        	boolean shouldPublish = false;
 		        StateMachine theMachine = theMatch.getMyStateMachine();
@@ -136,10 +136,14 @@ public class Hosting {
 	            	return;
 	            }
 	            
-	            try {
+	            try {	            	
 	            	JSONArray moveArray = moveBatchJSON.getJSONArray("responses");
 	            	// First, go through all of the incoming move requests, parse them,
 	            	// check their validity, and include them in the match description.
+	            	// Also record any outstanding errors found in the responses. For
+	            	// matches that have not started yet, where the players have just
+	            	// sent their responses to START and have not yet received their
+	            	// first PLAY request, don't attempt to interpret their responses.
 	            	for (int i = 0; i < moveArray.length(); i++) {
 	            		JSONObject moveResponse = moveArray.getJSONObject(i);
 	            		JSONObject moveRequest = moveResponse.getJSONObject("originalRequest");
@@ -181,47 +185,68 @@ public class Hosting {
     						}
     					}
 	            		
-			            if (theError.isEmpty()) {
-			            	String move = moveResponse.getString("response");  // .replace("%20", " ").replace("+", " ")
-			            	try {
-			            		if (source.equals("robot")) {
-			            			move = theMatch.getScrambler().unscramble(move).toString();
-			            		}
-			            	} catch (GdlFormatException e) {
-			            		;
-			            	} catch (SymbolFormatException e) {
-			            		;
-			            	}
-			            	try {
-			            		theMove = theMachine.getMoveFromTerm(GdlFactory.createTerm(move));
-							} catch (SymbolFormatException e) {
-								// Can't parse the move? Not valid.
-								theMove = null;
-							}
-							if(theMove != null && !theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex)).contains(theMove)) {
-								// Move isn't in the set of legal moves? Not valid.
-								theMove = null;
-							}
-			            	if (theMove == null) {
-			            		// Move isn't valid? Set an error.
-			            		theError = "IL " + move;
-			            	}
-			            }
-			            if (theMove == null) {
-			            	// When the move isn't valid, choose a random move.
-			            	List<Move> theMoves = theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex));
-		                	Collections.shuffle(theMoves);
-		                	theMove = theMoves.get(0);
-			            }
-		            	
-		            	theMatch.setPendingMove(nRoleIndex, theMove.toString());
+    					// After the match has started, also extract move-related information
+    					// from the request response and interpret it.
+    					if (!atStart) {
+				            if (theError.isEmpty()) {
+				            	String move = moveResponse.getString("response");  // .replace("%20", " ").replace("+", " ")
+				            	try {
+				            		if (source.equals("robot")) {
+				            			move = theMatch.getScrambler().unscramble(move).toString();
+				            		}
+				            	} catch (GdlFormatException e) {
+				            		;
+				            	} catch (SymbolFormatException e) {
+				            		;
+				            	}
+				            	try {
+				            		theMove = theMachine.getMoveFromTerm(GdlFactory.createTerm(move));
+								} catch (SymbolFormatException e) {
+									// Can't parse the move? Not valid.
+									theMove = null;
+								}
+								if(theMove != null && !theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex)).contains(theMove)) {
+									// Move isn't in the set of legal moves? Not valid.
+									theMove = null;
+								}
+				            	if (theMove == null) {
+				            		// Move isn't valid? Set an error.
+				            		theError = "IL " + move;
+				            	}
+				            }
+				            if (theMove == null) {
+				            	// When the move isn't valid, choose a random move.
+				            	List<Move> theMoves = theMachine.getLegalMoves(theState, theMachine.getRoles().get(nRoleIndex));
+			                	Collections.shuffle(theMoves);
+			                	theMove = theMoves.get(0);
+				            }
+				            theMatch.setPendingMove(nRoleIndex, theMove.toString());
+    					}
+
 		            	theMatch.setPendingError(nRoleIndex, theError);
 	            	}
-
-	            	// Once the move has been set as pending, check to see if the match can
-	            	// transition to the next step. This is done as a loop so that even when
-	            	// all of the players have NOOP moves or are playing randomly, we'll still
-	            	// push through to the next state.
+	            	
+	            	// For matches that have not started yet, now that we've received
+	            	// initial responses to START from all players, they can be started.
+	            	if (atStart) {
+	            		shouldPublish = true;
+	            		theMatch.recordInitialErrors();
+                        if (theMatch.hasComputerPlayers()) {
+	                        String theRequest = null;
+	                        if (theMatch.isCompleted()) {
+	                        	theRequest = RequestBuilder.getStopRequest(theMatch.getMatchId(), null, theMatch.getScrambler());
+	                        } else {
+	                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), null, theMatch.getScrambler());
+	                        }
+	                        addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest));
+                        }
+	            	}
+	            	
+	            	// Once the incoming moves have been processed -- either acknowledged,
+	            	// when coming from START, or set as pending, when coming from PLAY --
+	            	// check to see if the match can transition to the next step. This is done
+	            	// as a loop so that even when all of the players have NOOP moves or are
+	            	// playing randomly, we'll still push through to the next state.
                     while (!theMachine.isTerminal(theState) && theMatch.allPendingMovesSubmitted()) {
                         List<Move> theMoves = theMatch.advanceState(theMachine);
                         shouldPublish = true;
@@ -344,20 +369,13 @@ public class Hosting {
 				if (!aRequestJSON.has("matchKey")) {
 					throw new RuntimeException("Could not get match key from callback: " + aRequestJSON.toString());
 				}
-				String matchId = aRequestJSON.getString("matchId");
 				String matchKey = aRequestJSON.getString("matchKey");
 				int forStep = aRequestJSON.getInt("forStep");
 				if (!AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(matchKey)) {
 					if (aRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
-						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponseJSON.toString()));
+						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("atStart", "False").param("moveBatchJSON", theBatchResponseJSON.toString()));
 					} else if (aRequestJSON.getString("requestContent").startsWith("( START ")) {
-						MatchData theMatch = MatchData.loadMatchData(matchKey);
-						if (theMatch == null) {
-							Logger.getAnonymousLogger().severe("Could not find match referenced by callback: " + aRequestJSON.toString());
-						} else {
-							String theFirstPlayRequest = RequestBuilder.getPlayRequest(matchId, null, theMatch.getScrambler());
-							addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", matchKey).param("requestContent", theFirstPlayRequest));
-						}
+						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("atStart", "True").param("moveBatchJSON", theBatchResponseJSON.toString()));
 					} else if (aRequestJSON.getString("requestContent").startsWith("( STOP ") ||
 							   aRequestJSON.getString("requestContent").startsWith("( ABORT ")) {
 						;
@@ -398,7 +416,7 @@ public class Hosting {
 					return;
 				}
 
-				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("moveBatchJSON", theBatchResponse.toString()));
+				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("atStart", "False").param("moveBatchJSON", theBatchResponse.toString()));
 				
 				resp.getWriter().println(theMove);
 			}
