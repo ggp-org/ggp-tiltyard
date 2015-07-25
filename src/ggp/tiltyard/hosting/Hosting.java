@@ -66,7 +66,7 @@ public class Hosting {
        			}
            		m.publish();
        		} else if (requestedTask.equals("select_moves")) {				
-           		selectMoves(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("forStep")), Boolean.parseBoolean(req.getParameter("atStart")), new JSONObject(req.getParameter("moveBatchJSON").replace("%20", " ").replace("+", " ")));
+           		selectMoves(req.getParameter("matchKey"), Integer.parseInt(req.getParameter("forStep")), Boolean.parseBoolean(req.getParameter("startResponse")), new JSONObject(req.getParameter("moveBatchJSON").replace("%20", " ").replace("+", " ")));
        		} else if (requestedTask.equals("request")) {
        			if (AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(req.getParameter("matchKey"))) return;
        			MatchData.loadMatchData(req.getParameter("matchKey")).issueRequestForAll(req.getParameter("requestContent"));
@@ -99,7 +99,7 @@ public class Hosting {
     }
 
     public static final int SELECT_MOVES_ATTEMPTS = 20;
-    public static void selectMoves(String matchKey, int forStep, boolean atStart, JSONObject moveBatchJSON) {
+    public static void selectMoves(String matchKey, int forStep, boolean startResponse, JSONObject moveBatchJSON) {
    		EncodedKeyPair theKeys = StoredCryptoKeys.loadCryptoKeys("Tiltyard");
    		
    		// Attempt the transaction a few times. If the transaction can't go through
@@ -185,9 +185,13 @@ public class Hosting {
     						}
     					}
 	            		
-    					// After the match has started, also extract move-related information
-    					// from the request response and interpret it.
-    					if (!atStart) {
+    					// For responses to START requests, just record the errors as the initial
+    					// errors for the match. For responses to PLAY requests, also extract the
+    					// move-related information and interpret it, and then record the move and
+    					// error information.
+    					if (startResponse) {
+    						theMatch.setInitialError(nRoleIndex, theError);
+    					} else {
 				            if (theError.isEmpty()) {
 				            	String move = moveResponse.getString("response");  // .replace("%20", " ").replace("+", " ")
 				            	try {
@@ -221,32 +225,29 @@ public class Hosting {
 			                	theMove = theMoves.get(0);
 				            }
 				            theMatch.setPendingMove(nRoleIndex, theMove.toString());
-    					}
-
-		            	theMatch.setPendingError(nRoleIndex, theError);
+				            theMatch.setPendingError(nRoleIndex, theError);
+    					}		            	
 	            	}
 	            	
-	            	// For matches that have not started yet, now that we've received
-	            	// initial responses to START from all players, they can be started.
-	            	if (atStart) {
-	            		shouldPublish = true;
-	            		theMatch.recordInitialErrors();
-                        if (theMatch.hasComputerPlayers()) {
-	                        String theRequest = null;
-	                        if (theMatch.isCompleted()) {
-	                        	theRequest = RequestBuilder.getStopRequest(theMatch.getMatchId(), null, theMatch.getScrambler());
-	                        } else {
-	                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), null, theMatch.getScrambler());
-	                        }
-	                        addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest));
+	            	// Once the START response has been received, the next step
+	            	// is to issue a PLAY request for the computer players.
+	            	if (startResponse) {
+	            		if (!theMatch.hasComputerPlayers()) {
+	            			throw new RuntimeException("Got a START response but no computer players are present!");
+	            		}
+                        String theRequest = null;
+                        if (theMatch.isCompleted()) {
+                        	theRequest = RequestBuilder.getStopRequest(theMatch.getMatchId(), null, theMatch.getScrambler());
+                        } else {
+                        	theRequest = RequestBuilder.getPlayRequest(theMatch.getMatchId(), null, theMatch.getScrambler());
                         }
+                        addTaskToQueue(withUrl("/hosting/tasks/request").method(Method.GET).param("matchKey", theMatch.getMatchKey()).param("requestContent", theRequest));
 	            	}
 	            	
-	            	// Once the incoming moves have been processed -- either acknowledged,
-	            	// when coming from START, or set as pending, when coming from PLAY --
-	            	// check to see if the match can transition to the next step. This is done
-	            	// as a loop so that even when all of the players have NOOP moves or are
-	            	// playing randomly, we'll still push through to the next state.
+	            	// Check to see if the match can transition to the next step. This is done
+	            	// as a loop so that if all of the players have NOOP moves or are playing
+	            	// randomly, we'll push through until we reach a state that requires some
+	            	// meaningful interaction with them.
                     while (!theMachine.isTerminal(theState) && theMatch.allPendingMovesSubmitted()) {
                         List<Move> theMoves = theMatch.advanceState(theMachine);
                         shouldPublish = true;
@@ -373,9 +374,9 @@ public class Hosting {
 				int forStep = aRequestJSON.getInt("forStep");
 				if (!AbortedMatchKeys.loadAbortedMatchKeys().isRecentlyAborted(matchKey)) {
 					if (aRequestJSON.getString("requestContent").startsWith("( PLAY ")) {
-						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("atStart", "False").param("moveBatchJSON", theBatchResponseJSON.toString()));
+						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("startResponse", "False").param("moveBatchJSON", theBatchResponseJSON.toString()));
 					} else if (aRequestJSON.getString("requestContent").startsWith("( START ")) {
-						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("atStart", "True").param("moveBatchJSON", theBatchResponseJSON.toString()));
+						addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("startResponse", "True").param("moveBatchJSON", theBatchResponseJSON.toString()));
 					} else if (aRequestJSON.getString("requestContent").startsWith("( STOP ") ||
 							   aRequestJSON.getString("requestContent").startsWith("( ABORT ")) {
 						;
@@ -416,7 +417,7 @@ public class Hosting {
 					return;
 				}
 
-				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("atStart", "False").param("moveBatchJSON", theBatchResponse.toString()));
+				addTaskToQueue(withUrl("/hosting/tasks/select_moves").method(Method.POST).param("matchKey", matchKey).param("forStep", "" + forStep).param("startResponse", "False").param("moveBatchJSON", theBatchResponse.toString()));
 				
 				resp.getWriter().println(theMove);
 			}

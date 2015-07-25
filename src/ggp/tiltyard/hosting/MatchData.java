@@ -57,11 +57,21 @@ public class MatchData {
 	@Persistent private String[] playerURLs;
 	@Persistent private String[] playerRegions;
 	@Persistent private boolean[] playsRandomly;
-    @Persistent private String[] pendingMoves;
-    @Persistent private String[] pendingErrors;
     @Persistent private Text theGameJSON;
     @Persistent private Text theMatchJSON;
     @Persistent private String theAuthToken;
+    
+    // These three arrays contain pending match inputs from each player.
+    // Their entries are inputs received from each player that have not
+    // yet been incorporated into the underlying match data (theMatch).
+    //
+    // pendingMoves/pendingErrors contain moves and errors in response
+    // to a PLAY request.
+    //
+    // initialErrors contains errors in response to START request.
+    @Persistent private String[] pendingMoves;
+    @Persistent private String[] pendingErrors;    
+    @Persistent private String[] initialErrors;    
     
     private Match theMatch;
     
@@ -93,6 +103,11 @@ public class MatchData {
         theMatch.setWhichPlayersAreHuman(isPlayerHuman);
         theMatch.enableScrambling();
 
+        // Initialize the arrays containing pending match inputs.
+    	initialErrors = new String[playerNames.size()];        
+        pendingErrors = new String[playerNames.size()];
+        pendingMoves = new String[playerNames.size()];
+        
         StateMachine theMachine = getMyStateMachine();
         MachineState theState = theMachine.getInitialState();
         try {
@@ -102,9 +117,9 @@ public class MatchData {
         } catch (GoalDefinitionException e) {
         	throw new RuntimeException(e);
         }        
-        //while (!theMachine.isTerminal(theState) && allPendingMovesSubmitted()) {
-        //    advanceState(theMachine);
-        //}
+        while (!theMachine.isTerminal(theState) && allPendingMovesSubmitted()) {
+            advanceState(theMachine);
+        }
         
         matchKey = publish();
         save();
@@ -202,22 +217,15 @@ public class MatchData {
 			throw new RuntimeException(e);
 		}
     }
-    
-    public void recordInitialErrors() {
-    	if (!theMatch.getErrorHistory().isEmpty()) {
-    		throw new RuntimeException("Tried to record initial errors for a match that already has errors recorded.");
-    	}
-    	if (theMatch.getStateHistory().size() > 1) {
-        	throw new RuntimeException("Tried to record initial errors for a match that's beyond the initial state.");
+
+    public void setInitialError(int nRoleIndex, String error) {
+    	if (initialErrors == null) {
+    		throw new RuntimeException("initialErrors is not initialized, but trying to record error " + error + " for player " + nRoleIndex);
     	}
     	
-        List<String> theErrors = new ArrayList<String>();
-        for (int i = 0; i < pendingErrors.length; i++) {
-        	theErrors.add(pendingErrors[i] == null ? "" : pendingErrors[i]);
-        }
-        theMatch.appendErrors(theErrors);
+    	initialErrors[nRoleIndex] = error;
     }
-    
+
     private void setState(StateMachine theMachine, MachineState state, List<Move> moves) throws MoveDefinitionException, GoalDefinitionException {
         theMatch.appendState(state.getContents());
         if (moves != null) {
@@ -226,22 +234,42 @@ public class MatchData {
         if (theMachine.isTerminal(state)) {
         	theMatch.markCompleted(theMachine.getGoals(state));
         }
+        
+        // Are we in a non-initial state?
+        if (theMatch.getStateHistory().size() > 1) {
+        	// For the first non-initial state, we must also backfill the initial
+        	// errors received in the START request before writing the pending errors
+        	// from the subsequent PLAY request.
+        	if (initialErrors != null && theMatch.getStateHistory().size() == 2) {
+        		// This should only happen in the first non-initial state.
+        		if (theMatch.getStateHistory().size() != 2) {
+        			throw new RuntimeException("Found non-null initialErrors in state " + theMatch.getStateHistory().size());
+        		}
+        		
+        		// Collect the initial errors and write them into theMatch.
+    	        List<String> theErrors = new ArrayList<String>();
+    	        for (int i = 0; i < initialErrors.length; i++) {
+    	        	theErrors.add(initialErrors[i] == null ? "" : initialErrors[i]);
+    	        }
+    	        theMatch.appendErrors(theErrors);
+    	        initialErrors = null;        		
+        	}
 
-        if (pendingErrors != null) {
+        	if (pendingErrors == null) {
+        		throw new RuntimeException("Could not find pendingError array for a match that's beyond the initial state.");
+        	}
+        	// Collect the pending errors and write them into theMatch.
 	        List<String> theErrors = new ArrayList<String>();
 	        for (int i = 0; i < pendingErrors.length; i++) {
 	        	theErrors.add(pendingErrors[i] == null ? "" : pendingErrors[i]);
 	        }
-	        theMatch.appendErrors(theErrors);
-        } else if (theMatch.getStateHistory().size() > 1) {
-        	throw new RuntimeException("Could not find pendingError array for a match that's beyond the initial state.");
-        } else {
-        	// For the initial state, the errors are added later.
+	        theMatch.appendErrors(theErrors);        	
         }
         
-        // Clear the current pending moves and errors
+        // Clear the pending match inputs, since they're now incorporated into
+        // the state of the match.
         pendingMoves = new String[theMachine.getRoles().size()];
-        pendingErrors = new String[theMachine.getRoles().size()];        
+        pendingErrors = new String[theMachine.getRoles().size()];
 
         // If the match isn't completed, we should fill in all of the moves
         // that are automatically forced (because the player has no other move).
@@ -439,7 +467,6 @@ public class MatchData {
 				e.printStackTrace();
 			}
         }
-        //Counter.increment("Tiltyard.Scheduling.Round.Success");
     }
     
     public MachineState getState(StateMachine theMachine) {
@@ -449,11 +476,19 @@ public class MatchData {
     }
 
     public void setPendingMove(int nRoleIndex, String move) {
-        this.pendingMoves[nRoleIndex] = move;
+    	if (pendingMoves == null) {
+    		throw new RuntimeException("pendingMoves is not initialized, but trying to record move " + move + " for player " + nRoleIndex);
+    	}
+    	
+        pendingMoves[nRoleIndex] = move;
     }
     
     public void setPendingError(int nRoleIndex, String error) {
-        this.pendingErrors[nRoleIndex] = error;
+    	if (pendingErrors == null) {
+    		throw new RuntimeException("pendingErrors is not initialized, but trying to record error " + error + " for player " + nRoleIndex);
+    	}    	
+    	
+        pendingErrors[nRoleIndex] = error;
     }    
 
     public boolean allPendingMovesSubmitted() {
