@@ -56,6 +56,8 @@ public class Scheduling {
 		// Sudoku variants
 		new String[] { "sudokuGrade1", "sudokuGrade2", "sudokuGrade3", "sudokuGrade4",
 				"sudokuGrade5", "sudokuGrade6E", "sudokuGrade6H" },
+		// Futoshiki variants
+		new String[] { "futoshiki4", "futoshiki5", "futoshiki6" },
 		// FFA/TTC variants
 		new String[] { "2pffa_zerosum", "2pffa", "3pffa", "4pffa",
 				"2pttc", "3pttc", "4pttc", "ttcc4_2player", },
@@ -93,8 +95,9 @@ public class Scheduling {
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
 				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2",
 				"tron_10x10" },		
-		// New games, that get an extra promotional boost because they're new
-		new String[] { "amazons_8x8", "amazons_10x10", "amazonsSuicide_10x10", "amazonsTorus_10x10" },
+		// New games, that get an extra promotional boost because they're new or interesting
+		new String[] { "futoshiki4", "futoshiki5", "futoshiki6", "pentago", "nineBoardTicTacToe",
+				"connectFour", "englishDraughts" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
