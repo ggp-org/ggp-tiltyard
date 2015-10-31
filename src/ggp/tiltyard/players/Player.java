@@ -46,7 +46,7 @@ public class Player {
     @Persistent private Integer nPingStrikes;
     @Persistent private String infoStatus;
     @Persistent private String infoError;
-    @Persistent private Text infoFull;
+    @Persistent private Text infoFull;    
 
     // Optional fields.
     @Persistent private String visibleEmail;
@@ -55,6 +55,7 @@ public class Player {
     @Persistent private String exponentURL;
     @Persistent private String exponentVizURL;
     @Persistent private String theCountryCode;
+    @Persistent private Boolean isRegisteredForTourney;
     
     // Optional image-related fields.
     @Persistent private String imageBlobKey;
@@ -166,6 +167,14 @@ public class Player {
 
     public void setExponentVizURL(String exponentVizURL) {
     	this.exponentVizURL = exponentVizURL;
+    }
+    
+    public void setRegisteredForTourney(boolean isRegistered) {
+    	this.isRegisteredForTourney = isRegistered;
+    }
+    
+    public boolean getRegisteredForTourney() {
+    	return isRegisteredForTourney;
     }
     
     public static final String REGION_US = "US";
@@ -297,6 +306,7 @@ public class Player {
             theJSON.put("name", theName);
             theJSON.put("isEnabled", isEnabled);
             theJSON.put("isPingable", isPingable);
+            theJSON.put("isRegisteredForTourney", isRegisteredForTourney);
             theJSON.put("gdlVersion", gdlVersion);
             theJSON.put("visibleEmail", visibleEmail);
             theJSON.put("visibleWebsite", visibleWebsite);

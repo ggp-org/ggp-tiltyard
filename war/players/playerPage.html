@@ -344,6 +344,10 @@
                 </div>
               </div>
               <div class="control-group">
+                <label class="control-label" for="input_player_tourney">Tiltyard Open?</label>
+                <div class="controls"><input type="checkbox" id="input_player_tourney"></div>
+              </div>                            
+              <div class="control-group">
                 <label class="control-label" for="form_upload_image">Player Image</label>
                 <div class="controls"><input type="file" name="myFile"><input type="submit" value="Upload"></div>
               </div>              
@@ -422,6 +426,7 @@
         $('#input_player_active')[0].checked   = withDefaultValue(aPlayer.isEnabled, false);
         $('#input_player_pingable')[0].checked = withDefaultValue(aPlayer.isPingable, true);
         $('#form_upload_image')[0].action      = withDefaultValue(aPlayer.imageUploadURL, "");
+        $('#input_player_tourney')[0].checked  = withDefaultValue(aPlayer.isRegisteredForTourney, false);
       }
       
       function submitPlayerData() {
@@ -436,6 +441,7 @@
         aPlayer.isEnabled = $('#input_player_active')[0].checked;
         aPlayer.gdlVersion = $('#input_gdl_version')[0].value;
         aPlayer.countryCode = $('#input_player_country')[0].value;
+        aPlayer.isRegisteredForTourney = $('#input_player_tourney')[0].checked;
         aPlayer = JSON.parse(ResourceLoader.post_raw("/data/updatePlayer", JSON.stringify(aPlayer)));
         showPlayerData(aPlayer);
         alert('Saved!');
@@ -456,6 +462,7 @@
       $('#input_exponent_viz_url').popover({'title':'Log Visualization', 'content':'Optional URL for the log visualization page associated with this player. Please note: currently, all log contents and the log-related URLs will be publicly visible. Use at your own risk.'});
       $('#input_player_active').popover({'title':'Player Active', 'content':'Automatically assign this player matches in the GGP Tiltyard?'});
       $('#input_player_pingable').popover({'title':'Player Pingable', 'content':'Only assign this player matches after sending an info request to make sure it\'s available?'});
+      $('#input_player_tourney').popover({'title':'Tiltyard Open', 'content':'Allow this player to participate in the next Tiltyard Open tournament.'});
       $('#input_player_country_autocomplete').popover({'title':'Player Country', 'content':'Which country is this player located in? Tiltyard uses this information to connect to the player from nearby backends, reducing network latency.'});
     </script>
   </body>  

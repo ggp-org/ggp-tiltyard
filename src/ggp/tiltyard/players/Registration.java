@@ -127,6 +127,7 @@ public class Registration {
                 
                 p.setEnabled(playerInfo.getBoolean("isEnabled"));
                 p.setPingable(playerInfo.getBoolean("isPingable"));
+                p.setRegisteredForTourney(playerInfo.getBoolean("isRegisteredForTourney"));
                 p.setURL(sanitize(playerInfo.getString("theURL")));
                 p.setVisibleEmail(sanitize(playerInfo.getString("visibleEmail")));
                 p.setVisibleWebsite(sanitize(playerInfo.getString("visibleWebsite")));
