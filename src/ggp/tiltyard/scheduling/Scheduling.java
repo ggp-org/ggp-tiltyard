@@ -30,6 +30,11 @@ public class Scheduling {
     // inject arbitrary javascript into the visualizations).	
 	private static final String GAME_REPO_URL = "http://games.ggp.org/base/";
 	
+	// This is the tournament name for all of the regularly-scheduled Tiltyard
+	// matches, the ones not initiated by manual action or as part of a special
+	// "Tiltyard Open" tournament.
+	private static final String REGULAR_TOURNAMENT_NAME = "tiltyard_continuous";
+	
 	// This is a whitelist of games that run on Tiltyard, organized by category.
 	// This eliminates the following classes of games:
 	//
@@ -284,7 +289,7 @@ public class Scheduling {
         int previewClock = -1;
 
         // Start the match using the hybrid match hosting system.
-       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, playerRegionsForMatch, previewClock, startClock, playClock);        	
+       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, playerRegionsForMatch, previewClock, startClock, playClock, REGULAR_TOURNAMENT_NAME);        	
     }
 
     private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {    	

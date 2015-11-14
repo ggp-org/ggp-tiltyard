@@ -18,7 +18,12 @@ import javax.jdo.annotations.*;
 import org.ggp.galaxy.shared.persistence.Persistence;
 
 @PersistenceCapable
-public class PendingMatch {	
+public class PendingMatch {
+	// This is the tournament name for all of the Tiltyard matches triggered by
+	// one-off manual action (as opposed to regular scheduling or any of the special
+	// "Tiltyard Open" tournaments).
+	private static final String MANUAL_TOURNAMENT_NAME = "tiltyard_requested";	
+	
     @PrimaryKey @Persistent private String pendingKey;
 
     @Persistent private String gameURL;
@@ -121,7 +126,7 @@ public class PendingMatch {
         	}
         }
         
-    	String matchKey = Hosting.startMatch(gameURL, playerURLs, playerNames, playerRegions, previewClock, startClock, playClock);
+    	String matchKey = Hosting.startMatch(gameURL, playerURLs, playerNames, playerRegions, previewClock, startClock, playClock, MANUAL_TOURNAMENT_NAME);
     	if (matchKey != null) {
     		availablePlayers.removeAll(usedPlayers);
     	}
