@@ -173,7 +173,7 @@ public class Player {
     	this.isRegisteredForTourney = isRegistered;
     }
     
-    public boolean getRegisteredForTourney() {
+    public boolean isRegisteredForTourney() {
     	return isRegisteredForTourney;
     }
     
