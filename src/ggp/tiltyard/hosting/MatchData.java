@@ -132,6 +132,10 @@ public class MatchData {
     public String getMatchId() {
     	return theMatch.getMatchId();
     }
+    
+    public String getTournamentId() {
+    	return theMatch.getTournamentNameFromHost();
+    }
 
     public boolean isCompleted() {
     	return theMatch.isCompleted();
