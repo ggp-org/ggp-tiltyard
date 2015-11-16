@@ -2,6 +2,7 @@ package ggp.tiltyard;
 
 import ggp.tiltyard.players.Registration;
 import ggp.tiltyard.scheduling.Scheduling;
+import ggp.tiltyard.scheduling.TournamentData;
 import ggp.tiltyard.backends.BackendRegistration;
 import ggp.tiltyard.hosting.Hosting;
 import ggp.tiltyard.identity.GitkitIdentity;
@@ -79,6 +80,24 @@ public class GGP_TiltyardServlet extends HttpServlet {
         	Hosting.doTask(req, resp);
         	return;
         }
+        
+        // TODO: Get rid of this once tournament testing is done.
+        if (req.getRequestURI().equals("/start_test_tourney")) {
+        	new TournamentData("test_tourney_1", "wazzap").save();
+            resp.setContentType("text/plain");
+            resp.getWriter().println("Started test tourney");
+            resp.setStatus(200);
+            return;
+        }
+        
+        // TODO: Get rid of this once tournament testing is done.
+        if (req.getRequestURI().equals("/check_test_tourney")) {
+        	TournamentData t = TournamentData.loadTournamentData("test_tourney_1");
+            resp.setContentType("text/plain");
+            resp.getWriter().println(t.getPublicToInternalMatchIdMap());
+            resp.setStatus(200);
+            return;
+        }        
         
         String reqURI = req.getRequestURI();
         if (reqURI.equals("/about")) reqURI += "/";
