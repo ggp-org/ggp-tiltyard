@@ -24,8 +24,8 @@ interface Tournament {
 //Fake class until we can incorporate ggp-tournament
 class TournamentSpecParser {
 	static class MockTournament implements Tournament {
-		public String getInternalName() { return "test_tourney_1"; }
-		public String getDisplayName() { return "Test Tourney 1"; }
+		public String getInternalName() { return "test_tourney_2"; }
+		public String getDisplayName() { return "Test Tourney 2"; }
 		public long getSecondsToWaitUntilInitialStartTime() { return Math.max(0, BEGIN_TIME - System.currentTimeMillis()); }
 		@Override
 		public NextMatchesResult getMatchesToRun(Seeding initialSeeding, Set<MatchResult> resultsSoFar) {
@@ -42,9 +42,17 @@ class TournamentSpecParser {
 				nextToRun.addMatchSetup(MatchSetup.create("opaque-id-1", TGame.create("http://games.ggp.org/base/games/ticTacToe/v0/", 2, true), Arrays.asList(new String[]{ "LabOne", "LabTwo" }), 30, 10));
 			} else if (!doneInternalIDs.contains("opaque-id-2")) {
 				nextToRun.addMatchSetup(MatchSetup.create("opaque-id-2", TGame.create("http://games.ggp.org/base/games/ticTacToe/v0/", 2, true), Arrays.asList(new String[]{ "LabTwo", "LabOne" }), 30, 10));
-			} else if (!doneInternalIDs.contains("opaque-id-3")) {
-				nextToRun.addMatchSetup(MatchSetup.create("opaque-id-3", TGame.create("http://games.ggp.org/base/games/maze/v0/", 1, true), Arrays.asList(new String[]{ "LabOne" }), 30, 10));
-				nextToRun.addMatchSetup(MatchSetup.create("opaque-id-4", TGame.create("http://games.ggp.org/base/games/maze/v0/", 1, true), Arrays.asList(new String[]{ "LabTwo" }), 30, 10));
+			} else if (!doneInternalIDs.contains("opaque-id-3") || !doneInternalIDs.contains("opaque-id-4")) {
+				if (!doneInternalIDs.contains("opaque-id-3")) {
+					nextToRun.addMatchSetup(MatchSetup.create("opaque-id-3", TGame.create("http://games.ggp.org/base/games/maze/v0/", 1, true), Arrays.asList(new String[]{ "LabOne" }), 30, 10));
+				}
+				if (!doneInternalIDs.contains("opaque-id-4")) {
+					nextToRun.addMatchSetup(MatchSetup.create("opaque-id-4", TGame.create("http://games.ggp.org/base/games/maze/v0/", 1, true), Arrays.asList(new String[]{ "LabTwo" }), 30, 10));
+				}
+			} else if (!doneInternalIDs.contains("opaque-id-5")) {
+				nextToRun.addMatchSetup(MatchSetup.create("opaque-id-5", TGame.create("http://games.ggp.org/base/games/connectFour/v0/", 2, true), Arrays.asList(new String[]{ "LabTwo", "LabOne" }), 30, 10));
+			} else if (!doneInternalIDs.contains("opaque-id-6")) {
+				nextToRun.addMatchSetup(MatchSetup.create("opaque-id-6", TGame.create("http://games.ggp.org/base/games/connectFour/v0/", 2, true), Arrays.asList(new String[]{ "LabOne", "LabTwo" }), 30, 10));
 			}
 			return nextToRun;
 		}		

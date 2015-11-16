@@ -83,7 +83,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
         
         // TODO: Get rid of this once tournament testing is done.
         if (req.getRequestURI().equals("/start_test_tourney")) {
-        	new TournamentData("test_tourney_1", "wazzap").save();
+        	new TournamentData("test_tourney_2", "wazzap").save();
             resp.setContentType("text/plain");
             resp.getWriter().println("Started test tourney");
             resp.setStatus(200);
@@ -92,7 +92,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
         
         // TODO: Get rid of this once tournament testing is done.
         if (req.getRequestURI().equals("/check_test_tourney")) {
-        	TournamentData t = TournamentData.loadTournamentData("test_tourney_1");
+        	TournamentData t = TournamentData.loadTournamentData("test_tourney_2");
             resp.setContentType("text/plain");
             resp.getWriter().println(t.getPublicToInternalMatchIdMap());
             resp.setStatus(200);
