@@ -12,8 +12,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 
 import javax.servlet.http.*;
+
+import org.ggp.base.util.loader.RemoteResourceLoader;
 
 import com.google.appengine.api.capabilities.CapabilitiesService;
 import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
@@ -83,18 +86,22 @@ public class GGP_TiltyardServlet extends HttpServlet {
         
         // TODO: Get rid of this once tournament testing is done.
         if (req.getRequestURI().equals("/start_test_tourney")) {
-        	new TournamentData("test_tourney_2", "wazzap").save();
+        	String yaml = RemoteResourceLoader.loadRaw("https://storage.googleapis.com/ggp-static-content/test_tourney_spec.txt");
             resp.setContentType("text/plain");
-            resp.getWriter().println("Started test tourney");
+        	new TournamentData("test_tourney_4", yaml).save();
+            resp.getWriter().println("Started test tourney from spec:\n\n" + yaml);
             resp.setStatus(200);
             return;
         }
         
         // TODO: Get rid of this once tournament testing is done.
         if (req.getRequestURI().equals("/check_test_tourney")) {
-        	TournamentData t = TournamentData.loadTournamentData("test_tourney_2");
+        	TournamentData t = TournamentData.loadTournamentData("test_tourney_4");
             resp.setContentType("text/plain");
-            resp.getWriter().println(t.getPublicToInternalMatchIdMap());
+            resp.getWriter().println("Tournament " + t.getTournamentKey() + "\n");
+            resp.getWriter().println("Players: " + Arrays.asList(t.getPlayersInvolved().toArray()) + "\n");
+            resp.getWriter().println("Matches: " + t.getPublicToInternalMatchIdMap() + "\n");
+            resp.getWriter().println("Ranking: " + t.getRanking());
             resp.setStatus(200);
             return;
         }        

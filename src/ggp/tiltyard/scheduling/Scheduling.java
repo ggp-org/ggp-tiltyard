@@ -24,6 +24,11 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletResponse;
 
+import net.alloyggp.tournament.api.TMatchSetup;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TSeeding;
+
 import org.ggp.base.util.gdl.factory.exceptions.GdlFormatException;
 import org.ggp.base.util.loader.RemoteResourceLoader;
 import org.ggp.base.util.symbol.factory.exceptions.SymbolFormatException;
@@ -201,7 +206,7 @@ public class Scheduling {
         	if (tournament.hasFinished()) {
         		continue;
         	}
-        	
+
         	// For ongoing tournaments, special tournament scheduling rules are in effect.
         	if (secondsToStart == 0L) {
         		// First, check if the tournament has been seeded yet. If not, do so now.
@@ -217,10 +222,18 @@ public class Scheduling {
         		} catch (Exception e) {
         			Logger.getAnonymousLogger().log(Level.SEVERE, "Could not schedule for tournament " + tournament.getTournamentKey() + ": " + e, e);
         		}
+        		
+        		// Lastly, drain ordinary scheduling for all players involved in the tournament.
+                for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
+                    Player p = theAvailablePlayers.get(i);
+                    if (tournament.getPlayersInvolved().contains(p.getName())) {
+                        theAvailablePlayers.remove(i);
+                    }
+                }        		
             }
         	
-        	// For ongoing and upcoming tournaments, drain regular scheduling for all involved players.
-        	if (secondsToStart < SECONDS_BEFORE_TOURNEY_TO_STOP_NEW_MATCHES) {
+        	// For upcoming tournaments, drain regular scheduling for all potentially-involved players.
+        	if (0 < secondsToStart && secondsToStart < SECONDS_BEFORE_TOURNEY_TO_STOP_NEW_MATCHES) {
                 for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                     Player p = theAvailablePlayers.get(i);
                     if (p.isRegisteredForTourney()) {
@@ -354,28 +367,25 @@ public class Scheduling {
     }
     
     private static void runTournamentSetup(TournamentData tournament, List<Player> theAvailablePlayers) {
-		Set<Player> playersForTourney = new HashSet<Player>();
+    	// First, choose which players are participating in this tournament.
+		Set<String> playersForTourney = new HashSet<String>();
         for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
             Player p = theAvailablePlayers.get(i);
             if (p.isRegisteredForTourney()) {
-            	playersForTourney.add(p);
+            	playersForTourney.add(p.getName());
             }
         }
-        // TODO: Create seeding based on "playersForTourney"
-        //List<net.alloyggp.tournament.api.Player> players = Lists.newArrayList();
-        //for (Player player : playersForTourney) {
-        //	players.add(net.alloyggp.tournament.api.Player.create(player.getName()));
-        //}
-        //Seeding seeding = Seeding.createRandomSeeding(new Random(), players);
-        //String persistedSeeding = seeding.toPersistedString();
-        String persistedSeeding = "yodawg";
-        tournament.beginTournament(persistedSeeding);
+        // Then, create a seeding that includes those players.
+        List<TPlayer> players = Lists.newArrayList();
+        for (String player : playersForTourney) {
+        	players.add(TPlayer.create(player));
+        }
+        TSeeding seeding = TSeeding.createRandomSeeding(new Random(), players);
+        String persistedSeeding = seeding.toPersistedString();
+        tournament.beginTournament(playersForTourney, persistedSeeding);
     }
     
     private static void runTournamentScheduler(TournamentData tournament, Set<MatchData> activeTournamentMatches) throws JSONException, IOException, SymbolFormatException, GdlFormatException {
-		String persistedSeeding = tournament.getPersistedSeeding();
-		Seeding theSeeding = Seeding.fromPersistedString(persistedSeeding);
-				
 		Set<String> activeInternalMatchIDs = new HashSet<String>();
 		if (activeTournamentMatches != null) {
 			for (MatchData activeMatch : activeTournamentMatches) {
@@ -385,34 +395,31 @@ public class Scheduling {
 		
         // Get the results for already-completed matches in this tournament.
 		// Use those results to compute the set of next matches to run.
-		JSONObject theTournamentMatchesJSON = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterTournament,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2," + tournament.getTournamentKey());		
-		Set<MatchResult> matchResults = getMatchResultsFromJSON(tournament, theTournamentMatchesJSON);
-        NextMatchesResult matchesToRunResult = tournament.getTournament().getMatchesToRun(theSeeding, matchResults);
-        //Logger.getAnonymousLogger().severe("Computing next tournament step, from [" + Arrays.asList(matchResults.toArray()) + "] -> " + matchesToRunResult);
+        TNextMatchesResult nextMatchesResult = tournament.getNextMatches();
 
-        if (matchesToRunResult.getSecondsToWaitUntilAllowedStartTime() > 0L) {
+        if (nextMatchesResult.getSecondsToWaitUntilAllowedStartTime() > 0L) {
             // This round of the tournament shouldn't start yet.
             // Let a later pass of the scheduler deal with these matches.
             return;
         }
 
-        if (matchesToRunResult.getMatchesToRun().isEmpty()) {
+        if (nextMatchesResult.getMatchesToRun().isEmpty()) {
             tournament.finishTournament();
             return;
         }
 
-        for (MatchSetup matchSetup : matchesToRunResult.getMatchesToRun()) {
+        for (TMatchSetup matchSetup : nextMatchesResult.getMatchesToRun()) {
             if (activeInternalMatchIDs.contains(matchSetup.getMatchId())) {
                 continue;
             }
 
-            String theGameURL = matchSetup.getGame().getURL();
+            String theGameURL = matchSetup.getGame().getUrl();
 
             List<String> playerURLsForMatch = Lists.newArrayList();
             List<String> playerNamesForMatch = Lists.newArrayList();
             List<String> playerRegionsForMatch = Lists.newArrayList();
-            for (String tournamentPlayer : matchSetup.getPlayers()) {
-                Player player = Player.loadPlayer(tournamentPlayer);
+            for (TPlayer tournamentPlayer : matchSetup.getPlayers()) {
+                Player player = Player.loadPlayer(tournamentPlayer.getId());
                 playerURLsForMatch.add(player.getURL());
                 playerNamesForMatch.add(player.getName());
                 playerRegionsForMatch.add(player.getRegion());
@@ -427,29 +434,6 @@ public class Scheduling {
                     tournament.getTournamentKey());
             tournament.recordMatch(publicMatchID, matchSetup.getMatchId());
         }
-    }
-    
-    static Set<MatchResult> getMatchResultsFromJSON(TournamentData tournament, JSONObject theTournamentMatchesJSON) throws JSONException, SymbolFormatException, GdlFormatException {		
-    	Set<MatchResult> matchResults = new HashSet<MatchResult>();
-    	JSONArray theMatches = theTournamentMatchesJSON.getJSONArray("queryMatches");
-    	for (int i = 0; i < theMatches.length(); i++) {
-    		JSONObject aMatchJSON = theMatches.getJSONObject(i);
-    		String internalMatchID = tournament.lookupInternalMatchID(aMatchJSON.getString("matchURL").replace("http://matches.ggp.org/matches/", "").replace("/", ""));
-    		List<String> thePlayers = new ArrayList<String>();
-    		for (int j = 0; j < aMatchJSON.getJSONArray("playerNamesFromHost").length(); j++) {
-    			thePlayers.add(aMatchJSON.getJSONArray("playerNamesFromHost").getString(j));
-    		}
-    		if (aMatchJSON.getBoolean("isAborted")) {
-    			matchResults.add(MatchResult.getAbortedMatchResult(internalMatchID, thePlayers));
-    		} else if (aMatchJSON.getBoolean("isCompleted")) {
-    			List<Integer> theGoals = new ArrayList<Integer>();
-    			for (int j = 0; j < aMatchJSON.getJSONArray("goalValues").length(); j++) {
-    				theGoals.add(aMatchJSON.getJSONArray("goalValues").getInt(j));
-    			}
-    			matchResults.add(MatchResult.getSuccessfulMatchResult(internalMatchID, thePlayers, theGoals));
-    		}
-    	}
-    	return matchResults;
     }
 
     private static void handleStrikesForPlayers(JSONObject theMatchInfo, List<String> players, List<Player> thePlayers) {    	

@@ -1,15 +1,31 @@
 package ggp.tiltyard.scheduling;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
+import net.alloyggp.tournament.api.TMatchResult;
+import net.alloyggp.tournament.api.TNextMatchesResult;
+import net.alloyggp.tournament.api.TPlayer;
+import net.alloyggp.tournament.api.TRanking;
+import net.alloyggp.tournament.api.TSeeding;
+import net.alloyggp.tournament.api.TTournament;
+import net.alloyggp.tournament.api.TTournamentSpecParser;
+
+import org.ggp.base.util.loader.RemoteResourceLoader;
 import org.ggp.galaxy.shared.persistence.Persistence;
+
+import external.JSON.JSONArray;
+import external.JSON.JSONObject;
 
 @PersistenceCapable
 public class TournamentData {
@@ -30,6 +46,10 @@ public class TournamentData {
     // the rest of the tournament.
     @Persistent private String persistedSeeding;
     
+    // When the tournament begins, the set of players involved in the
+    // tournament is chosen and will remain fixed from that point on.
+    @Persistent private Set<String> playersInvolved;
+    
     // When a tournament match begins, we establish a mapping from the
     // public match identifier to the tournament-internal match id.
     @Persistent private String serializedPublicToInternalMatchIdMap;
@@ -43,7 +63,7 @@ public class TournamentData {
     // Data structure with all of the immutable configuration settings
     // for the tournament, decoded from tournamentConfigYAML. This is
     // generated from persisted data but is not, itself, persisted.
-    @NotPersistent private Tournament theTournament = null;
+    @NotPersistent private TTournament theTournament = null;
 
     // Data structure with the mapping from public match IDs
     // to the internal match IDs. This is generated from persisted data
@@ -68,7 +88,7 @@ public class TournamentData {
     	return tournamentKey;
     }
     
-    public Tournament getTournament() {
+    public TTournament getTournament() {
     	return theTournament;
     }
     
@@ -88,15 +108,20 @@ public class TournamentData {
     	return publicToInternalMatchIdMap.get(publicMatchID);
     }
     
-    public Map<String,String> getPublicToInternalMatchIdMap() {
-    	return publicToInternalMatchIdMap;
+	public Map<String,String> getPublicToInternalMatchIdMap() {
+		return publicToInternalMatchIdMap;
+	}    
+    
+    public Set<String> getPlayersInvolved() {
+    	return playersInvolved;
     }
     
     // This should be called once the time to begin the tournament has arrived,
     // to establish a seeding based on a random arrangement of the players who
     // are available and opted-in at the beginning of the tournament.
-    public void beginTournament(String persistedSeeding) {
+    public void beginTournament(Set<String> playersInvolved, String persistedSeeding) {
     	hasBegun = Boolean.TRUE;
+    	this.playersInvolved = playersInvolved;
     	this.persistedSeeding = persistedSeeding;
     	save();
     }
@@ -116,12 +141,60 @@ public class TournamentData {
     	save();
     }
     
+    // Get the next matches to run, based on the seeding and the match results
+    // for the tournament so far.
+    public TNextMatchesResult getNextMatches() {
+    	return getTournament().getMatchesToRun(getSeeding(), getMatchResultsSoFar());
+    }
+    
+    // Get the current ranking of players, based on the seeding and the match results
+    // for the tournament so far.
+    public TRanking getRanking() {
+    	return getTournament().getCurrentStandings(getSeeding(), getMatchResultsSoFar());
+    }    
+    
+    // Get the seeding based on the persisted data.
+    private TSeeding getSeeding() {
+		return TSeeding.fromPersistedString(getPersistedSeeding());
+    }
+
+    // Get the match results for the tournament by querying the database server
+    // for all matches on Tiltyard with the right tournament name. 
+    private Set<TMatchResult> getMatchResultsSoFar() {
+    	try {
+	    	JSONObject theTournamentMatchesJSON = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterTournament,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2," + getTournamentKey());		
+	    	Set<TMatchResult> matchResults = new HashSet<TMatchResult>();
+	    	JSONArray theMatches = theTournamentMatchesJSON.getJSONArray("queryMatches");
+	    	for (int i = 0; i < theMatches.length(); i++) {
+	    		JSONObject aMatchJSON = theMatches.getJSONObject(i);
+	    		String internalMatchID = lookupInternalMatchID(aMatchJSON.getString("matchURL").replace("http://matches.ggp.org/matches/", "").replace("/", ""));
+	    		List<TPlayer> thePlayers = new ArrayList<TPlayer>();
+	    		for (int j = 0; j < aMatchJSON.getJSONArray("playerNamesFromHost").length(); j++) {
+	    			thePlayers.add(TPlayer.create(aMatchJSON.getJSONArray("playerNamesFromHost").getString(j)));
+	    		}
+	    		if (aMatchJSON.getBoolean("isAborted")) {
+	    			matchResults.add(TMatchResult.getAbortedMatchResult(internalMatchID, thePlayers));
+	    		} else if (aMatchJSON.getBoolean("isCompleted")) {
+	    			List<Integer> theGoals = new ArrayList<Integer>();
+	    			for (int j = 0; j < aMatchJSON.getJSONArray("goalValues").length(); j++) {
+	    				theGoals.add(aMatchJSON.getJSONArray("goalValues").getInt(j));
+	    			}
+	    			matchResults.add(TMatchResult.getSuccessfulMatchResult(internalMatchID, thePlayers, theGoals));
+	    		}
+	    	}
+	    	return matchResults;
+    	} catch (Exception e) {
+    		Logger.getAnonymousLogger().log(Level.SEVERE, "Could not query match results for tournament " + getTournamentKey() + ": " + e, e);
+    		throw new RuntimeException(e);
+    	}
+    }
+    
     void deflateForSaving() {
     	serializedPublicToInternalMatchIdMap = serializeStringHashMap(publicToInternalMatchIdMap);
     }
 
     void inflateAfterLoading() {
-    	theTournament = TournamentSpecParser.parseYamlString(tournamentConfigYAML);
+    	theTournament = TTournamentSpecParser.parseYamlString(tournamentConfigYAML);
     	publicToInternalMatchIdMap = deserializeStringHashMap(serializedPublicToInternalMatchIdMap);
     }
     
