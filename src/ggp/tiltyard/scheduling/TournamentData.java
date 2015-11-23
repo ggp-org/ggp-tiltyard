@@ -25,6 +25,7 @@ import org.ggp.base.util.loader.RemoteResourceLoader;
 import org.ggp.galaxy.shared.persistence.Persistence;
 
 import external.JSON.JSONArray;
+import external.JSON.JSONException;
 import external.JSON.JSONObject;
 
 @PersistenceCapable
@@ -108,12 +109,42 @@ public class TournamentData {
     	return publicToInternalMatchIdMap.get(publicMatchID);
     }
     
-	public Map<String,String> getPublicToInternalMatchIdMap() {
-		return publicToInternalMatchIdMap;
-	}    
-    
     public Set<String> getPlayersInvolved() {
     	return playersInvolved;
+    }
+    
+    public String getDisplayData() {
+    	try {
+	    	JSONObject displayData = new JSONObject();
+	    	
+	    	TSeeding theSeeding = getSeeding();
+	    	Set<TMatchResult> theMatchResults = getMatchResultsSoFar();
+	    	
+	    	displayData.put("id", getTournamentKey());
+	    	displayData.put("name", theTournament.getDisplayName());	    	
+	    	displayData.put("standings", theTournament.getCurrentStandings(theSeeding, theMatchResults).toString());
+	    	displayData.put("hasBegun", hasBegun);
+	    	displayData.put("hasFinished", hasFinished);
+	    	displayData.put("matchIdMapDebugString", publicToInternalMatchIdMap.toString());
+	    	{
+	    		JSONArray standingsHistory = new JSONArray();
+	    		for (TRanking aRanking : theTournament.getStandingsHistory(theSeeding, theMatchResults)) {
+	    			standingsHistory.put(aRanking.toString());
+	    		}
+	    		displayData.put("standingsHistory", standingsHistory);
+	    	}
+	    	{
+	    		JSONArray thePlayers = new JSONArray();
+	    		for (String player : getPlayersInvolved()) {
+	    			thePlayers.put(player);
+	    		}
+	    		displayData.put("players", thePlayers);
+	    	}	    	
+	    	return displayData.toString();
+    	} catch (JSONException je) {
+    		Logger.getAnonymousLogger().log(Level.SEVERE, "Could not serialize tournament display data: " + je, je);
+    		return "{}";
+    	}
     }
     
     // This should be called once the time to begin the tournament has arrived,
@@ -146,12 +177,6 @@ public class TournamentData {
     public TNextMatchesResult getNextMatches() {
     	return getTournament().getMatchesToRun(getSeeding(), getMatchResultsSoFar());
     }
-    
-    // Get the current ranking of players, based on the seeding and the match results
-    // for the tournament so far.
-    public TRanking getRanking() {
-    	return getTournament().getCurrentStandings(getSeeding(), getMatchResultsSoFar());
-    }    
     
     // Get the seeding based on the persisted data.
     private TSeeding getSeeding() {

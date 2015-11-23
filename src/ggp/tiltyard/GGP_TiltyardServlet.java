@@ -12,11 +12,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 
 import javax.servlet.http.*;
-
-import org.ggp.base.util.loader.RemoteResourceLoader;
 
 import com.google.appengine.api.capabilities.CapabilitiesService;
 import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
@@ -68,6 +65,15 @@ public class GGP_TiltyardServlet extends HttpServlet {
             resp.setStatus(200);
             return;
         }
+        
+        if (req.getRequestURI().startsWith("/data/tournaments/")) {
+        	String tournamentKey = req.getRequestURI().replaceFirst("/data/tournaments/", "");
+        	TournamentData t = TournamentData.loadTournamentData(tournamentKey);
+            resp.setContentType("text/plain");
+            resp.getWriter().println(t.getDisplayData());
+            resp.setStatus(200);
+            return;
+        }
 
         if (req.getRequestURI().startsWith("/data/")) {
             Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), req, resp);
@@ -83,28 +89,18 @@ public class GGP_TiltyardServlet extends HttpServlet {
         	Hosting.doTask(req, resp);
         	return;
         }
-        
+
         // TODO: Get rid of this once tournament testing is done.
+        /*
         if (req.getRequestURI().equals("/start_test_tourney")) {
         	String yaml = RemoteResourceLoader.loadRaw("https://storage.googleapis.com/ggp-static-content/test_tourney_spec.txt");
             resp.setContentType("text/plain");
-        	new TournamentData("test_tourney_4", yaml).save();
+        	new TournamentData("test_tourney_5", yaml).save();
             resp.getWriter().println("Started test tourney from spec:\n\n" + yaml);
             resp.setStatus(200);
             return;
         }
-        
-        // TODO: Get rid of this once tournament testing is done.
-        if (req.getRequestURI().equals("/check_test_tourney")) {
-        	TournamentData t = TournamentData.loadTournamentData("test_tourney_4");
-            resp.setContentType("text/plain");
-            resp.getWriter().println("Tournament " + t.getTournamentKey() + "\n");
-            resp.getWriter().println("Players: " + Arrays.asList(t.getPlayersInvolved().toArray()) + "\n");
-            resp.getWriter().println("Matches: " + t.getPublicToInternalMatchIdMap() + "\n");
-            resp.getWriter().println("Ranking: " + t.getRanking());
-            resp.setStatus(200);
-            return;
-        }        
+        */
         
         String reqURI = req.getRequestURI();
         if (reqURI.equals("/about")) reqURI += "/";

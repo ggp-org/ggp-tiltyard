@@ -149,19 +149,20 @@ public class Scheduling {
             		activeMatch.abort();
             		activeMatch.publish();
             		activeMatch.delete();
-            	} else if (activeMatch.hasComputerPlayers()) {
-            		// Otherwise, if the match has computer players, mark those players as busy and
-            		// note when they'll be available for new matches.
-            		busyPlayerNames.addAll(matchPlayers);
-            		morePlayersIn = Math.min(activeMatch.getExpectedTimeToCompletion(), morePlayersIn);
-            		
+            	} else {
             		// Track all active matches by which tournament they're in.
-            		// (This will need to be relocated if tournaments ever involve human players.)
             		String tournamentName = activeMatch.getTournamentId();
             		if (!activeTournamentMatches.containsKey(tournamentName)) {
             			activeTournamentMatches.put(tournamentName, new HashSet<MatchData>());
             		}
-            		activeTournamentMatches.get(tournamentName).add(activeMatch);
+            		activeTournamentMatches.get(tournamentName).add(activeMatch);            		
+            		
+            		if (activeMatch.hasComputerPlayers()) {
+	            		// For active matches with computer players, mark those players as busy and
+	            		// note when they'll be available for new matches.
+	            		busyPlayerNames.addAll(matchPlayers);
+	            		morePlayersIn = Math.min(activeMatch.getExpectedTimeToCompletion(), morePlayersIn);
+            		}
             	}            	
             }
 
@@ -214,33 +215,39 @@ public class Scheduling {
 	        		// The time has arrived. Begin the tournament!
         			runTournamentSetup(tournament, theAvailablePlayers);
         		}
-
-        		// At this point, the tournament has been seeded. Now we need to schedule
-        		// any matches that should be ongoing at this point but aren't yet active.
-        		try {
-        			runTournamentScheduler(tournament, activeTournamentMatches.get(tournament.getTournamentKey()));
-        		} catch (Exception e) {
-        			Logger.getAnonymousLogger().log(Level.SEVERE, "Could not schedule for tournament " + tournament.getTournamentKey() + ": " + e, e);
-        		}
         		
-        		// Lastly, drain ordinary scheduling for all players involved in the tournament.
-                for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
-                    Player p = theAvailablePlayers.get(i);
-                    if (tournament.getPlayersInvolved().contains(p.getName())) {
-                        theAvailablePlayers.remove(i);
-                    }
-                }        		
+        		// Second, if the tournament has been seeded, schedule matches for it.
+        		// It's possible for "runTournamentSetup" to not seed the tournament if
+        		// there are no available players; in that case, the scheduling does not
+        		// begin yet, and we wait for available players to show up before starting.
+        		if (tournament.hasBegun()) {
+	        		// At this point, the tournament has been seeded. Now we need to schedule
+	        		// any matches that should be ongoing at this point but aren't yet active.
+	        		try {
+	        			runTournamentScheduler(tournament, activeTournamentMatches.get(tournament.getTournamentKey()));
+	        		} catch (Exception e) {
+	        			Logger.getAnonymousLogger().log(Level.SEVERE, "Could not schedule for tournament " + tournament.getTournamentKey() + ": " + e, e);
+	        		}
+	        		
+	        		// Lastly, drain ordinary scheduling for all players involved in the tournament.
+	                for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
+	                    Player p = theAvailablePlayers.get(i);
+	                    if (tournament.getPlayersInvolved().contains(p.getName())) {
+	                        theAvailablePlayers.remove(i);
+	                    }
+	                }
+        		}
             }
         	
         	// For upcoming tournaments, drain regular scheduling for all potentially-involved players.
-        	if (0 < secondsToStart && secondsToStart < SECONDS_BEFORE_TOURNEY_TO_STOP_NEW_MATCHES) {
+        	if (!tournament.hasBegun() && secondsToStart < SECONDS_BEFORE_TOURNEY_TO_STOP_NEW_MATCHES) {
                 for (int i = theAvailablePlayers.size()-1; i >= 0; i--) {
                     Player p = theAvailablePlayers.get(i);
                     if (p.isRegisteredForTourney()) {
                         theAvailablePlayers.remove(i);
                     }
                 }
-            }
+            }        	
         }        
         
         // Figure out how many players are available. If no computer players are
@@ -375,14 +382,16 @@ public class Scheduling {
             	playersForTourney.add(p.getName());
             }
         }
-        // Then, create a seeding that includes those players.
-        List<TPlayer> players = Lists.newArrayList();
-        for (String player : playersForTourney) {
-        	players.add(TPlayer.create(player));
+        if (!playersForTourney.isEmpty()) {
+	        // Then, create a seeding that includes those players.
+	        List<TPlayer> players = Lists.newArrayList();
+	        for (String player : playersForTourney) {
+	        	players.add(TPlayer.create(player));
+	        }
+	        TSeeding seeding = TSeeding.createRandomSeeding(new Random(), players);
+	        String persistedSeeding = seeding.toPersistedString();
+	        tournament.beginTournament(playersForTourney, persistedSeeding);
         }
-        TSeeding seeding = TSeeding.createRandomSeeding(new Random(), players);
-        String persistedSeeding = seeding.toPersistedString();
-        tournament.beginTournament(playersForTourney, persistedSeeding);
     }
     
     private static void runTournamentScheduler(TournamentData tournament, Set<MatchData> activeTournamentMatches) throws JSONException, IOException, SymbolFormatException, GdlFormatException {
