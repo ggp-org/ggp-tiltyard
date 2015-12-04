@@ -24,6 +24,8 @@ import net.alloyggp.tournament.api.TTournamentSpecParser;
 import org.ggp.base.util.loader.RemoteResourceLoader;
 import org.ggp.galaxy.shared.persistence.Persistence;
 
+import com.google.appengine.api.datastore.Text;
+
 import external.JSON.JSONArray;
 import external.JSON.JSONException;
 import external.JSON.JSONObject;
@@ -39,7 +41,7 @@ public class TournamentData {
     // YAML definition containing all of the immutable configuration
     // settings for the tournament, like start time, tournament type,
     // internal and display names, etc, encoded in YAML.
-    @Persistent private String tournamentConfigYAML;    
+    @Persistent private Text tournamentConfigYAML;
     
     // When the tournament begins, a fixed seeding is chosen based on
     // a random assignment of the available players. This seeding must
@@ -76,7 +78,7 @@ public class TournamentData {
     // the scheduler to wind down existing matches.
     public TournamentData(String key, String configYAML) {
     	tournamentKey = key;
-    	tournamentConfigYAML = configYAML;
+    	tournamentConfigYAML = new Text(configYAML);
     	persistedSeeding = null;
     	hasBegun = Boolean.FALSE;
     	hasFinished = Boolean.FALSE;
@@ -219,7 +221,7 @@ public class TournamentData {
     }
 
     void inflateAfterLoading() {
-    	theTournament = TTournamentSpecParser.parseYamlString(tournamentConfigYAML);
+    	theTournament = TTournamentSpecParser.parseYamlString(tournamentConfigYAML.getValue());
     	publicToInternalMatchIdMap = deserializeStringHashMap(serializedPublicToInternalMatchIdMap);
     }
     
