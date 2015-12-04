@@ -55,7 +55,7 @@ public class TournamentData {
     
     // When a tournament match begins, we establish a mapping from the
     // public match identifier to the tournament-internal match id.
-    @Persistent private String serializedPublicToInternalMatchIdMap;
+    @Persistent private Text serializedPublicToInternalMatchIdMap;
     
     // Has the tournament begun yet?
     @Persistent private Boolean hasBegun;
@@ -82,7 +82,7 @@ public class TournamentData {
     	persistedSeeding = null;
     	hasBegun = Boolean.FALSE;
     	hasFinished = Boolean.FALSE;
-    	serializedPublicToInternalMatchIdMap = "";
+    	serializedPublicToInternalMatchIdMap = new Text("");
     	inflateAfterLoading();
     	save();
     }
@@ -111,6 +111,10 @@ public class TournamentData {
     	return publicToInternalMatchIdMap.get(publicMatchID);
     }
     
+    public boolean hasInternalMatchID(String internalMatchID) {
+    	return publicToInternalMatchIdMap.values().contains(internalMatchID);
+    }
+    
     public Set<String> getPlayersInvolved() {
     	return playersInvolved;
     }
@@ -123,8 +127,8 @@ public class TournamentData {
 	    	Set<TMatchResult> theMatchResults = getMatchResultsSoFar();
 	    	
 	    	displayData.put("id", getTournamentKey());
-	    	displayData.put("name", theTournament.getDisplayName());	    	
-	    	displayData.put("standings", theTournament.getCurrentStandings(theSeeding, theMatchResults).toString());
+	    	displayData.put("name", theTournament.getDisplayName());
+	    	displayData.put("standings", theTournament.getCurrentStandings(theSeeding, theMatchResults).toString().replace("\n", "\n <br> "));
 	    	displayData.put("hasBegun", hasBegun);
 	    	displayData.put("hasFinished", hasFinished);
 	    	displayData.put("matchIdMapDebugString", publicToInternalMatchIdMap.toString());
@@ -217,12 +221,12 @@ public class TournamentData {
     }
     
     void deflateForSaving() {
-    	serializedPublicToInternalMatchIdMap = serializeStringHashMap(publicToInternalMatchIdMap);
+    	serializedPublicToInternalMatchIdMap = new Text(serializeStringHashMap(publicToInternalMatchIdMap));
     }
 
     void inflateAfterLoading() {
     	theTournament = TTournamentSpecParser.parseYamlString(tournamentConfigYAML.getValue());
-    	publicToInternalMatchIdMap = deserializeStringHashMap(serializedPublicToInternalMatchIdMap);
+    	publicToInternalMatchIdMap = deserializeStringHashMap(serializedPublicToInternalMatchIdMap.getValue());
     }
     
         
