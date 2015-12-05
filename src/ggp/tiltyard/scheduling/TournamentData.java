@@ -63,6 +63,10 @@ public class TournamentData {
     // Has the tournament finished yet?
     @Persistent private Boolean hasFinished;
     
+    // Cache of the display data for the tournament, so that it doesn't
+    // have to be recomputed on every user request.
+    @Persistent private Text cachedDisplayData;
+    
     // Data structure with all of the immutable configuration settings
     // for the tournament, decoded from tournamentConfigYAML. This is
     // generated from persisted data but is not, itself, persisted.
@@ -83,6 +87,7 @@ public class TournamentData {
     	hasBegun = Boolean.FALSE;
     	hasFinished = Boolean.FALSE;
     	serializedPublicToInternalMatchIdMap = new Text("");
+    	cachedDisplayData = new Text("{}");
     	inflateAfterLoading();
     	save();
     }
@@ -119,7 +124,7 @@ public class TournamentData {
     	return playersInvolved;
     }
     
-    public String getDisplayData() {
+    public void updateDisplayDataCache() {
     	try {
 	    	JSONObject displayData = new JSONObject();
 	    	
@@ -145,11 +150,21 @@ public class TournamentData {
 	    			thePlayers.put(player);
 	    		}
 	    		displayData.put("players", thePlayers);
-	    	}	    	
-	    	return displayData.toString();
+	    	}
+	    	cachedDisplayData = new Text(displayData.toString());
     	} catch (JSONException je) {
     		Logger.getAnonymousLogger().log(Level.SEVERE, "Could not serialize tournament display data: " + je, je);
+    	}
+    }
+    
+    public String getDisplayData() {
+    	if (cachedDisplayData == null) {
+    		updateDisplayDataCache();
+    	}
+    	if (cachedDisplayData == null) {
     		return "{}";
+    	} else {
+    		return cachedDisplayData.getValue();
     	}
     }
     
@@ -193,7 +208,7 @@ public class TournamentData {
     // for all matches on Tiltyard with the right tournament name. 
     private Set<TMatchResult> getMatchResultsSoFar() {
     	try {
-	    	JSONObject theTournamentMatchesJSON = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterTournament,recent,90bd08a7df7b8113a45f1e537c1853c3974006b2," + getTournamentKey());		
+	    	JSONObject theTournamentMatchesJSON = RemoteResourceLoader.loadJSON("http://database.ggp.org/query/filterTournament,recent1000,90bd08a7df7b8113a45f1e537c1853c3974006b2," + getTournamentKey());		
 	    	Set<TMatchResult> matchResults = new HashSet<TMatchResult>();
 	    	JSONArray theMatches = theTournamentMatchesJSON.getJSONArray("queryMatches");
 	    	for (int i = 0; i < theMatches.length(); i++) {
