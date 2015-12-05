@@ -136,6 +136,14 @@ public class Scheduling {
         	Set<MatchData> activeMatches = MatchData.loadMatches();
             Set<String> busyPlayerNames = new HashSet<String>();            
             for (MatchData activeMatch : activeMatches) {
+        		// Track all active matches by which tournament they're in.
+        		String tournamentName = activeMatch.getTournamentId();
+        		if (!activeTournamentMatches.containsKey(tournamentName)) {
+        			activeTournamentMatches.put(tournamentName, new HashSet<MatchData>());
+        		}
+        		activeTournamentMatches.get(tournamentName).add(activeMatch);
+        		
+        		// Delete matches that just finished. Track which players are busy.
             	List<String> matchPlayers = activeMatch.getPlayerNames();
             	if (activeMatch.isCompleted() && activeMatch.getTimeSinceLastChange() > 1000L*60*2) {
             		// Once a match has been completed for 2+ minutes, force it to be published one
@@ -149,21 +157,12 @@ public class Scheduling {
             		activeMatch.abort();
             		activeMatch.publish();
             		activeMatch.delete();
-            	} else {
-            		// Track all active matches by which tournament they're in.
-            		String tournamentName = activeMatch.getTournamentId();
-            		if (!activeTournamentMatches.containsKey(tournamentName)) {
-            			activeTournamentMatches.put(tournamentName, new HashSet<MatchData>());
-            		}
-            		activeTournamentMatches.get(tournamentName).add(activeMatch);            		
-            		
-            		if (activeMatch.hasComputerPlayers()) {
-	            		// For active matches with computer players, mark those players as busy and
-	            		// note when they'll be available for new matches.
-	            		busyPlayerNames.addAll(matchPlayers);
-	            		morePlayersIn = Math.min(activeMatch.getExpectedTimeToCompletion(), morePlayersIn);
-            		}
-            	}            	
+            	} else if (activeMatch.hasComputerPlayers()) {
+            		// For active matches with computer players, mark those players as busy and
+            		// note when they'll be available for new matches.
+            		busyPlayerNames.addAll(matchPlayers);
+            		morePlayersIn = Math.min(activeMatch.getExpectedTimeToCompletion(), morePlayersIn);
+            	}
             }
 
             // For all of the players listed as enabled, record whether or not they're actually
@@ -237,6 +236,9 @@ public class Scheduling {
 	                    }
 	                }
         		}
+        		
+        		// For active tournaments, update the display data cache on every round.
+        		tournament.updateDisplayDataCache();
             }
         	
         	// For upcoming tournaments, drain regular scheduling for all potentially-involved players.
@@ -247,8 +249,8 @@ public class Scheduling {
                         theAvailablePlayers.remove(i);
                     }
                 }
-            }        	
-        }        
+            }
+        }
         
         // Figure out how many players are available. If no computer players are
     	// available, don't bother attempting to automatically schedule a match.
@@ -370,7 +372,7 @@ public class Scheduling {
         int previewClock = -1;
 
         // Start the match using the hybrid match hosting system.
-       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, playerRegionsForMatch, previewClock, startClock, playClock, REGULAR_TOURNAMENT_NAME);        	
+       	Hosting.startMatch(theGameURL, playerURLsForMatch, playerNamesForMatch, playerRegionsForMatch, previewClock, startClock, playClock, REGULAR_TOURNAMENT_NAME);
     }
     
     private static void runTournamentSetup(TournamentData tournament, List<Player> theAvailablePlayers) {
@@ -405,7 +407,7 @@ public class Scheduling {
         // Get the results for already-completed matches in this tournament.
 		// Use those results to compute the set of next matches to run.
         TNextMatchesResult nextMatchesResult = tournament.getNextMatches();
-
+        
         if (nextMatchesResult.getSecondsToWaitUntilAllowedStartTime() > 0L) {
             // This round of the tournament shouldn't start yet.
             // Let a later pass of the scheduler deal with these matches.
@@ -419,9 +421,15 @@ public class Scheduling {
 
         for (TMatchSetup matchSetup : nextMatchesResult.getMatchesToRun()) {
             if (activeInternalMatchIDs.contains(matchSetup.getMatchId())) {
+            	Logger.getAnonymousLogger().severe("Skipping duplicate scheduling for " + matchSetup.getMatchId() + " since it's active (from active ids).");
                 continue;
             }
-
+            
+            if (tournament.hasInternalMatchID(matchSetup.getMatchId())) {
+            	Logger.getAnonymousLogger().severe("Skipping duplicate scheduling for " + matchSetup.getMatchId() + " since it's active (from tournament).");
+            	continue;
+            }
+            
             String theGameURL = matchSetup.getGame().getUrl();
 
             List<String> playerURLsForMatch = Lists.newArrayList();
