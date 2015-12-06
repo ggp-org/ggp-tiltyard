@@ -72,7 +72,7 @@ public class Scheduling {
 				"gt_two_thirds_6p" },
 		// Chinese checkers variants
 		new String[] { "chineseCheckers1", "chineseCheckers2", "chineseCheckers3",
-				"chineseCheckers4", "chineseCheckers6" },
+				"chineseCheckers4", "chineseCheckers6", "solitaireChineseCheckers" },
 		// Sudoku variants
 		new String[] { "sudokuGrade1", "sudokuGrade2", "sudokuGrade3", "sudokuGrade4",
 				"sudokuGrade5", "sudokuGrade6E", "sudokuGrade6H" },
@@ -86,14 +86,15 @@ public class Scheduling {
 				"chinook" },
 		// Connect Four variants
 		new String[] { "3pConnectFour", "connectFourLarger", "connectFourLarge",
-				"connectFour", "connectFourSuicide", "connectFourSimultaneous" },
+				"connectFour", "connectFourSuicide", "connectFourSimultaneous",
+				"connectFour_9x6" },
 		// Tic-Tac-Toe variants
 		new String[] { "ticTacToe", "nineBoardTicTacToe", "cittaceot", "ticTacToeLarge",
 				"connect5", "biddingTicTacToe", "ticTacToeLargeSuicide",
 				"biddingTicTacToe_10coins", "nineBoardTicTacToePie" },
 		// Breakthrough variants
 		new String[] { "knightThrough", "breakthroughWalls", "breakthrough",  "breakthroughSmall",
-				"escortLatch" },
+				"escortLatch", "breakthroughSuicideSmall" },
 		// Dots-and-Boxes variants
 		new String[] { "dotsAndBoxes", "dotsAndBoxesSuicide" },				
 		// Pentago variants
@@ -107,19 +108,23 @@ public class Scheduling {
 		// Peg Jumping variants
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
-		new String[] { "hex", "hexPie", "majorities" },
+		new String[] { "hex", "hexPie", "majorities", "copolymer_4_pie" },
 		// Amazons variants
 		new String[] { "amazons_8x8", "amazons_10x10", "amazonsSuicide_10x10", "amazonsTorus_10x10" },
 		// Queens variants
 		new String[] { "queens06ug", "queens08lg", "queens08ug" },
+		// Othello / Reversi variants
+		new String[] { "reversi", "reversiSuicide" },
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
-		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
-				"qyshinsu", "blocker", "sheepAndWolf", "max_knights", "untwistycomplex2",
-				"tron_10x10", "mineClearingSmall" },
+		new String[] { "cephalopodMicro",  "maze", "eightPuzzle", "qyshinsu", "blocker",
+				"sheepAndWolf", "max_knights", "untwistycomplex2", "tron_10x10",
+				"mineClearingSmall", "nonogram_5x5_1",  "shmup", "battlebrushes",
+				"rubiksCube" },
 		// New games, that get an extra promotional boost because they're new or interesting
-		new String[] { "futoshiki4", "futoshiki5", "futoshiki6", "queens06ug",
-				"queens08lg", "queens08ug", "queens31lg", "mineClearingSmall" },
+		new String[] { "nonogram_5x5_1", "reversiSuicide", "copolymer_4_pie",
+				"solitaireChineseCheckers", "shmup", "battlebrushes", "rubiksCube",
+				"connectFour_9x6" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
