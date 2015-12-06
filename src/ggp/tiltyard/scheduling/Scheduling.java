@@ -111,7 +111,7 @@ public class Scheduling {
 		// Amazons variants
 		new String[] { "amazons_8x8", "amazons_10x10", "amazonsSuicide_10x10", "amazonsTorus_10x10" },
 		// Queens variants
-		new String[] { "queens06ug", "queens08lg", "queens08ug", "queens31lg" },
+		new String[] { "queens06ug", "queens08lg", "queens08ug" },
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro", "reversi", "maze", "eightPuzzle",
