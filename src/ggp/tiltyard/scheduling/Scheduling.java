@@ -112,7 +112,7 @@ public class Scheduling {
 		// Amazons variants
 		new String[] { "amazons_8x8", "amazons_10x10", "amazonsSuicide_10x10", "amazonsTorus_10x10" },
 		// Queens variants
-		new String[] { "queens06ug", "queens08lg", "queens08ug" },
+		new String[] { "queens06ug", "queens08lg", "queens08ug", "queens12ug", "queens16ug" },
 		// Othello / Reversi variants
 		new String[] { "reversi", "reversiSuicide" },
 		// Games that fell into no other category, but didn't seem to be
@@ -120,11 +120,10 @@ public class Scheduling {
 		new String[] { "cephalopodMicro",  "maze", "eightPuzzle", "qyshinsu", "blocker",
 				"sheepAndWolf", "max_knights", "untwistycomplex2", "tron_10x10",
 				"mineClearingSmall", "nonogram_5x5_1",  "shmup", "battlebrushes",
-				"rubiksCube" },
+				"rubiksCube", "hidato19", "hidato37" },
 		// New games, that get an extra promotional boost because they're new or interesting
-		new String[] { "nonogram_5x5_1", "reversiSuicide", "copolymer_4_pie",
-				"solitaireChineseCheckers", "shmup", "battlebrushes", "rubiksCube",
-				"connectFour_9x6" },
+		new String[] { "hidato19", "hidato37", "queens12ug", "queens16ug",
+				"battlebrushes", "connectFour_9x6" },
 	};
 	
     public static void runSchedulingRound() throws IOException {
