@@ -315,7 +315,7 @@ public class Hosting {
         resp.getWriter().println(response.toString());        
     }
     
-    public static String startMatch(String gameURL, List<String> playerURLs, List<String> playerNames, List<String> playerRegions, int previewClock, int startClock, int playClock) {    	
+    public static String startMatch(String gameURL, List<String> playerURLs, List<String> playerNames, List<String> playerRegions, int previewClock, int startClock, int playClock, String tournamentNameFromHost) {    	
 		if (!gameURL.startsWith("http://games.ggp.org/base/games/")) {
 			Logger.getAnonymousLogger().severe("Game URL did not start with valid prefix.");
 			return null;
@@ -335,7 +335,7 @@ public class Hosting {
 			return null;
         }        
         
-        MatchData m = new MatchData(matchId, playerNames, playerURLs, playerRegions, previewClock, startClock, playClock, theGame);
+        MatchData m = new MatchData(matchId, playerNames, playerURLs, playerRegions, previewClock, startClock, playClock, theGame, tournamentNameFromHost);
         if (m.hasComputerPlayers()) {
         	addTaskToQueue(withUrl("/hosting/tasks/request_start").method(Method.GET).param("matchKey", m.getMatchKey()));
         }

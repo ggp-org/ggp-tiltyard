@@ -2,6 +2,7 @@ package ggp.tiltyard;
 
 import ggp.tiltyard.players.Registration;
 import ggp.tiltyard.scheduling.Scheduling;
+import ggp.tiltyard.scheduling.TournamentData;
 import ggp.tiltyard.backends.BackendRegistration;
 import ggp.tiltyard.hosting.Hosting;
 import ggp.tiltyard.identity.GitkitIdentity;
@@ -13,6 +14,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import javax.servlet.http.*;
+
+import org.ggp.base.util.loader.RemoteResourceLoader;
 
 import com.google.appengine.api.capabilities.CapabilitiesService;
 import com.google.appengine.api.capabilities.CapabilitiesServiceFactory;
@@ -64,6 +67,15 @@ public class GGP_TiltyardServlet extends HttpServlet {
             resp.setStatus(200);
             return;
         }
+        
+        if (req.getRequestURI().startsWith("/data/tournaments/")) {
+        	String tournamentKey = req.getRequestURI().replaceFirst("/data/tournaments/", "");
+        	TournamentData t = TournamentData.loadTournamentData(tournamentKey);
+            resp.setContentType("text/plain");
+            resp.getWriter().println(t.getDisplayData());
+            resp.setStatus(200);
+            return;
+        }
 
         if (req.getRequestURI().startsWith("/data/")) {
             Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), req, resp);
@@ -78,6 +90,22 @@ public class GGP_TiltyardServlet extends HttpServlet {
         if (req.getRequestURI().startsWith("/hosting/tasks/")) {
         	Hosting.doTask(req, resp);
         	return;
+        }
+
+        // TODO: Clean this up so that Tiltyard has a native interface for uploading
+        //       tournament YAML descriptions and creating tournaments based on them.
+        if (req.getRequestURI().startsWith("/create/tournament=")) {
+        	String tournament_key = req.getRequestURI().replace("/create/tournament=", "");
+        	if (TournamentData.loadTournamentData(tournament_key) != null) {
+        		resp.getWriter().println("Tournament " + tournament_key + " already exists.");
+        	} else {
+	        	String yaml = RemoteResourceLoader.loadRaw("https://storage.googleapis.com/ggp-static-content/" + tournament_key + ".yaml");
+	            resp.setContentType("text/plain");
+	        	new TournamentData(tournament_key, yaml).save();
+	            resp.getWriter().println("Started tourney " + tournament_key + " from spec:\n\n" + yaml);
+        	}
+    		resp.setStatus(200);
+    		return;        	
         }
         
         String reqURI = req.getRequestURI();
