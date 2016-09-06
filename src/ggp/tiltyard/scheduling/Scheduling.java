@@ -87,7 +87,7 @@ public class Scheduling {
 		// Connect Four variants
 		new String[] { "3pConnectFour", "connectFourLarger", "connectFourLarge",
 				"connectFour", "connectFourSuicide", "connectFourSimultaneous",
-				"connectFour_9x6" },
+				"connectFour_9x6", "connectFourSuicide_7x7" },
 		// Tic-Tac-Toe variants
 		new String[] { "ticTacToe", "nineBoardTicTacToe", "cittaceot", "ticTacToeLarge",
 				"connect5", "biddingTicTacToe", "ticTacToeLargeSuicide",
@@ -96,15 +96,15 @@ public class Scheduling {
 		new String[] { "knightThrough", "breakthroughWalls", "breakthrough",  "breakthroughSmall",
 				"escortLatch", "breakthroughSuicideSmall" },
 		// Dots-and-Boxes variants
-		new String[] { "dotsAndBoxes", "dotsAndBoxesSuicide" },				
+		new String[] { "dotsAndBoxes", "dotsAndBoxesSuicide" },
 		// Pentago variants
 		new String[] { "pentago", "pentagoSuicide" },
 		// Quarto variants
 		new String[] { "quarto", "quartoSuicide" },
 		// Knight's Tour variants
 		new String[] { "knightsTour", "knightsTourLarge" },
-		// Chess variantsanObject
-		new String[] { "speedChess", "skirmishNew", "skirmishZeroSum" },
+		// Chess variants
+		new String[] { "speedChess", "skirmishNew", "skirmishZeroSum", "chess_200" },
 		// Peg Jumping variants
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
@@ -118,27 +118,28 @@ public class Scheduling {
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro",  "maze", "eightPuzzle", "qyshinsu", "blocker",
-				"sheepAndWolf", "max_knights", "untwistycomplex2", "tron_10x10",
-				"mineClearingSmall", "nonogram_5x5_1",  "shmup", "battlebrushes",
-				"rubiksCube", "hidato19", "hidato37" },
+				"sheepAndWolf", "max_knights", "untwistycomplex2" },
+		new String[] { "tron_10x10", "mineClearingSmall", "nonogram_5x5_1", "shmup",
+		        "battlebrushes", "rubiksCube", "hidato19", "hidato37", "madBishops" },
 		// New games, that get an extra promotional boost because they're new or interesting
 		new String[] { "hidato19", "hidato37", "queens12ug", "queens16ug",
-				"battlebrushes", "connectFour_9x6" },
+				"battlebrushes", "connectFour_9x6", "connectFourSuicide_7x7",
+				"madBishops", "chess_200" },
 	};
-	
+
     public static void runSchedulingRound() throws IOException {
     	SchedulerConfig theConfig = SchedulerConfig.loadConfig();
         List<Player> theAvailablePlayers = Player.loadEnabledPlayers();
         long morePlayersIn = Long.MAX_VALUE;
-        
+
         Map<String, Set<MatchData>> activeTournamentMatches = new HashMap<String, Set<MatchData>>();
-        
+
         {
             // Find and clear all of the completed or wedged matches. For matches
             // which are still ongoing, mark the players in those matches as busy.
         	// Also keep track of how long it will be before some are available.
         	Set<MatchData> activeMatches = MatchData.loadMatches();
-            Set<String> busyPlayerNames = new HashSet<String>();            
+            Set<String> busyPlayerNames = new HashSet<String>();
             for (MatchData activeMatch : activeMatches) {
         		// Track all active matches by which tournament they're in.
         		String tournamentName = activeMatch.getTournamentId();
