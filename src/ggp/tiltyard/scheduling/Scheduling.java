@@ -205,7 +205,7 @@ public class Scheduling {
         // tournament according to a particular lineup. Players not opted-in to the tournament do
         // not have their scheduling affected.        
         for (TournamentData tournament : TournamentData.loadTournaments()) {
-        	long secondsToStart = tournament.getTournament().getSecondsToWaitUntilInitialStartTime();
+        	long secondsToStart = tournament.getTournament().getSecondsToWaitUntilInitialStartTime(tournament.getAdminActions());
         	
         	// Tournaments that have finished don't have any effect on scheduling.
         	if (tournament.hasFinished()) {

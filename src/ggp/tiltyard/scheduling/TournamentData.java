@@ -13,9 +13,10 @@ import java.util.logging.Logger;
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.*;
 
+import net.alloyggp.tournament.api.TAdminAction;
+import net.alloyggp.tournament.api.TAdminActions;
 import net.alloyggp.tournament.api.TMatchResult;
 import net.alloyggp.tournament.api.TNextMatchesResult;
-import net.alloyggp.tournament.api.TPlayer;
 import net.alloyggp.tournament.api.TRanking;
 import net.alloyggp.tournament.api.TSeeding;
 import net.alloyggp.tournament.api.TTournament;
@@ -62,6 +63,9 @@ public class TournamentData {
     
     // Has the tournament finished yet?
     @Persistent private Boolean hasFinished;
+
+    // Administrative actions that have been issues for this tournament.
+    @Persistent private List<String> persistedAdminActions;
     
     // Cache of the display data for the tournament, so that it doesn't
     // have to be recomputed on every user request.
@@ -88,6 +92,7 @@ public class TournamentData {
     	hasFinished = Boolean.FALSE;
     	serializedPublicToInternalMatchIdMap = new Text("");
     	cachedDisplayData = new Text("{}");
+    	persistedAdminActions = new ArrayList<String>();
     	inflateAfterLoading();
     	save();
     }
@@ -124,6 +129,17 @@ public class TournamentData {
     	return playersInvolved;
     }
     
+    public List<TAdminAction> getAdminActions() {
+    	List<TAdminAction> adminActions = new ArrayList<TAdminAction>();
+    	if (persistedAdminActions != null) {
+    		for (String persistedAdminAction : persistedAdminActions) {
+    			TAdminAction adminAction = TAdminActions.fromPersistedString(persistedAdminAction);
+    			adminActions.add(adminAction);
+    		}
+    	}
+    	return adminActions;
+    }
+    
     public void updateDisplayDataCache() {
     	try {
 	    	JSONObject displayData = new JSONObject();
@@ -133,13 +149,13 @@ public class TournamentData {
 	    	
 	    	displayData.put("id", getTournamentKey());
 	    	displayData.put("name", theTournament.getDisplayName());
-	    	displayData.put("standings", theTournament.getCurrentStandings(theSeeding, theMatchResults).toString().replace("\n", "\n <br> "));
+	    	displayData.put("standings", theTournament.getCurrentStandings(theSeeding, theMatchResults, getAdminActions()).toString().replace("\n", "\n <br> "));
 	    	displayData.put("hasBegun", hasBegun);
 	    	displayData.put("hasFinished", hasFinished);
 	    	displayData.put("matchIdMapDebugString", publicToInternalMatchIdMap.toString());
 	    	{
 	    		JSONArray standingsHistory = new JSONArray();
-	    		for (TRanking aRanking : theTournament.getStandingsHistory(theSeeding, theMatchResults)) {
+	    		for (TRanking aRanking : theTournament.getStandingsHistory(theSeeding, theMatchResults, getAdminActions())) {
 	    			standingsHistory.put(aRanking.toString());
 	    		}
 	    		displayData.put("standingsHistory", standingsHistory);
@@ -150,6 +166,13 @@ public class TournamentData {
 	    			thePlayers.put(player);
 	    		}
 	    		displayData.put("players", thePlayers);
+	    	}
+	    	{
+	    		JSONArray adminActions = new JSONArray();
+	    		for (TAdminAction aAction : getAdminActions()) {
+	    			adminActions.put(aAction.toString());
+	    		}
+	    		displayData.put("adminActions", adminActions);
 	    	}
 	    	cachedDisplayData = new Text(displayData.toString());
     	} catch (JSONException je) {
@@ -186,6 +209,12 @@ public class TournamentData {
     	save();
     }
     
+    public void recordAdminAction(String persistableAdminAction) {
+    	persistedAdminActions.add(persistableAdminAction);
+    	save();
+    	updateDisplayDataCache();
+    }
+    
     // This should be called when the tournament has no additional matches left
     // to schedule, and no longer needs to be considered during scheduling.
     public void finishTournament() {
@@ -196,7 +225,7 @@ public class TournamentData {
     // Get the next matches to run, based on the seeding and the match results
     // for the tournament so far.
     public TNextMatchesResult getNextMatches() {
-    	return getTournament().getMatchesToRun(getSeeding(), getMatchResultsSoFar());
+    	return getTournament().getMatchesToRun(getSeeding(), getMatchResultsSoFar(), getAdminActions());
     }
     
     // Get the seeding based on the persisted data.
@@ -214,18 +243,14 @@ public class TournamentData {
 	    	for (int i = 0; i < theMatches.length(); i++) {
 	    		JSONObject aMatchJSON = theMatches.getJSONObject(i);
 	    		String internalMatchID = lookupInternalMatchID(aMatchJSON.getString("matchURL").replace("http://matches.ggp.org/matches/", "").replace("/", ""));
-	    		List<TPlayer> thePlayers = new ArrayList<TPlayer>();
-	    		for (int j = 0; j < aMatchJSON.getJSONArray("playerNamesFromHost").length(); j++) {
-	    			thePlayers.add(TPlayer.create(aMatchJSON.getJSONArray("playerNamesFromHost").getString(j)));
-	    		}
 	    		if (aMatchJSON.getBoolean("isAborted")) {
-	    			matchResults.add(TMatchResult.getAbortedMatchResult(internalMatchID, thePlayers));
+	    			matchResults.add(TMatchResult.getAbortedMatchResult(internalMatchID));
 	    		} else if (aMatchJSON.getBoolean("isCompleted")) {
 	    			List<Integer> theGoals = new ArrayList<Integer>();
 	    			for (int j = 0; j < aMatchJSON.getJSONArray("goalValues").length(); j++) {
 	    				theGoals.add(aMatchJSON.getJSONArray("goalValues").getInt(j));
 	    			}
-	    			matchResults.add(TMatchResult.getSuccessfulMatchResult(internalMatchID, thePlayers, theGoals));
+	    			matchResults.add(TMatchResult.getSuccessfulMatchResult(internalMatchID, theGoals));
 	    		}
 	    	}
 	    	return matchResults;

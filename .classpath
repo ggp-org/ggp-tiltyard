@@ -17,6 +17,7 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/joda-time-2.0.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-codec-1.6.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/snakeyaml-1.16.jar"/>
-	<classpathentry kind="lib" path="war/WEB-INF/lib/ggp-tournament-0.0.7.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/escape-rope-0.0.5.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/ggp-tournament-0.1.0.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
