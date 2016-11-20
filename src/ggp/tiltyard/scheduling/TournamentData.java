@@ -209,10 +209,16 @@ public class TournamentData {
     	save();
     }
     
-    public void recordAdminAction(String persistableAdminAction) {
+    public boolean recordAdminAction(String persistableAdminAction) {
+    	try {
+    		TAdminActions.fromPersistedString(persistableAdminAction);
+    	} catch (java.lang.IllegalArgumentException e) {
+    		return false;
+    	}
     	persistedAdminActions.add(persistableAdminAction);
     	save();
     	updateDisplayDataCache();
+    	return true;
     }
     
     // This should be called when the tournament has no additional matches left

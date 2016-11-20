@@ -1,0 +1,126 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>GGP.org - Tiltyard Gaming Server</title>
+    <meta name="description" content="General game playing is about playing games that you've never seen before. Watch intelligent computers play games against each other here!" />  
+    <link rel="shortcut icon" href="http://www.ggp.org/favicon.ico">
+    <link href="//fonts.googleapis.com/css?family=Roboto:300,700" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="//www.ggp.org/viewer/bellerophon.css" />
+    <link rel="stylesheet" type="text/css" href="/tiltyard.css" />
+    <link rel="stylesheet" type="text/css" href="//www.ggp.org/scripts/external/bootstrap/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="//www.gstatic.com/authtoolkit/css/gitkit.css" />
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/external/bootstrap/bootstrap.min.js'></script>
+    <script type="text/javascript" src="//www.ggp.org/viewer/bellerophonHeader.js"></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/Analytics.js'></script>
+    <script type='text/javascript' src='/static/scripts/jquery-ui-autocomplete.js'></script>
+    <script type='text/javascript' src='/static/scripts/jquery.select-to-autocomplete.min.js'></script>
+    <script type="text/javascript" src="//www.gstatic.com/authtoolkit/js/gitkit.js"></script>   
+    <style>
+    .ui-autocomplete {
+      padding: 0;
+      list-style: none;
+      background-color: #fff;
+      width: 218px;
+      border: 1px solid #B0BECA;
+      max-height: 350px;
+      overflow-y: scroll;
+    }
+    .ui-autocomplete .ui-menu-item a {
+      border-top: 1px solid #B0BECA;
+      display: block;
+      padding: 4px 6px;
+      color: #353D44;
+      cursor: pointer;
+    }
+    .ui-autocomplete .ui-menu-item:first-child a {
+      border-top: none;
+    }
+    .ui-autocomplete .ui-menu-item a.ui-state-hover {
+      background-color: #D5E5F4;
+      color: #161A1C;
+    }
+    </style>
+  </head>
+  <body>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/ResourceLoader.js'></script>
+    <script type='text/javascript' src='//www.ggp.org/scripts/common/UserInterface.js'></script>    
+
+    <div class="header" id="header"></div>
+    <br>
+    <center><div id='gitkitStatus'></div></center>
+    <br>
+    <div id='tournamentDiv'></div>
+    
+    <div class="container">
+      <div class="row">
+        <div class="span8 offset2">
+          <form id="form_upload_image" action="" method="post" enctype="multipart/form-data" class="well form-horizontal">
+            <fieldset>
+              <legend id="form_tournament_name">Tournament Configuration</legend>
+              <div class="control-group">
+                <label class="control-label" for="input_tournament_action">Tournament Action</label>
+                <div class="controls">
+                  <textarea id="input_tournament_action"></textarea>
+                </div>
+              </div>
+            </fieldset>
+            <button class="btn btn-primary" type="button" onclick="submitTournamentAction();">Submit</button>
+          </form>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span8 offset2">
+          <div id="display_players"></div>
+          <div id="display_standings"></div>
+          <div id="display_has_begun"></div>
+          <div id="display_has_ended"></div>
+          <div id="display_actions"></div>
+        </div>
+      </div>
+    </div>    
+    
+    <script type='text/javascript' charset="utf-8">
+      var loginState = ResourceLoader.load_json('/data/login');
+      if (!loginState.loggedIn) {
+        window.location = "//tiltyard.ggp.org/players/";
+      }
+      window.google.identitytoolkit.signInButton('#gitkitStatus', {
+        widgetUrl: "//tiltyard.ggp.org/oauth2callback",
+        signOutUrl: "//tiltyard.ggp.org/players/",
+        popupMode: true,
+      });
+      generateHeader(document.getElementById('header'), "Tiltyard Registration", '');
+
+      var withDefaultValue = function (x,y) { if (x || x === false || x === "") { return x; } else { return y; } };       
+      function showTournamentData(aTournament) {
+        $('#form_tournament_name')[0].value = aTournament.name;
+        $('#display_players')[0].innerHTML = "<b>Players:</b> " + withDefaultValue(aTournament.players, "N/A");
+        $('#display_standings')[0].innerHTML = "<b>Standings:</b> " + withDefaultValue(aTournament.standings, "N/A");
+        $('#display_has_begun')[0].innerHTML = "<b>Has Begun?</b> " + withDefaultValue(aTournament.hasBegun, "N/A");
+        $('#display_has_ended')[0].innerHTML = "<b>Has Ended?</b> " + withDefaultValue(aTournament.hasFinished, "N/A");
+        $('#display_actions')[0].innerHTML = "<b>Admin Actions:</b> " + withDefaultValue(aTournament.actions, "N/A");
+      }
+      
+      function submitTournamentAction() {
+        var anAction = {};
+        anAction.theTournament = window.location.pathname.replace("/tournaments/", "");
+        anAction.theAction = $('#input_tournament_action')[0].value;
+        alert('ActionJSON: ' + JSON.stringify(anAction));
+        var theResponse = ResourceLoader.post_raw("/tournaments/submitTournamentAction", JSON.stringify(anAction));
+        if (theResponse.trim() == "parse error") {
+          alert('Error: server could not parse action ' + anAction.theAction);
+        } else {
+          alert('Action submitted! ' + theResponse);
+        }
+      }
+
+      var tournamentName = window.location.pathname.replace("/tournaments/", "");
+      var theTournament = ResourceLoader.load_json('/data/tournaments/' + tournamentName);
+      showTournamentData(theTournament);
+      
+      $('#input_tournament_action').popover({'title':'Tournament Action', 'content':'Submit a serialized tournament action for this tournament here.'});
+    </script>
+  </body>  
+</html>

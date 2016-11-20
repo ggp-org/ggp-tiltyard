@@ -3,6 +3,7 @@ package ggp.tiltyard;
 import ggp.tiltyard.players.Registration;
 import ggp.tiltyard.scheduling.Scheduling;
 import ggp.tiltyard.scheduling.TournamentData;
+import ggp.tiltyard.scheduling.Tournaments;
 import ggp.tiltyard.backends.BackendRegistration;
 import ggp.tiltyard.hosting.Hosting;
 import ggp.tiltyard.identity.GitkitIdentity;
@@ -112,6 +113,7 @@ public class GGP_TiltyardServlet extends HttpServlet {
         if (reqURI.equals("/about")) reqURI += "/";
         if (reqURI.equals("/players")) reqURI += "/";
         if (reqURI.equals("/hosting")) reqURI += "/";
+        if (reqURI.equals("/tournaments")) reqURI += "/";
         if (reqURI.endsWith("/")) {
             reqURI += "index.html";
         }
@@ -124,6 +126,9 @@ public class GGP_TiltyardServlet extends HttpServlet {
         if (reqURI.startsWith("/players-test/")) {
             reqURI = "/players/playerPageTest.html";
         }
+        if (reqURI.startsWith("/tournaments/") && !reqURI.equals("/tournaments/index.html")) {
+        	reqURI = "/tournaments/tournamentPage.html";
+        }        
         if (reqURI.startsWith("/hosting/") && !reqURI.equals("/hosting/index.html")) {
         	reqURI = "/hosting/humanUI.html";
         }
@@ -211,6 +216,8 @@ public class GGP_TiltyardServlet extends HttpServlet {
         	// incoming requests when the datastore isn't writeable.        	
         } else if (theURI.startsWith("/backends/")) {        	
             BackendRegistration.doPost(theURI.replace("/backends/", ""), in, req.getRemoteAddr(), resp);
+        } else if (theURI.startsWith("/tournaments/")) {
+            Tournaments.doPost(theURI.replace("/tournaments/", ""), in, req, resp);
         } else {
             Registration.doPost(theURI, in, req, resp);
         }
