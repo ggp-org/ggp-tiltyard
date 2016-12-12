@@ -11,14 +11,20 @@ import org.ggp.galaxy.shared.persistence.Persistence;
 public class SchedulerConfig {
     @PrimaryKey @Persistent private String thePrimaryKey;
     @Persistent private boolean isDrained;
+    @Persistent private boolean isDrainedExceptTournament;
 
     private SchedulerConfig() {
         thePrimaryKey = "SchedulerConfig";
         isDrained = false;
+        isDrainedExceptTournament = false;
     }
     
     public boolean isDrained() {
     	return isDrained;
+    }
+    
+    public boolean isDrainedExceptTournament() {
+    	return isDrainedExceptTournament;
     }
 
     /* Static accessor methods */

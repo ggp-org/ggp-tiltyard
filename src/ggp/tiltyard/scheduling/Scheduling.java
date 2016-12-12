@@ -203,7 +203,7 @@ public class Scheduling {
         // scheduling logic. This drains matches from players that will be involved in upcoming
         // and ongoing tournaments, and then once a tournament begins, schedules matches for that
         // tournament according to a particular lineup. Players not opted-in to the tournament do
-        // not have their scheduling affected.        
+        // not have their scheduling affected.
         for (TournamentData tournament : TournamentData.loadTournaments()) {
         	long secondsToStart = tournament.getTournament().getSecondsToWaitUntilInitialStartTime(tournament.getAdminActions());
         	
@@ -256,6 +256,9 @@ public class Scheduling {
                 }
             }
         }
+        
+        // Should we drain all non-tournament matches? If so, nothing left to do.
+        if (theConfig.isDrainedExceptTournament()) return;
         
         // Figure out how many players are available. If no computer players are
     	// available, don't bother attempting to automatically schedule a match.

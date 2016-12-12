@@ -77,6 +77,26 @@ public class GGP_TiltyardServlet extends HttpServlet {
             resp.setStatus(200);
             return;
         }
+        
+        /* Can be enabled to push a tournament YAML descriptor.
+        if (req.getRequestURI().startsWith("/push_tournament")) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream("tiltyardOpen2016.yaml"), "utf-8"));
+            StringBuffer response = new StringBuffer();
+
+            String line;
+            while( (line = br.readLine()) != null ) {
+                response.append(line + "\n");
+            }
+            
+            br.close();
+
+            resp.setContentType("text/plain");
+            resp.getWriter().println(response.toString());
+            resp.setStatus(200);
+            new TournamentData("tiltyard_open_20161209", response.toString()).save();
+        	return;
+        }
+        */
 
         if (req.getRequestURI().startsWith("/data/")) {
             Registration.doGet(req.getRequestURI().replaceFirst("/data/", ""), req, resp);

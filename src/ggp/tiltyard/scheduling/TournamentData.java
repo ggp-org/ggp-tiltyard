@@ -175,6 +175,7 @@ public class TournamentData {
 	    		displayData.put("adminActions", adminActions);
 	    	}
 	    	cachedDisplayData = new Text(displayData.toString());
+	    	save();
     	} catch (JSONException je) {
     		Logger.getAnonymousLogger().log(Level.SEVERE, "Could not serialize tournament display data: " + je, je);
     	}
