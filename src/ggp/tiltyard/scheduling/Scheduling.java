@@ -90,8 +90,11 @@ public class Scheduling {
 				"connectFour_9x6", "connectFourSuicide_7x7" },
 		// Tic-Tac-Toe variants
 		new String[] { "ticTacToe", "nineBoardTicTacToe", "cittaceot", "ticTacToeLarge",
-				"connect5", "biddingTicTacToe", "ticTacToeLargeSuicide",
+				"biddingTicTacToe", "ticTacToeLargeSuicide",
 				"biddingTicTacToe_10coins", "nineBoardTicTacToePie" },
+		// Gomoku (Connect Five) variants
+		new String[] { "connect5", "gomoku_11x11", "gomoku_15x15", "gomoku_swap2_11x11",
+		        "gomoku_swap2_15x15", },
 		// Breakthrough variants
 		new String[] { "knightThrough", "breakthroughWalls", "breakthrough",  "breakthroughSmall",
 				"escortLatch", "breakthroughSuicideSmall" },
@@ -104,7 +107,7 @@ public class Scheduling {
 		// Knight's Tour variants
 		new String[] { "knightsTour", "knightsTourLarge" },
 		// Chess variants
-		new String[] { "speedChess", "skirmishNew", "skirmishZeroSum", "chess_200" },
+		new String[] { "speedChess", "skirmishNew", "skirmishZeroSum", "chess_200", "shogi_ctk" },
 		// Peg Jumping variants
 		new String[] { "peg", "pegEuro" },
 		// Hex variants
@@ -115,16 +118,20 @@ public class Scheduling {
 		new String[] { "queens06ug", "queens08lg", "queens08ug", "queens12ug", "queens16ug" },
 		// Othello / Reversi variants
 		new String[] { "reversi", "reversiSuicide" },
+		// Go variants
+		new String[] { "atariGo_7x7", "atariGoVariant_7x7", },
 		// Games that fell into no other category, but didn't seem to be
 		// significant enough to deserve their own individual categories.
 		new String[] { "cephalopodMicro",  "maze", "eightPuzzle", "qyshinsu", "blocker",
-				"sheepAndWolf", "max_knights", "untwistycomplex2" },
+				"sheepAndWolf", "max_knights", "untwistycomplex2", "zombieAttack1PL6",
+				"urmAdd", "linesOfAction" },
 		new String[] { "tron_10x10", "mineClearingSmall", "nonogram_5x5_1", "shmup",
-		        "battlebrushes", "rubiksCube", "hidato19", "hidato37", "madBishops" },
+		        "battlebrushes", "rubiksCube", "rubiksCubeSuperflip", "hidato19",
+		        "hidato37", "madBishops" },
 		// New games, that get an extra promotional boost because they're new or interesting
-		new String[] { "hidato19", "hidato37", "queens12ug", "queens16ug",
-				"battlebrushes", "connectFour_9x6", "connectFourSuicide_7x7",
-				"madBishops", "chess_200" },
+		new String[] { "gomoku_11x11", "gomoku_15x15", "gomoku_swap2_11x11", "gomoku_swap2_15x15",
+		        "zombieAttack1PL6", "shogi_ctk", "urmAdd", "rubiksCubeSuperflip",
+		        "linesOfAction", "atariGo_7x7", "atariGoVariant_7x7", },
 	};
 
     public static void runSchedulingRound() throws IOException {
