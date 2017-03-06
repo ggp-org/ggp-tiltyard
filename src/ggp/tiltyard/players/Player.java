@@ -344,7 +344,9 @@ public class Player {
         PersistenceManager pm = Persistence.getPersistenceManager();
         Query q = pm.newQuery(Player.class);
         q.setFilter("isEnabled == true");
-        List<Player> toReturn = new ArrayList<Player> ((List<Player>) q.execute());
+        List<Player> toReturn = new ArrayList<Player>();
+        List<Player> queryResult = (List<Player>) q.execute();
+        toReturn.addAll(queryResult);
         q.closeAll();
         pm.close();
         return toReturn;
